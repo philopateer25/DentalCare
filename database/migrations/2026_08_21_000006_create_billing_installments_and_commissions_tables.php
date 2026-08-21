@@ -10,16 +10,22 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('practice_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('practice_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('doctor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('treatment_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->string('invoice_number')->unique();
-            $table->decimal('total_amount', 10, 2);
-            $table->decimal('paid_amount', 10, 2)->default(0.00);
-            $table->decimal('balance_due', 10, 2);
-            $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'overdue', 'cancelled'])->default('unpaid');
-            $table->date('issue_date');
+            $table->date('invoice_date')->default(now());
+            $table->date('issue_date')->nullable();
             $table->date('due_date')->nullable();
+            $table->decimal('subtotal', 10, 2)->default(0.00);
+            $table->decimal('discount', 10, 2)->default(0.00);
+            $table->decimal('tax', 10, 2)->default(0.00);
+            $table->decimal('total_amount', 10, 2)->default(0.00);
+            $table->decimal('paid_amount', 10, 2)->default(0.00);
+            $table->decimal('remaining_balance', 10, 2)->default(0.00);
+            $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'overdue', 'cancelled'])->default('unpaid');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
 
@@ -27,10 +33,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->foreignId('treatment_procedure_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('description');
+            $table->string('procedure_name');
+            $table->string('tooth_number')->nullable();
             $table->integer('quantity')->default(1);
-            $table->decimal('unit_price', 10, 2);
-            $table->decimal('total_price', 10, 2);
+            $table->decimal('unit_price', 10, 2)->default(0.00);
+            $table->decimal('total', 10, 2)->default(0.00);
+            $table->decimal('doctor_commission_percentage', 5, 2)->default(0.00);
+            $table->decimal('doctor_commission_amount', 10, 2)->default(0.00);
             $table->timestamps();
         });
 
@@ -60,15 +69,15 @@ return new class extends Migration
 
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('practice_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('practice_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->foreignId('installment_schedule_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
             $table->decimal('amount', 10, 2);
-            $table->enum('payment_method', ['cash', 'instapay', 'card_pos', 'insurance_tpa', 'bank_transfer'])->default('cash');
-            $table->string('transaction_reference')->nullable(); // InstaPay ref / POS auth code / Check no.
+            $table->enum('payment_method', ['cash', 'instapay', 'credit_card', 'insurance_tpa', 'bank_transfer'])->default('cash');
+            $table->string('transaction_reference')->nullable();
             $table->foreignId('logged_by_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->dateTime('paid_at');
+            $table->dateTime('paid_at')->default(now());
             $table->text('notes')->nullable();
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,21 +16,45 @@ class Patient extends Model
     protected $fillable = [
         'practice_id',
         'file_number',
-        'national_id',
+        'full_name',
         'first_name',
         'last_name',
-        'gender',
-        'dob',
+        'national_id',
         'phone',
+        'secondary_phone',
+        'dob',
+        'gender',
+        'blood_type',
+        'referral_source',
         'whatsapp_number',
         'email',
         'address',
-        'emergency_contact',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'penicillin_allergy',
+        'latex_allergy',
+        'bleeding_disorder',
+        'cardiac_condition',
+        'hypertension',
+        'diabetic',
+        'hepatitis',
+        'pregnant',
+        'medical_alerts_json',
+        'medical_notes',
         'status',
     ];
 
     protected $casts = [
         'dob' => 'date',
+        'penicillin_allergy' => 'boolean',
+        'latex_allergy' => 'boolean',
+        'bleeding_disorder' => 'boolean',
+        'cardiac_condition' => 'boolean',
+        'hypertension' => 'boolean',
+        'diabetic' => 'boolean',
+        'hepatitis' => 'boolean',
+        'pregnant' => 'boolean',
+        'medical_alerts_json' => 'array',
     ];
 
     public function practice(): BelongsTo
@@ -77,8 +102,53 @@ class Patient extends Model
         return $this->hasMany(LabOrder::class);
     }
 
-    public function getFullNameAttribute(): string
+    /**
+     * Get or set active medical alert keys array for Filament CheckboxList component
+     */
+    public function medicalAlerts(): Attribute
     {
-        return "{$this->first_name} {$this->last_name}";
+        return Attribute::make(
+            get: function () {
+                $alerts = [];
+                $flags = [
+                    'penicillin_allergy',
+                    'latex_allergy',
+                    'bleeding_disorder',
+                    'cardiac_condition',
+                    'hypertension',
+                    'diabetic',
+                    'hepatitis',
+                    'pregnant',
+                ];
+
+                foreach ($flags as $flag) {
+                    if (!empty($this->attributes[$flag])) {
+                        $alerts[] = $flag;
+                    }
+                }
+
+                return $alerts;
+            },
+            set: function ($value) {
+                $value = is_array($value) ? $value : [];
+                $flags = [
+                    'penicillin_allergy',
+                    'latex_allergy',
+                    'bleeding_disorder',
+                    'cardiac_condition',
+                    'hypertension',
+                    'diabetic',
+                    'hepatitis',
+                    'pregnant',
+                ];
+
+                $updated = [];
+                foreach ($flags as $flag) {
+                    $updated[$flag] = in_array($flag, $value);
+                }
+
+                return $updated;
+            }
+        );
     }
 }

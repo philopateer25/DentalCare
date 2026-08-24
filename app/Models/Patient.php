@@ -72,6 +72,11 @@ class Patient extends Model
         return $this->hasMany(ToothRecord::class);
     }
 
+    public function teeth(): HasMany
+    {
+        return $this->hasMany(PatientTooth::class);
+    }
+
     public function perioChartings(): HasMany
     {
         return $this->hasMany(PerioCharting::class);

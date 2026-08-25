@@ -13,6 +13,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Jobs\SendWhatsAppMessage;
+use Filament\Notifications\Notification;
 
 class PatientResource extends Resource
 {
@@ -145,6 +147,52 @@ class PatientResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('sendInstructions')
+                    ->label('Send Instructions')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\Select::make('template')
+                            ->label('Instruction Template')
+                            ->options([
+                                'post_extraction' => 'Post-Extraction Care',
+                                'post_implant' => 'Post-Implant Care',
+                                'general_hygiene' => 'General Oral Hygiene',
+                            ])
+                            ->required()
+                            ->reactive()
+                            ->afterStateUpdated(function (callable $set, $state) {
+                                $texts = [
+                                    'post_extraction' => "Please bite on the gauze for 30 minutes. Do not rinse, spit, or drink through a straw for 24 hours.",
+                                    'post_implant' => "Take prescribed medications as directed. Avoid hard foods on the implant side for 2 weeks.",
+                                    'general_hygiene' => "Brush twice a day for 2 minutes and floss daily.",
+                                ];
+                                $set('message', $texts[$state] ?? '');
+                            }),
+                        Forms\Components\Textarea::make('message')
+                            ->label('Message Content')
+                            ->required()
+                            ->rows(4),
+                    ])
+                    ->action(function (Patient $record, array $data) {
+                        SendWhatsAppMessage::dispatch($record->phone, $data['message']);
+                        Notification::make()->title('Message queued for delivery!')->success()->send();
+                    }),
+                Tables\Actions\Action::make('sendCheckUp')
+                    ->label('Send Check-up')
+                    ->icon('heroicon-o-heart')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\Textarea::make('message')
+                            ->label('Check-up Message')
+                            ->default("Hello! This is a quick check-up from the clinic. How are you feeling today following your recent visit? Please let us know if you have any concerns.")
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->action(function (Patient $record, array $data) {
+                        SendWhatsAppMessage::dispatch($record->phone, $data['message']);
+                        Notification::make()->title('Check-up message queued!')->success()->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -13,6 +13,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use App\Jobs\SendWhatsAppMessage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceResource extends Resource
 {
@@ -241,6 +244,31 @@ class InvoiceResource extends Resource
             ])
             ->filters([])
             ->actions([
+                Tables\Actions\Action::make('sendViaWhatsApp')
+                    ->label('Send via WhatsApp')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->action(function (Invoice $record) {
+                        // Generate PDF
+                        $pdf = Pdf::loadView('pdf.invoice', ['invoice' => $record]);
+                        $fileName = "Invoice_{$record->invoice_number}.pdf";
+                        $path = "public/invoices/{$fileName}";
+                        
+                        // Save temporarily to public disk
+                        Storage::disk('local')->put($path, $pdf->output());
+                        
+                        // Get public URL (assuming local storage is linked, or use asset helper)
+                        $url = asset("storage/invoices/{$fileName}");
+                        
+                        // Dispatch job
+                        if ($record->patient && $record->patient->phone) {
+                            $caption = "Hello {$record->patient->full_name}, here is your invoice from today's visit.";
+                            SendWhatsAppMessage::dispatch($record->patient->phone, null, $url, $fileName, $caption);
+                            Notification::make()->title('Invoice sent via WhatsApp!')->success()->send();
+                        } else {
+                            Notification::make()->title('Patient has no phone number!')->danger()->send();
+                        }
+                    }),
                 Tables\Actions\Action::make('recordPayment')
                     ->label('Record Payment')
                     ->icon('heroicon-m-banknotes')

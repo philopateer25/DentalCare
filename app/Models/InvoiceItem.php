@@ -13,16 +13,19 @@ class InvoiceItem extends Model
     protected $fillable = [
         'invoice_id',
         'treatment_procedure_id',
-        'description',
+        'procedure_name',
+        'tooth_number',
         'quantity',
         'unit_price',
-        'total_price',
+        'total',
+        'doctor_commission_percentage',
+        'doctor_commission_amount',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
     public function invoice(): BelongsTo

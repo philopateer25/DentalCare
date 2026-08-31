@@ -68,4 +68,9 @@ class TreatmentPlan extends Model
             'net_amount' => max(0, $total - $discount),
         ]);
     }
+
+    public function labOrders(): HasMany
+    {
+        return $this->hasMany(LabOrder::class);
+    }
 }

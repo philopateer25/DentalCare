@@ -47,6 +47,11 @@ class Patient extends Model
         return $this->hasMany(ToothRecord::class);
     }
 
+    public function teeth(): HasMany
+    {
+        return $this->hasMany(PatientTooth::class);
+    }
+
     public function perioChartings(): HasMany
     {
         return $this->hasMany(PerioCharting::class);
@@ -75,6 +80,16 @@ class Patient extends Model
     public function labOrders(): HasMany
     {
         return $this->hasMany(LabOrder::class);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(PatientFile::class);
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
     }
 
     public function getFullNameAttribute(): string

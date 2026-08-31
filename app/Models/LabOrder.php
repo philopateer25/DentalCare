@@ -14,6 +14,7 @@ class LabOrder extends Model
         'practice_id',
         'patient_id',
         'doctor_id',
+        'treatment_plan_id',
         'dental_lab_id',
         'tooth_number_fdi',
         'shade',
@@ -52,5 +53,10 @@ class LabOrder extends Model
     public function dentalLab(): BelongsTo
     {
         return $this->belongsTo(DentalLab::class);
+    }
+
+    public function treatmentPlan(): BelongsTo
+    {
+        return $this->belongsTo(TreatmentPlan::class);
     }
 }

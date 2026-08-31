@@ -13,15 +13,19 @@ class InventoryBatch extends Model
 
     protected $fillable = [
         'inventory_item_id',
+        'supplier_id',
         'batch_number',
         'expiry_date',
+        'received_date',
         'unit_cost',
         'quantity_received',
         'quantity_remaining',
+        'notes',
     ];
 
     protected $casts = [
         'expiry_date' => 'date',
+        'received_date' => 'date',
         'unit_cost' => 'decimal:2',
         'quantity_received' => 'integer',
         'quantity_remaining' => 'integer',
@@ -32,8 +36,28 @@ class InventoryBatch extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
     public function consumptions(): HasMany
     {
         return $this->hasMany(ProcedureConsumption::class);
+    }
+
+    public function getExpiryStatusAttribute(): string
+    {
+        if (! $this->expiry_date) {
+            return 'No Expiry';
+        }
+        if ($this->expiry_date->isPast()) {
+            return 'Expired';
+        }
+        if ($this->expiry_date->diffInDays(now()) <= 60) {
+            return 'Expiring Soon';
+        }
+
+        return 'Active';
     }
 }

@@ -29,6 +29,26 @@ class Payment extends Model
         'paid_at' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($payment) {
+            if ($payment->invoice) {
+                $payment->invoice->recalculateTotals();
+            }
+            if ($payment->installmentSchedule) {
+                $schedule = $payment->installmentSchedule;
+                $schedule->paid_amount += $payment->amount;
+                if ($schedule->paid_amount >= $schedule->amount) {
+                    $schedule->status = 'paid';
+                    $schedule->payment_date = now();
+                } else {
+                    $schedule->status = 'partially_paid';
+                }
+                $schedule->save();
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

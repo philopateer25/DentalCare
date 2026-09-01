@@ -47,6 +47,15 @@ class PatientInsurancePolicy extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($policy) {
+            if (empty($policy->policy_number)) {
+                $policy->policy_number = 'POL-' . date('Y') . '-' . str_pad((string) (static::max('id') + 1), 5, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

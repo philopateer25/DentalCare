@@ -75,7 +75,8 @@ class PaymentResource extends Resource
                             ->required(),
                         Forms\Components\TextInput::make('transaction_reference')
                             ->label('POS Auth Code / Transaction Ref / Check #')
-                            ->placeholder('e.g. POS-991823, IP-00291'),
+                            ->default(fn () => 'PAY-' . date('Ymd') . '-' . str_pad((string) (Payment::max('id') + 1), 4, '0', STR_PAD_LEFT))
+                            ->placeholder('Auto-generated (e.g. PAY-20260901-0001)'),
                         Forms\Components\DateTimePicker::make('paid_at')
                             ->label('Payment Received Date & Time')
                             ->default(now())

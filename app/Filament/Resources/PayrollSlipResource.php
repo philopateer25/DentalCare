@@ -36,6 +36,7 @@ class PayrollSlipResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('payslip_number')
                             ->label('Payslip Voucher #')
+                            ->default(fn () => 'PAY-' . date('Y') . '-' . date('m') . '-' . str_pad((string) (PayrollSlip::max('id') + 1), 4, '0', STR_PAD_LEFT))
                             ->disabled()
                             ->dehydrated()
                             ->placeholder('Auto-generated (e.g. PAY-2026-08-0001)'),

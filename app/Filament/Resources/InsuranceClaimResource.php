@@ -40,9 +40,10 @@ class InsuranceClaimResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('claim_number')
                             ->label('Claim #')
+                            ->default(fn () => 'CLM-' . date('Y') . '-' . str_pad((string) (InsuranceClaim::max('id') + 1), 5, '0', STR_PAD_LEFT))
                             ->disabled()
                             ->dehydrated()
-                            ->placeholder('Auto-generated (e.g. CLM-2026-0001)'),
+                            ->placeholder('Auto-generated (e.g. CLM-2026-00001)'),
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
                             ->relationship('patient', 'first_name')

@@ -40,6 +40,18 @@ class InventoryItem extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($item) {
+            if (empty($item->sku)) {
+                $item->sku = 'SKU-' . str_pad((string) (static::max('id') + 1), 5, '0', STR_PAD_LEFT);
+            }
+            if (empty($item->barcode)) {
+                $item->barcode = 'BAR-' . date('Ymd') . '-' . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

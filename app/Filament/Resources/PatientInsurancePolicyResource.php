@@ -50,11 +50,13 @@ class PatientInsurancePolicyResource extends Resource
                             ->required(),
                         Forms\Components\TextInput::make('policy_number')
                             ->label('Member / Policy ID #')
+                            ->default(fn () => 'POL-' . date('Y') . '-' . str_pad((string) (PatientInsurancePolicy::max('id') + 1), 5, '0', STR_PAD_LEFT))
                             ->required()
-                            ->placeholder('e.g. DEL-9920149'),
+                            ->placeholder('Auto-generated (e.g. POL-2026-00001)'),
                         Forms\Components\TextInput::make('group_number')
                             ->label('Employer Group #')
-                            ->placeholder('e.g. GRP-44102'),
+                            ->default(fn () => 'GRP-' . str_pad((string) (PatientInsurancePolicy::max('id') + 1), 4, '0', STR_PAD_LEFT))
+                            ->placeholder('Auto-generated (e.g. GRP-0001)'),
                         Forms\Components\TextInput::make('subscriber_name')
                             ->label('Primary Subscriber Name')
                             ->required()

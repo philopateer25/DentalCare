@@ -52,7 +52,8 @@ class DentalLabResource extends Resource
                             ->required(),
                         Forms\Components\TextInput::make('account_number')
                             ->label('Clinic Account # with Lab')
-                            ->placeholder('e.g. ACC-884920'),
+                            ->default(fn () => 'LAB-ACC-' . str_pad((string) (DentalLab::max('id') + 1), 4, '0', STR_PAD_LEFT))
+                            ->placeholder('Auto-generated (e.g. LAB-ACC-0001)'),
                         Forms\Components\TextInput::make('contact_person')
                             ->label('Primary Lab Tech / Account Rep')
                             ->maxLength(255),

@@ -35,6 +35,15 @@ class DentalLab extends Model
         'rating' => 'decimal:1',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($lab) {
+            if (empty($lab->account_number)) {
+                $lab->account_number = 'LAB-ACC-' . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

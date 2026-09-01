@@ -25,8 +25,11 @@ class PatientResource extends Resource
                 Forms\Components\Section::make('Patient Demographics')
                     ->schema([
                         Forms\Components\TextInput::make('file_number')
+                            ->label('Patient File / ID #')
+                            ->default(fn () => 'PAT-' . date('Y') . '-' . str_pad((string) (Patient::max('id') + 1), 5, '0', STR_PAD_LEFT))
                             ->required()
-                            ->maxLength(50),
+                            ->maxLength(50)
+                            ->placeholder('Auto-generated (e.g. PAT-2026-00001)'),
                         Forms\Components\TextInput::make('first_name')
                             ->required()
                             ->maxLength(100),

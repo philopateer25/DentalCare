@@ -30,6 +30,15 @@ class InsuranceProvider extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($provider) {
+            if (empty($provider->payer_id)) {
+                $provider->payer_id = 'PAYER-' . str_pad((string) (static::max('id') + 1), 3, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

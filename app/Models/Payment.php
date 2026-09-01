@@ -31,6 +31,12 @@ class Payment extends Model
 
     protected static function booted()
     {
+        static::creating(function ($payment) {
+            if (empty($payment->transaction_reference)) {
+                $payment->transaction_reference = 'PAY-' . date('Ymd') . '-' . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+
         static::saved(function ($payment) {
             if ($payment->invoice) {
                 $payment->invoice->recalculateTotals();

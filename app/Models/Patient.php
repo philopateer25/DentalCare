@@ -32,6 +32,15 @@ class Patient extends Model
         'dob' => 'date',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($patient) {
+            if (empty($patient->file_number)) {
+                $patient->file_number = 'PAT-' . date('Y') . '-' . str_pad((string) (static::max('id') + 1), 5, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function practice(): BelongsTo
     {
         return $this->belongsTo(Practice::class);

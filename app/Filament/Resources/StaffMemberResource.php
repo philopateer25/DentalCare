@@ -36,9 +36,10 @@ class StaffMemberResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('employee_id')
                             ->label('Employee ID #')
+                            ->default(fn () => 'EMP-' . str_pad((string) (StaffMember::max('id') + 1), 4, '0', STR_PAD_LEFT))
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->placeholder('e.g. EMP-001'),
+                            ->placeholder('Auto-generated (e.g. EMP-0001)'),
                         Forms\Components\TextInput::make('first_name')
                             ->required()
                             ->maxLength(255),

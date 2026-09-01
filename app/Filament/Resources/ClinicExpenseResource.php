@@ -37,9 +37,10 @@ class ClinicExpenseResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('expense_number')
                             ->label('Expense Voucher #')
+                            ->default(fn () => 'EXP-' . date('Y') . '-' . str_pad((string) (ClinicExpense::max('id') + 1), 5, '0', STR_PAD_LEFT))
                             ->disabled()
                             ->dehydrated()
-                            ->placeholder('Auto-generated (e.g. EXP-2026-0001)'),
+                            ->placeholder('Auto-generated (e.g. EXP-2026-00001)'),
                         Forms\Components\Select::make('category')
                             ->label('Accounting Category')
                             ->options([

@@ -41,6 +41,12 @@ class StaffMember extends Model
 
     protected static function booted()
     {
+        static::creating(function ($staff) {
+            if (empty($staff->employee_id)) {
+                $staff->employee_id = 'EMP-' . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+
         static::saving(function ($staff) {
             $staff->base_salary = $staff->base_salary !== null && $staff->base_salary !== '' ? $staff->base_salary : 0.00;
             $staff->hourly_rate = $staff->hourly_rate !== null && $staff->hourly_rate !== '' ? $staff->hourly_rate : 0.00;

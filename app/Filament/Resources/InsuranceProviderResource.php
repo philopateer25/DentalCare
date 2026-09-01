@@ -40,7 +40,8 @@ class InsuranceProviderResource extends Resource
                             ->placeholder('e.g. Delta Dental Premier, MetLife Dental, Cigna PPO, Bupa Global'),
                         Forms\Components\TextInput::make('payer_id')
                             ->label('Electronic Claims Payer ID (EDI #)')
-                            ->placeholder('e.g. DELTA-01, METLIFE-99')
+                            ->default(fn () => 'PAYER-' . str_pad((string) (InsuranceProvider::max('id') + 1), 3, '0', STR_PAD_LEFT))
+                            ->placeholder('Auto-generated (e.g. PAYER-001)')
                             ->required(),
                         Forms\Components\TextInput::make('contact_person')
                             ->label('Provider Relations Rep')

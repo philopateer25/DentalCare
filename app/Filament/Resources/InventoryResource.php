@@ -96,13 +96,15 @@ class InventoryResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('sku')
                                     ->label('SKU / Catalog Number')
+                                    ->default(fn () => 'SKU-' . str_pad((string) (InventoryItem::max('id') + 1), 5, '0', STR_PAD_LEFT))
                                     ->maxLength(50)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('e.g. HF-SG1314, 3M-1370A2'),
+                                    ->placeholder('Auto-generated (e.g. SKU-00001)'),
                                 Forms\Components\TextInput::make('barcode')
                                     ->label('Barcode / UPC / GTIN')
+                                    ->default(fn () => 'BAR-' . date('Ymd') . '-' . str_pad((string) (InventoryItem::max('id') + 1), 4, '0', STR_PAD_LEFT))
                                     ->maxLength(100)
-                                    ->placeholder('Barcode scan or GTIN'),
+                                    ->placeholder('Auto-generated barcode'),
                                 Forms\Components\Select::make('unit')
                                     ->label('Unit of Measurement')
                                     ->options([

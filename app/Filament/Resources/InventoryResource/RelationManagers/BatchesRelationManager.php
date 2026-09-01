@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InventoryResource\RelationManagers;
 
+use App\Models\InventoryBatch;
 use App\Models\Supplier;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -21,8 +22,10 @@ class BatchesRelationManager extends RelationManager
             ->schema([
                 Forms\Components\TextInput::make('batch_number')
                     ->label('Batch / Lot Number')
+                    ->default(fn () => 'BAT-' . date('Ymd') . '-' . str_pad((string) (InventoryBatch::max('id') + 1), 4, '0', STR_PAD_LEFT))
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->placeholder('Auto-generated (e.g. BAT-20260901-0001)'),
                 Forms\Components\Select::make('supplier_id')
                     ->label('Supplier')
                     ->options(Supplier::query()->pluck('name', 'id'))

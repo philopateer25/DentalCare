@@ -31,6 +31,15 @@ class InventoryBatch extends Model
         'quantity_remaining' => 'integer',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function ($batch) {
+            if (empty($batch->batch_number)) {
+                $batch->batch_number = 'BAT-' . date('Ymd') . '-' . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);

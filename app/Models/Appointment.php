@@ -17,6 +17,8 @@ class Appointment extends Model
         'patient_id',
         'doctor_id',
         'treatment_procedure_id',
+        'procedure_name',
+        'tooth_number',
         'start_time',
         'end_time',
         'chief_complaint',

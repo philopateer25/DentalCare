@@ -12,30 +12,25 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class FilesRelationManager extends RelationManager
 {
-    protected static string $relationship = 'files';
+    protected static string $relationship = 'files'; // Adjust this if the relationship name in Patient model is different, e.g. 'patientFiles'
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\FileUpload::make('file_path')
-                    ->label('Upload File')
-                    ->disk('public')
-                    ->directory('patient-files')
-                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'application/pdf', 'application/dicom'])
+                Forms\Components\TextInput::make('title')
                     ->required()
-                    ->columnSpanFull(),
+                    ->maxLength(255),
                 Forms\Components\Select::make('type')
                     ->options([
-                        'xray_panoramic' => 'Panoramic X-Ray',
-                        'xray_periapical' => 'Periapical X-Ray',
-                        'cbct' => 'CBCT Scan',
-                        'intraoral_photo' => 'Intraoral Photo',
-                        'consent_form' => 'Consent Form',
+                        'xray' => 'X-Ray',
+                        'document' => 'Document',
+                        'photo' => 'Photo',
                         'other' => 'Other',
                     ])
                     ->required(),
-                Forms\Components\TextInput::make('title')
+                Forms\Components\FileUpload::make('file_path')
+                    ->label('File')
                     ->required(),
                 Forms\Components\TextInput::make('tooth_number_fdi')
                     ->label('Tooth Number (Optional)')
@@ -49,47 +44,15 @@ class FilesRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('title')
-            ->contentGrid([
-                'md' => 2,
-                'xl' => 3,
-            ])
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\ImageColumn::make('file_path')
-                        ->disk('public')
-                        ->height('200px')
-                        ->width('100%')
-                        ->extraImgAttributes(['class' => 'object-cover rounded-t-xl w-full'])
-                        ->square(),
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('title')
-                            ->weight('bold')
-                            ->size('lg'),
-                        Tables\Columns\TextColumn::make('type')
-                            ->badge()
-                            ->formatStateUsing(fn (string $state): string => match ($state) {
-                                'xray_panoramic' => 'Panoramic X-Ray',
-                                'xray_periapical' => 'Periapical X-Ray',
-                                'cbct' => 'CBCT Scan',
-                                'intraoral_photo' => 'Intraoral Photo',
-                                'consent_form' => 'Consent Form',
-                                'other' => 'Other',
-                                default => 'Unknown',
-                            })
-                            ->color(fn (string $state): string => match ($state) {
-                                'consent_form' => 'warning',
-                                'cbct', 'xray_panoramic', 'xray_periapical' => 'info',
-                                default => 'success',
-                            }),
-                        Tables\Columns\TextColumn::make('tooth_number_fdi')
-                            ->formatStateUsing(fn ($state) => $state ? "Tooth {$state}" : '')
-                            ->color('gray'),
-                        Tables\Columns\TextColumn::make('created_at')
-                            ->date()
-                            ->color('gray')
-                            ->size('sm'),
-                    ])->space(1)->extraAttributes(['class' => 'p-4']),
-                ])->space(0)->extraAttributes(['class' => 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden']),
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->badge(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -102,8 +65,13 @@ class FilesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn ($record) => asset('storage/' . $record->file_path))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

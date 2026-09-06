@@ -205,6 +205,92 @@ class TreatmentPlansRelationManager extends RelationManager
                     ->after(function (\Illuminate\Database\Eloquent\Model $record) {
                         $record->recalculateTotals();
                     }),
+                Tables\Actions\Action::make('generate_invoice')
+                    ->label('Generate Invoice')
+                    ->icon('heroicon-o-document-currency-dollar')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (\Illuminate\Database\Eloquent\Model $record) {
+                        // Create Invoice
+                        $invoice = \App\Models\Invoice::create([
+                            'practice_id' => 1, // Defaulting to practice 1
+                            'patient_id' => $record->patient_id,
+                            'treatment_plan_id' => $record->id,
+                            'invoice_number' => 'INV-' . strtoupper(uniqid()),
+                            'total_amount' => $record->total_amount,
+                            'paid_amount' => 0,
+                            'remaining_balance' => $record->total_amount,
+                            'status' => 'unpaid',
+                            'issue_date' => now(),
+                            'due_date' => now()->addDays(30),
+                        ]);
+                        
+                        // Create Invoice Items from Procedures
+                        foreach ($record->phases as $phase) {
+                            foreach ($phase->procedures as $procedure) {
+                                \App\Models\InvoiceItem::create([
+                                    'invoice_id' => $invoice->id,
+                                    'invoiceable_type' => \App\Models\TreatmentProcedure::class,
+                                    'invoiceable_id' => $procedure->id,
+                                    'procedure_name' => ($procedure->procedureCode->title ?? 'Procedure') . ($procedure->tooth_number_fdi ? " (Tooth {$procedure->tooth_number_fdi})" : ''),
+                                    'tooth_number' => $procedure->tooth_number_fdi,
+                                    'quantity' => 1,
+                                    'unit_price' => $procedure->fee,
+                                    'total' => $procedure->net_amount,
+                                ]);
+                            }
+                        }
+                        
+                        \Filament\Notifications\Notification::make()
+                            ->title('Invoice Generated Successfully')
+                            ->success()
+                            ->send();
+                    })
+                    ->hidden(fn (\Illuminate\Database\Eloquent\Model $record) => $record->invoices()->exists() ?? false),
+                    
+                Tables\Actions\Action::make('draft_prescription')
+                    ->label('Draft Rx')
+                    ->icon('heroicon-o-beaker')
+                    ->color('warning')
+                    ->form([
+                        Forms\Components\TextInput::make('medication_name')
+                            ->label('Medication Name')
+                            ->default('Amoxicillin & Ibuprofen')
+                            ->required(),
+                        Forms\Components\TextInput::make('dosage')
+                            ->label('Dosage')
+                            ->default('500mg / 400mg')
+                            ->required(),
+                        Forms\Components\TextInput::make('frequency')
+                            ->label('Frequency')
+                            ->default('Every 8 hours / Every 6 hours PRN'),
+                        Forms\Components\TextInput::make('duration')
+                            ->label('Duration')
+                            ->default('7 days'),
+                        Forms\Components\Textarea::make('instructions')
+                            ->label('Patient Instructions')
+                            ->default("Take medications as prescribed. Avoid chewing on the treated side. Call clinic if severe pain or swelling occurs.")
+                            ->required(),
+                    ])
+                    ->action(function (\Illuminate\Database\Eloquent\Model $record, array $data) {
+                        \App\Models\Prescription::create([
+                            'patient_id' => $record->patient_id,
+                            'doctor_id' => auth()->id() ?? $record->doctor_id,
+                            'medication_name' => $data['medication_name'],
+                            'dosage' => $data['dosage'],
+                            'frequency' => $data['frequency'],
+                            'duration' => $data['duration'],
+                            'instructions' => $data['instructions'],
+                            'status' => 'active',
+                            'date_prescribed' => now(),
+                        ]);
+                        
+                        \Filament\Notifications\Notification::make()
+                            ->title('Prescription Drafted')
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

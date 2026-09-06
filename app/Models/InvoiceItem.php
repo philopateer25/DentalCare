@@ -13,6 +13,8 @@ class InvoiceItem extends Model
     protected $fillable = [
         'invoice_id',
         'treatment_procedure_id',
+        'invoiceable_type',
+        'invoiceable_id',
         'procedure_name',
         'tooth_number',
         'quantity',
@@ -36,5 +38,10 @@ class InvoiceItem extends Model
     public function procedure(): BelongsTo
     {
         return $this->belongsTo(TreatmentProcedure::class, 'treatment_procedure_id');
+    }
+
+    public function invoiceable(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    {
+        return $this->morphTo();
     }
 }

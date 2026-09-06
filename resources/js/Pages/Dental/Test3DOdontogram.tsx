@@ -12,6 +12,7 @@ import {
 
 interface Props {
   patient: PatientInfo;
+  examination: { id: number; type: string; examined_at: string; notes: string | null };
   initialRecords?: Record<string, ToothRecord>;
   initialViewMode?: 'clean' | 'detailed';
 }
@@ -24,11 +25,157 @@ const FDI_TEETH = {
   lowerLeft: ['31', '32', '33', '34', '35', '36', '37', '38'],
 };
 
-export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}, initialViewMode = 'clean' }) => {
+export const Test3DOdontogram: React.FC<Props> = ({ patient, examination: initialExam, initialRecords = {}, initialViewMode = 'clean' }) => {
   const [teethRecords, setTeethRecords] = useState<Record<string, ToothRecord>>(initialRecords);
   const [selectedTooth, setSelectedTooth] = useState<string | null>('11');
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [viewMode, setViewMode] = useState<'clean' | 'detailed'>(initialViewMode);
+  
+  const [activeExam, setActiveExam] = useState(initialExam);
+  const [examinations, setExaminations] = useState<any[]>([initialExam]);
+
+  const [mode, setMode] = useState<'findings' | 'treatment'>('findings');
+  const [activePlan, setActivePlan] = useState<any>(null);
+  const [allPlans, setAllPlans] = useState<any[]>([]);
+  const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>({});
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
+  const [newPlanTitle, setNewPlanTitle] = useState('');
+
+  React.useEffect(() => {
+    // Fetch historical examinations
+    axios.get(`/api/patients/${patient.id}/examinations`).then(res => {
+      setExaminations(res.data);
+    });
+
+    // Fetch all treatment plans
+    axios.get(`/api/patients/${patient.id}/treatment-plans`).then(res => {
+      setAllPlans(res.data);
+      if (res.data.length > 0) {
+        setActivePlan(res.data[0]);
+        loadProceduresFromPlan(res.data[0]);
+      } else {
+        // Fallback to active if none found, which auto-creates one
+        axios.get(`/api/patients/${patient.id}/treatment-plans/active`).then(activeRes => {
+          setAllPlans([activeRes.data]);
+          setActivePlan(activeRes.data);
+          loadProceduresFromPlan(activeRes.data);
+        });
+      }
+    });
+  }, [patient.id]);
+
+  const loadProceduresFromPlan = (plan: any) => {
+    const procs: Record<string, any[]> = {};
+    if (plan && plan.phases) {
+        plan.phases.forEach((p: any) => {
+            p.procedures?.forEach((proc: any) => {
+                if (proc.tooth_number_fdi) {
+                    if (!procs[proc.tooth_number_fdi]) procs[proc.tooth_number_fdi] = [];
+                    procs[proc.tooth_number_fdi].push(proc);
+                }
+            });
+        });
+    }
+    setPlannedProcedures(procs);
+  };
+
+  const handleCreatePlan = async () => {
+    if (!newPlanTitle.trim()) return;
+    setSavingStatus('saving');
+    try {
+      const res = await axios.post(`/api/patients/${patient.id}/treatment-plans`, {
+        title: newPlanTitle,
+      });
+      setAllPlans([res.data, ...allPlans]);
+      setActivePlan(res.data);
+      loadProceduresFromPlan(res.data);
+      setIsCreatingPlan(false);
+      setNewPlanTitle('');
+      setSavingStatus('saved');
+      setTimeout(() => setSavingStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to create plan', err);
+      setSavingStatus('error');
+    }
+  };
+
+  const handlePlanChange = (planId: number) => {
+    const plan = allPlans.find(p => p.id === planId);
+    if (plan) {
+      setActivePlan(plan);
+      loadProceduresFromPlan(plan);
+    }
+  };
+
+  const handleTreatmentSelect = async (procedureCode: string) => {
+    if (!selectedTooth || !activePlan) return;
+    setSavingStatus('saving');
+    try {
+      const res = await axios.post(`/api/treatment-plans/${activePlan.id}/procedures`, {
+        tooth_number_fdi: selectedTooth,
+        procedure_code: procedureCode,
+      });
+      // Update local state
+      setPlannedProcedures(prev => ({
+        ...prev,
+        [selectedTooth]: [...(prev[selectedTooth] || []), res.data.procedure]
+      }));
+      setSavingStatus('saved');
+      setTimeout(() => setSavingStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to add treatment', err);
+      setSavingStatus('error');
+    }
+  };
+
+  const handleTreatmentComplete = async (procedureId: number, toothNumber: string) => {
+    setSavingStatus('saving');
+    try {
+      // In a real app, you'd want a dedicated endpoint like PUT /api/procedures/{id}/complete
+      // For now, we simulate an API call or assume the backend accepts a PATCH.
+      // But since we don't have that endpoint in this demo, let's create a quick API endpoint in web.php.
+      await axios.patch(`/api/procedures/${procedureId}/complete`);
+      
+      // Update local state
+      setPlannedProcedures(prev => {
+        const procs = prev[toothNumber] || [];
+        return {
+          ...prev,
+          [toothNumber]: procs.map(p => p.id === procedureId ? { ...p, status: 'completed' } : p)
+        };
+      });
+      setSavingStatus('saved');
+      setTimeout(() => setSavingStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to complete treatment', err);
+      setSavingStatus('error');
+    }
+  };
+
+  const handleExamChange = async (examId: number) => {
+    const exam = examinations.find(e => e.id === examId);
+    if (!exam) return;
+    setActiveExam(exam);
+    
+    // Fetch findings for this exam
+    try {
+      const res = await axios.get(`/api/examinations/${examId}/odontogram`);
+      setTeethRecords(res.data);
+    } catch (err) {
+      console.error('Failed to load examination details', err);
+    }
+  };
+
+  const createNewExam = async () => {
+    try {
+      const res = await axios.post(`/api/patients/${patient.id}/examinations`, { type: 'periodic' });
+      setExaminations([res.data, ...examinations]);
+      setActiveExam(res.data);
+      setTeethRecords({}); // empty slate for new exam
+    } catch (err) {
+      console.error('Failed to create examination', err);
+    }
+  };
 
   const currentRecord = selectedTooth ? teethRecords[selectedTooth] : undefined;
   const currentCondition: ToothCondition = currentRecord?.condition || 'healthy';
@@ -53,7 +200,7 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
     setSavingStatus('saving');
 
     try {
-      await axios.post(`/api/patients/${patient.id}/teeth`, {
+      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
         tooth_number: selectedTooth,
         condition: condition,
         notes: currentNote,
@@ -80,7 +227,7 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
     setSavingStatus('saving');
 
     try {
-      await axios.post(`/api/patients/${patient.id}/teeth`, {
+      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
         tooth_number: selectedTooth,
         condition: currentCondition,
         notes: newNote,
@@ -112,7 +259,7 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
     setSavingStatus('saving');
 
     try {
-      await axios.post(`/api/patients/${patient.id}/teeth`, {
+      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
         tooth_number: selectedTooth,
         condition: currentCondition,
         notes: currentNote,
@@ -252,19 +399,54 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
       {/* Top Header Bar */}
       <div className="max-w-7xl mx-auto mb-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold rounded-full uppercase tracking-wider">
               3D Interactive Odontogram
             </span>
             <span className="text-xs text-slate-400">
               Patient File: <strong className="text-slate-200">{patient.file_number}</strong>
             </span>
+            <div className="ml-4 flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+              <button
+                onClick={() => setMode('findings')}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'findings' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Chart Findings
+              </button>
+              <button
+                onClick={() => setMode('treatment')}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'treatment' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Plan Treatment
+              </button>
+            </div>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold mt-1 text-white tracking-tight flex items-center gap-4">
             {patient.full_name}
+            
+            <div className="flex items-center gap-2 ml-4">
+              <select
+                value={activeExam.id}
+                onChange={(e) => handleExamChange(Number(e.target.value))}
+                className="bg-slate-950 border border-slate-700 text-sm text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
+              >
+                {examinations.map(exam => (
+                  <option key={exam.id} value={exam.id}>
+                    {new Date(exam.examined_at || exam.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} - {exam.type.charAt(0).toUpperCase() + exam.type.slice(1)} Exam
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={createNewExam}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                + New Exam
+              </button>
+            </div>
+
             <button 
               onClick={() => window.close()}
-              className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 flex items-center gap-1.5"
+              className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 flex items-center gap-1.5 ml-auto"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               Close Fullscreen
@@ -308,6 +490,7 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
           <div className="relative h-[500px] w-full">
             <Dental3DViewer
               teethRecords={teethRecords}
+              plannedProcedures={plannedProcedures}
               selectedTooth={selectedTooth}
               onSelectTooth={(num) => setSelectedTooth(num)}
               onDoubleClickTooth={(num) => setModalTooth(num)}
@@ -424,118 +607,231 @@ export const Test3DOdontogram: React.FC<Props> = ({ patient, initialRecords = {}
             {/* Condition Selector Action Buttons */}
             <div className="mt-5">
               <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
-                Apply Clinical Condition (1-Click)
+                {mode === 'findings' ? 'Apply Clinical Condition (1-Click)' : 'Propose Treatment Procedure'}
               </label>
 
-              <div className="grid grid-cols-1 gap-2.5">
-                {(Object.keys(CONDITION_LABELS) as ToothCondition[]).map((condKey) => {
-                  const meta = CONDITION_LABELS[condKey];
-                  const isCurrent = currentCondition === condKey;
-                  const hexColor = CONDITION_COLORS[condKey];
+              {mode === 'findings' ? (
+                <>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {(Object.keys(CONDITION_LABELS) as ToothCondition[]).map((condKey) => {
+                      const meta = CONDITION_LABELS[condKey];
+                      const isCurrent = currentCondition === condKey;
+                      const hexColor = CONDITION_COLORS[condKey];
 
-                  return (
-                    <button
-                      key={condKey}
-                      onClick={() => handleConditionSelect(condKey)}
-                      disabled={!selectedTooth}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
-                        isCurrent
-                          ? 'bg-slate-800 border-slate-600 shadow-md ring-1 ring-slate-500'
-                          : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700'
-                      } ${!selectedTooth ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-4 h-4 rounded-full border border-slate-700 flex-shrink-0 shadow-inner"
-                          style={{ backgroundColor: hexColor }}
-                        />
-                        <div>
-                          <div className="text-sm font-semibold text-slate-200">
-                            {meta.label}
-                          </div>
-                          <div className="text-xs text-slate-400">
-                            {meta.description}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isCurrent && (
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                          Active
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              
-              {currentCondition === 'custom' && selectedTooth && (
-                <div className="mt-4 p-4 bg-slate-950/60 border border-rose-500/30 rounded-xl">
-                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">
-                    Custom Note for Tooth #{selectedTooth}
-                  </label>
-                  <textarea
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 transition-all resize-none"
-                    rows={3}
-                    placeholder="Type custom doctor notes here... (e.g. Needs specialized cleaning)"
-                    value={currentNote}
-                    onChange={(e) => {
-                      const updatedRecord = { ...currentRecord, condition: currentCondition, notes: e.target.value };
-                      setTeethRecords(prev => ({
-                        ...prev,
-                        [selectedTooth]: updatedRecord
-                      }));
-                    }}
-                    onBlur={(e) => handleNoteSave(e.target.value)}
-                  />
-                  <div className="text-right mt-2 text-[10px] text-slate-500">
-                    Saves automatically on click away
-                  </div>
-                </div>
-              )}
-
-              {/* Surface Details (M-O-D-B-L) */}
-              {selectedTooth && ['healthy', 'active_caries', 'composite_filled'].includes(currentCondition) && (
-                <div className="mt-5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
-                  <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
-                    Surface Details (M-O-D-B-L)
-                  </label>
-                  <div className="flex justify-between gap-2">
-                    {(['mesial', 'occlusal', 'distal', 'buccal', 'lingual'] as const).map((surface) => {
-                      const surfCond = currentSurfaces[surface] || 'healthy';
-                      const label = surface.charAt(0).toUpperCase();
-                      const isActive = surfCond !== 'healthy';
                       return (
                         <button
-                          key={surface}
-                          onClick={() => {
-                            // Cycle through conditions: healthy -> active_caries -> composite_filled -> healthy
-                            let nextCond: SurfaceCondition = 'active_caries';
-                            if (surfCond === 'active_caries') nextCond = 'composite_filled';
-                            if (surfCond === 'composite_filled') nextCond = 'healthy';
-                            handleSurfaceSelect(surface, nextCond);
-                          }}
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold border transition-all ${
-                            isActive 
-                              ? `bg-slate-800 text-white shadow-md border-slate-600` 
-                              : `bg-slate-900 text-slate-500 border-slate-800 hover:bg-slate-800 hover:text-slate-300`
-                          }`}
-                          style={{
-                            borderColor: isActive ? CONDITION_COLORS[surfCond] : undefined,
-                            boxShadow: isActive ? `0 0 8px ${CONDITION_COLORS[surfCond]}40` : undefined,
-                          }}
-                          title={surface}
+                          key={condKey}
+                          onClick={() => handleConditionSelect(condKey)}
+                          disabled={!selectedTooth}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                            isCurrent
+                              ? 'bg-slate-800 border-slate-600 shadow-md ring-1 ring-slate-500'
+                              : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700'
+                          } ${!selectedTooth ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                          {label}
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-4 h-4 rounded-full border border-slate-700 flex-shrink-0 shadow-inner"
+                              style={{ backgroundColor: hexColor }}
+                            />
+                            <div>
+                              <div className="text-sm font-semibold text-slate-200">
+                                {meta.label}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                {meta.description}
+                              </div>
+                            </div>
+                          </div>
+
+                          {isCurrent && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              Active
+                            </span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
-                  <div className="flex items-center gap-3 mt-3 text-[10px] text-slate-500 justify-center">
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#E8E8E8]" /> Healthy</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" /> Caries</span>
-                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" /> Filled</span>
+                  
+                  {currentCondition === 'custom' && selectedTooth && (
+                    <div className="mt-4 p-4 bg-slate-950/60 border border-rose-500/30 rounded-xl">
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">
+                        Custom Note for Tooth #{selectedTooth}
+                      </label>
+                      <textarea
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 transition-all resize-none"
+                        rows={3}
+                        placeholder="Type custom doctor notes here... (e.g. Needs specialized cleaning)"
+                        value={currentNote}
+                        onChange={(e) => {
+                          const updatedRecord = { ...currentRecord, condition: currentCondition, notes: e.target.value };
+                          setTeethRecords(prev => ({
+                            ...prev,
+                            [selectedTooth]: updatedRecord
+                          }));
+                        }}
+                        onBlur={(e) => handleNoteSave(e.target.value)}
+                      />
+                      <div className="text-right mt-2 text-[10px] text-slate-500">
+                        Saves automatically on click away
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Surface Details (M-O-D-B-L) */}
+                  {selectedTooth && ['healthy', 'active_caries', 'composite_filled'].includes(currentCondition) && (
+                    <div className="mt-5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
+                        Surface Details (M-O-D-B-L)
+                      </label>
+                      <div className="flex justify-between gap-2">
+                        {(['mesial', 'occlusal', 'distal', 'buccal', 'lingual'] as const).map((surface) => {
+                          const surfCond = currentSurfaces[surface] || 'healthy';
+                          const label = surface.charAt(0).toUpperCase();
+                          const isActive = surfCond !== 'healthy';
+                          return (
+                            <button
+                              key={surface}
+                              onClick={() => {
+                                let nextCond: SurfaceCondition = 'active_caries';
+                                if (surfCond === 'active_caries') nextCond = 'composite_filled';
+                                if (surfCond === 'composite_filled') nextCond = 'healthy';
+                                handleSurfaceSelect(surface, nextCond);
+                              }}
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold border transition-all ${
+                                isActive 
+                                  ? `bg-slate-800 text-white shadow-md border-slate-600` 
+                                  : `bg-slate-900 text-slate-500 border-slate-800 hover:bg-slate-800 hover:text-slate-300`
+                              }`}
+                              style={{
+                                borderColor: isActive ? CONDITION_COLORS[surfCond] : undefined,
+                                boxShadow: isActive ? `0 0 8px ${CONDITION_COLORS[surfCond]}40` : undefined,
+                              }}
+                              title={surface}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex items-center gap-3 mt-3 text-[10px] text-slate-500 justify-center">
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#E8E8E8]" /> Healthy</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" /> Caries</span>
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" /> Filled</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex-1 overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-slate-700">
+                  <div className="mb-6 flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Target Treatment Plan
+                    </label>
+                    {isCreatingPlan ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newPlanTitle}
+                          onChange={(e) => setNewPlanTitle(e.target.value)}
+                          placeholder="e.g. Orthodontic Plan"
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 text-white focus:outline-none focus:border-purple-500"
+                        />
+                        <button
+                          onClick={handleCreatePlan}
+                          className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors font-medium"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setIsCreatingPlan(false)}
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 appearance-none font-medium"
+                          value={activePlan?.id || ''}
+                          onChange={(e) => handlePlanChange(Number(e.target.value))}
+                        >
+                          {allPlans.map(plan => (
+                            <option key={plan.id} value={plan.id}>{plan.title} ({plan.status})</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setIsCreatingPlan(true)}
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors flex items-center justify-center whitespace-nowrap font-medium"
+                        >
+                          + New Plan
+                        </button>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Common Procedures Grid */}
+                  <div className="grid grid-cols-1 gap-2.5">
+                  {[
+                    { code: 'D2330', name: 'Composite Filling (White)', color: '#3B82F6' }, // Blue
+                    { code: 'D2740', name: 'Crown - Porcelain/Ceramic', color: '#8B5CF6' }, // Purple
+                    { code: 'D3310', name: 'Root Canal Therapy', color: '#F59E0B' }, // Amber
+                    { code: 'D7140', name: 'Extraction, Erupted Tooth', color: '#EF4444' }, // Red
+                    { code: 'D6010', name: 'Surgical Placement of Implant', color: '#06B6D4' }, // Cyan
+                  ].map(proc => (
+                    <button
+                      key={proc.code}
+                      onClick={() => handleTreatmentSelect(proc.code)}
+                      disabled={!selectedTooth}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all bg-slate-950/60 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700 ${!selectedTooth ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-4 h-4 rounded-full border border-slate-700 flex-shrink-0 shadow-inner"
+                          style={{ backgroundColor: proc.color }}
+                        />
+                        <div>
+                          <div className="text-sm font-semibold text-slate-200">
+                            {proc.name}
+                          </div>
+                          <div className="text-xs text-slate-400">
+                            CDT Code: {proc.code}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-500 group-hover:text-emerald-400 transition-colors">+ Add</span>
+                    </button>
+                  ))}
+                  </div>
+                  
+                  {/* List planned treatments for selected tooth */}
+                  {selectedTooth && plannedProcedures[selectedTooth] && plannedProcedures[selectedTooth].length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-800">
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">
+                        Planned for #{selectedTooth}
+                      </label>
+                      <ul className="space-y-2">
+                        {plannedProcedures[selectedTooth].map((proc: any, i: number) => (
+                          <li key={i} className="text-sm bg-slate-900 border border-slate-700 rounded-lg p-2.5 flex justify-between items-center text-emerald-100">
+                            <div>
+                              <span>{proc.procedure_code?.title || 'Unknown Procedure'}</span>
+                              <div className="text-[10px] text-slate-400 mt-0.5">Status: <span className={proc.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'}>{proc.status}</span></div>
+                            </div>
+                            {proc.status !== 'completed' && (
+                              <button 
+                                onClick={() => handleTreatmentComplete(proc.id, selectedTooth)}
+                                className="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 text-xs rounded border border-emerald-500/30 transition-colors"
+                              >
+                                Complete ✓
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -17,9 +17,11 @@ class PatientFinanceWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
+        $patientId = $this->record?->id;
+
         return $table
             ->query(
-                Invoice::query()->where('patient_id', $this->record?->id)
+                Invoice::query()->where('patient_id', $patientId)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
@@ -75,6 +77,8 @@ class PatientFinanceWidget extends BaseWidget
                         if (isset($data['items'])) {
                             foreach ($data['items'] as $item) {
                                 $record->items()->create([
+                                    'invoiceable_type' => $item['invoiceable_type'] ?? null,
+                                    'invoiceable_id' => $item['invoiceable_id'] ?? null,
                                     'procedure_name' => $item['procedure_name'],
                                     'tooth_number' => $item['tooth_number'] ?? null,
                                     'quantity' => $item['quantity'],
@@ -86,42 +90,131 @@ class PatientFinanceWidget extends BaseWidget
                     })
                     ->form([
                         Forms\Components\Select::make('treatment_plan_id')
-                            ->label('Load from Treatment Plan (Optional)')
-                            ->options(fn () => \App\Models\TreatmentPlan::where('patient_id', $this->record?->id)->pluck('title', 'id'))
+                            ->label('Add from Treatment Plan')
+                            ->options(function () use ($patientId) {
+                                return \App\Models\TreatmentPlan::where('patient_id', $patientId)
+                                    ->pluck('title', 'id')
+                                    ->toArray();
+                            })
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 if (!$state) return;
                                 $plan = \App\Models\TreatmentPlan::with('procedures.procedureCode')->find($state);
                                 if ($plan) {
-                                    $items = [];
+                                    $items = $get('items') ?? [];
                                     foreach ($plan->procedures as $proc) {
                                         $items[] = [
-                                            'procedure_name' => $proc->procedureCode->title,
+                                            'invoiceable_type' => \App\Models\TreatmentProcedure::class,
+                                            'invoiceable_id' => $proc->id,
+                                            'procedure_name' => "Treatment: " . ($proc->procedureCode->title ?? 'Procedure'),
                                             'tooth_number' => $proc->tooth_number_fdi ?? null,
                                             'quantity' => 1,
                                             'unit_price' => $proc->net_amount,
                                         ];
                                     }
                                     $set('items', $items);
+                                    $set('treatment_plan_id', null);
                                 }
+                            }),
+                            
+                        Forms\Components\Select::make('appointment_id')
+                            ->label('Add Consultation Fee')
+                            ->options(function () use ($patientId) {
+                                $appointments = \App\Models\Appointment::where('patient_id', $patientId)->get();
+                                $options = [];
+                                foreach ($appointments as $a) {
+                                    $options[$a->id] = "Appt #{$a->id}: " . ($a->chief_complaint ?: 'General Consultation');
+                                }
+                                return $options;
                             })
-                            ->columnSpanFull(),
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if (!$state) return;
+                                $appt = \App\Models\Appointment::find($state);
+                                if ($appt) {
+                                    $items = $get('items') ?? [];
+                                    $items[] = [
+                                        'invoiceable_type' => \App\Models\Appointment::class,
+                                        'invoiceable_id' => $appt->id,
+                                        'procedure_name' => "Consultation Fee - " . ($appt->chief_complaint ?? 'General'),
+                                        'tooth_number' => null,
+                                        'quantity' => 1,
+                                        'unit_price' => $appt->consultation_fee ?? 0,
+                                    ];
+                                    $set('items', $items);
+                                    $set('appointment_id', null);
+                                }
+                            }),
+                            
+                        Forms\Components\Select::make('lab_order_id')
+                            ->label('Add Lab Order Fee')
+                            ->options(function () use ($patientId) {
+                                $orders = \App\Models\LabOrder::where('patient_id', $patientId)->get();
+                                $options = [];
+                                foreach ($orders as $o) {
+                                    $options[$o->id] = "Lab Order #{$o->id} - {$o->material}";
+                                }
+                                return $options;
+                            })
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if (!$state) return;
+                                $order = \App\Models\LabOrder::find($state);
+                                if ($order) {
+                                    $items = $get('items') ?? [];
+                                    $items[] = [
+                                        'invoiceable_type' => \App\Models\LabOrder::class,
+                                        'invoiceable_id' => $order->id,
+                                        'procedure_name' => "Lab Fee: {$order->material} ({$order->shade})",
+                                        'tooth_number' => $order->tooth_number_fdi,
+                                        'quantity' => 1,
+                                        'unit_price' => $order->cost ?? 0,
+                                    ];
+                                    $set('items', $items);
+                                    $set('lab_order_id', null);
+                                }
+                            }),
+
                         Forms\Components\DatePicker::make('issue_date')
                             ->default(now())
                             ->required(),
                         Forms\Components\DatePicker::make('due_date'),
                         Forms\Components\Repeater::make('items')
                             ->schema([
-                                Forms\Components\TextInput::make('procedure_name')->required(),
+                                Forms\Components\Hidden::make('invoiceable_type'),
+                                Forms\Components\Hidden::make('invoiceable_id'),
+                                Forms\Components\TextInput::make('procedure_name')->required()->columnSpan(2),
                                 Forms\Components\TextInput::make('tooth_number')->label('Tooth (Opt)'),
                                 Forms\Components\TextInput::make('quantity')->numeric()->default(1)->required()->live(),
                                 Forms\Components\TextInput::make('unit_price')->numeric()->required()->live(),
                             ])
-                            ->columns(4)
+                            ->columns(5)
                             ->columnSpanFull(),
                     ]),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form([
+                        Forms\Components\Repeater::make('items')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\TextInput::make('procedure_name')->columnSpan(2)->label('Item Name'),
+                                Forms\Components\TextInput::make('invoiceable_type')->label('Source Type')
+                                    ->formatStateUsing(fn ($state) => match($state) {
+                                        \App\Models\TreatmentProcedure::class => 'Treatment',
+                                        \App\Models\Appointment::class => 'Appointment',
+                                        \App\Models\LabOrder::class => 'Lab Order',
+                                        default => 'Manual Entry',
+                                    }),
+                                Forms\Components\TextInput::make('quantity')->numeric(),
+                                Forms\Components\TextInput::make('unit_price')->numeric(),
+                            ])
+                            ->columns(5)
+                            ->columnSpanFull()
+                            ->disableItemCreation()
+                            ->disableItemDeletion()
+                            ->disableItemMovement(),
+                    ]),
                 Tables\Actions\Action::make('record_payment')
                     ->label('Record Payment')
                     ->icon('heroicon-o-banknotes')

@@ -73,4 +73,9 @@ class TreatmentPlan extends Model
     {
         return $this->hasMany(LabOrder::class);
     }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

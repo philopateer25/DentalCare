@@ -20,7 +20,10 @@ class OperationResource extends Resource
 {
     protected static ?string $model = \App\Models\Appointment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?string $navigationIcon = 'heroicon-o-scissors';
+    protected static ?string $navigationLabel = 'Operations Log';
+    protected static ?string $navigationGroup = 'Clinical Management';
+    protected static ?int $navigationSort = 3;
     
     protected static ?string $modelLabel = 'Operation';
     protected static ?string $pluralModelLabel = 'Operations Log';

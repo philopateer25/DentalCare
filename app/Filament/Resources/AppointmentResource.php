@@ -66,6 +66,11 @@ class AppointmentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (\Illuminate\Database\Eloquent\Builder $query) {
+                if (auth()->user()->isDoctor() || auth()->user()->hasRole('doctor')) {
+                    $query->where('doctor_id', auth()->id());
+                }
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('start_time')
                     ->dateTime()

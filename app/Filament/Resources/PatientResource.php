@@ -3,18 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientResource\Pages;
-<<<<<<< HEAD
-=======
 use App\Filament\Resources\PatientResource\RelationManagers;
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
 use App\Models\Patient;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-<<<<<<< HEAD
-=======
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PatientResource\Forms\PatientForm;
@@ -22,71 +17,18 @@ use App\Filament\Resources\PatientResource\Tables\PatientTable;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
 
 class PatientResource extends Resource
 {
     protected static ?string $model = Patient::class;
 
-<<<<<<< HEAD
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'Clinical Management';
-=======
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
-        return $form
-<<<<<<< HEAD
-            ->schema([
-                Forms\Components\Section::make('Patient Demographics')
-                    ->schema([
-                        Forms\Components\TextInput::make('file_number')
-                            ->label('Patient File / ID #')
-                            ->default(fn () => 'PAT-' . date('Y') . '-' . str_pad((string) (Patient::max('id') + 1), 5, '0', STR_PAD_LEFT))
-                            ->required()
-                            ->maxLength(50)
-                            ->placeholder('Auto-generated (e.g. PAT-2026-00001)'),
-                        Forms\Components\TextInput::make('first_name')
-                            ->required()
-                            ->maxLength(100),
-                        Forms\Components\TextInput::make('last_name')
-                            ->required()
-                            ->maxLength(100),
-                        Forms\Components\Select::make('gender')
-                            ->options([
-                                'male' => 'Male',
-                                'female' => 'Female',
-                                'other' => 'Other',
-                            ])
-                            ->required(),
-                        Forms\Components\DatePicker::make('dob')
-                            ->label('Date of Birth'),
-                        Forms\Components\TextInput::make('national_id')
-                            ->maxLength(50),
-                    ])->columns(3),
-
-                Forms\Components\Section::make('Contact Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('phone')
-                            ->tel()
-                            ->required()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('whatsapp_number')
-                            ->tel()
-                            ->maxLength(50),
-                        Forms\Components\TextInput::make('email')
-                            ->email()
-                            ->maxLength(100),
-                        Forms\Components\TextInput::make('emergency_contact')
-                            ->maxLength(100),
-                        Forms\Components\Textarea::make('address')
-                            ->columnSpanFull(),
-                    ])->columns(2),
-=======
-            ->schema(PatientForm::schema());
+        return $form->schema(PatientForm::schema());
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -167,53 +109,18 @@ class PatientResource extends Resource
                                 \Filament\Infolists\Components\View::make('filament.resources.patient-resource.tabs.lab-orders')
                             ]),
                     ])->columnSpanFull(),
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-<<<<<<< HEAD
-            ->columns([
-                Tables\Columns\TextColumn::make('file_number')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-                Tables\Columns\TextColumn::make('full_name')
-                    ->label('Patient Name')
-                    ->searchable(['first_name', 'last_name'])
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('gender')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('dob')
-                    ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('gender')
-                    ->options([
-                        'male' => 'Male',
-                        'female' => 'Female',
-                        'other' => 'Other',
-                    ]),
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-=======
             ->columns(PatientTable::columns())
             ->filters(PatientTable::filters())
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -225,14 +132,10 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-<<<<<<< HEAD
-            //
-=======
             RelationManagers\AppointmentsRelationManager::class,
             RelationManagers\TreatmentPlansRelationManager::class,
             RelationManagers\FilesRelationManager::class,
             RelationManagers\PrescriptionsRelationManager::class,
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         ];
     }
 
@@ -241,10 +144,7 @@ class PatientResource extends Resource
         return [
             'index' => Pages\ListPatients::route('/'),
             'create' => Pages\CreatePatient::route('/create'),
-<<<<<<< HEAD
-=======
             'view' => Pages\ViewPatient::route('/{record}'),
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             'edit' => Pages\EditPatient::route('/{record}/edit'),
         ];
     }

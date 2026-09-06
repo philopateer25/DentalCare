@@ -120,4 +120,11 @@ class LabOrder extends Model
         return $this->belongsTo(TreatmentPlan::class);
 >>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
     }
+
+    public function isOverdue(): bool
+    {
+        return $this->status !== 'delivered' && 
+               $this->expected_delivery_at && 
+               $this->expected_delivery_at->isPast();
+    }
 }

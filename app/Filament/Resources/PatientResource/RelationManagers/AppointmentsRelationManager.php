@@ -105,6 +105,11 @@ class AppointmentsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('start_time')
+            ->modifyQueryUsing(function (Builder $query) {
+                if (auth()->user()->isDoctor() || auth()->user()->hasRole('doctor')) {
+                    $query->where('doctor_id', auth()->id());
+                }
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('start_time')
                     ->dateTime('d M Y, h:i A')

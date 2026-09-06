@@ -33,13 +33,27 @@ return new class extends Migration
         });
 
         Schema::table('invoices', function (Blueprint $table) {
-            $table->decimal('subtotal', 10, 2)->default(0.00)->after('invoice_number');
-            $table->decimal('discount_amount', 10, 2)->default(0.00)->after('subtotal');
-            $table->decimal('tax_amount', 10, 2)->default(0.00)->after('discount_amount');
-            $table->decimal('insurance_covered_amount', 10, 2)->default(0.00)->after('tax_amount');
-            $table->decimal('patient_copay_amount', 10, 2)->default(0.00)->after('insurance_covered_amount');
-            $table->text('terms_and_conditions')->nullable()->after('due_date');
-            $table->text('notes')->nullable()->after('terms_and_conditions');
+            if (!Schema::hasColumn('invoices', 'subtotal')) {
+                $table->decimal('subtotal', 10, 2)->default(0.00)->after('invoice_number');
+            }
+            if (!Schema::hasColumn('invoices', 'discount_amount')) {
+                $table->decimal('discount_amount', 10, 2)->default(0.00)->after('subtotal');
+            }
+            if (!Schema::hasColumn('invoices', 'tax_amount')) {
+                $table->decimal('tax_amount', 10, 2)->default(0.00)->after('discount_amount');
+            }
+            if (!Schema::hasColumn('invoices', 'insurance_covered_amount')) {
+                $table->decimal('insurance_covered_amount', 10, 2)->default(0.00)->after('tax_amount');
+            }
+            if (!Schema::hasColumn('invoices', 'patient_copay_amount')) {
+                $table->decimal('patient_copay_amount', 10, 2)->default(0.00)->after('insurance_covered_amount');
+            }
+            if (!Schema::hasColumn('invoices', 'terms_and_conditions')) {
+                $table->text('terms_and_conditions')->nullable()->after('due_date');
+            }
+            if (!Schema::hasColumn('invoices', 'notes')) {
+                $table->text('notes')->nullable()->after('terms_and_conditions');
+            }
         });
     }
 

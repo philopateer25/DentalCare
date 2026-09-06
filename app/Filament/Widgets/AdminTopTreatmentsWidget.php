@@ -25,7 +25,7 @@ class AdminTopTreatmentsWidget extends BaseWidget
         return $table
             ->query(
                 InvoiceItem::query()
-                    ->select('invoiceable_id', DB::raw('MAX(id) as id'), DB::raw('COUNT(id) as times_performed'), DB::raw('SUM(total) as generated_revenue'))
+                    ->select('invoiceable_id', DB::raw('MAX(id) as id'), DB::raw('COUNT(id) as times_performed'), DB::raw('SUM(total_price) as generated_revenue'))
                     ->where('invoiceable_type', 'App\Models\TreatmentProcedure')
                     ->whereMonth('created_at', now()->month)
                     ->groupBy('invoiceable_id')

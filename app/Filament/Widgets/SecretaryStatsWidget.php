@@ -36,13 +36,13 @@ class SecretaryStatsWidget extends BaseWidget
                 ->description('Total cash collected today')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
-                ->url(route('filament.admin.resources.patients.index')), // Optional: link to a payments resource if available
+                ->url(\App\Filament\Resources\PatientResource::getUrl('index')), // Optional: link to a payments resource if available
 
             Stat::make('Arriving Lab Orders', $arrivingLabs)
                 ->description('Prosthetics expected today')
                 ->descriptionIcon('heroicon-m-truck')
                 ->color('warning')
-                ->url(route('filament.admin.resources.lab-orders.index', ['tableFilters[expected_delivery_at][created_from]' => $today->format('Y-m-d')])),
+                ->url(\App\Filament\Resources\LabOrderResource::getUrl('index', ['tableFilters[expected_delivery_at][created_from]' => $today->format('Y-m-d')])),
         ];
     }
 }

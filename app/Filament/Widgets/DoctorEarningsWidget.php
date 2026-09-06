@@ -44,19 +44,19 @@ class DoctorEarningsWidget extends BaseWidget
                 ->description('Appointments assigned to you today')
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('primary')
-                ->url(route('filament.admin.resources.appointments.index', ['tableFilters[start_time][created_from]' => $today->format('Y-m-d'), 'tableFilters[doctor_id][value]' => $userId])),
+                ->url(\App\Filament\Resources\AppointmentResource::getUrl('index', ['tableFilters[start_time][created_from]' => $today->format('Y-m-d'), 'tableFilters[doctor_id][value]' => $userId])),
 
             Stat::make('Monthly Earnings', number_format($monthlyEarnings, 2) . ' EGP')
                 ->description('Total commission earned this month')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
-                ->url(route('filament.admin.resources.invoices.index') ?? '/admin'), // If commissions have a separate page, we can link it later
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')), // If commissions have a separate page, we can link it later
 
             Stat::make('Unsettled Balance', number_format($unsettledCommission, 2) . ' EGP')
                 ->description('Earnings pending settlement from clinic')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning')
-                ->url(route('filament.admin.resources.invoices.index') ?? '/admin'),
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')),
         ];
     }
 }

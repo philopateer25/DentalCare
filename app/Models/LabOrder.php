@@ -93,10 +93,14 @@ class LabOrder extends Model
         return $this->belongsTo(DentalLab::class);
     }
 
-<<<<<<< HEAD
     public function fittingAppointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class, 'fitting_appointment_id');
+    }
+
+    public function treatmentPlan(): BelongsTo
+    {
+        return $this->belongsTo(TreatmentPlan::class);
     }
 
     public function isOverdue(): bool
@@ -114,17 +118,5 @@ class LabOrder extends Model
         }
 
         return false;
-=======
-    public function treatmentPlan(): BelongsTo
-    {
-        return $this->belongsTo(TreatmentPlan::class);
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
-    }
-
-    public function isOverdue(): bool
-    {
-        return $this->status !== 'delivered' && 
-               $this->expected_delivery_at && 
-               $this->expected_delivery_at->isPast();
     }
 }

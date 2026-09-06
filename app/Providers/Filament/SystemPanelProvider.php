@@ -18,37 +18,26 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-class AdminPanelProvider extends PanelProvider
+class SystemPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
-            ->id('admin')
-            ->path('admin')
-            ->tenant(\App\Models\Practice::class)
+            ->id('system')
+            ->path('system')
             ->login()
-            ->brandName('DentalCare Management')
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/System/Resources'), for: 'App\\Filament\\System\\Resources')
+            ->discoverPages(in: app_path('Filament/System/Pages'), for: 'App\\Filament\\System\\Pages')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->navigationGroups([
-                'Clinical Management',
-                'Finance & Treasury',
-                'Lab & Prosthetics',
-                'Insurance & Claims',
-                'Staff & HR Management',
-                'Clinic Operations',
-                'Settings',
-            ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/System/Widgets'), for: 'App\\Filament\\System\\Widgets')
             ->widgets([
-                // Custom widgets are auto-discovered from app/Filament/Widgets
+                Widgets\AccountWidget::class,
+                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -60,9 +49,6 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-            ])
-            ->tenantMiddleware([
-                \App\Http\Middleware\CheckLicenseStatus::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

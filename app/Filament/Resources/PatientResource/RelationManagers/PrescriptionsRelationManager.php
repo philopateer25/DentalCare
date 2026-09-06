@@ -109,6 +109,8 @@ class PrescriptionsRelationManager extends RelationManager
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->label('WhatsApp')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                    ->requiresConfirmation()
                     ->action(function (\App\Models\Prescription $record) {
                         $patientName = $record->patient->full_name;
                         $doctorName = $record->doctor->name ?? 'Doctor';

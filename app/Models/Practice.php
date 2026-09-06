@@ -18,11 +18,24 @@ class Practice extends Model
         'logo_url',
         'prescription_template',
         'is_active',
+        'license_key',
+        'license_status',
+        'features',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'features' => 'array',
     ];
+
+    public function hasFeature(string $feature): bool
+    {
+        $features = $this->features;
+        if (!is_array($features)) {
+            return false;
+        }
+        return in_array($feature, $features, true) || (isset($features[$feature]) && $features[$feature] === true);
+    }
 
     public function branches(): HasMany
     {

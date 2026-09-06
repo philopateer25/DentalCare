@@ -42,7 +42,7 @@ class AppointmentsRelationManager extends RelationManager
                             
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => \App\Models\Practice::first()?->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()->id)
                             ->required()
                             ->hidden(),
                             
@@ -155,7 +155,7 @@ class AppointmentsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
                         if (!isset($data['practice_id'])) {
-                            $data['practice_id'] = \App\Models\Practice::first()?->id;
+                            $data['practice_id'] = \Filament\Facades\Filament::getTenant()->id;
                         }
                         if (!isset($data['branch_id'])) {
                             $data['branch_id'] = \App\Models\Branch::first()?->id;
@@ -171,6 +171,7 @@ class AppointmentsRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->modalHeading('Send WhatsApp Reminder')
                     ->modalDescription('Are you sure you want to send a reminder to the patient via WhatsApp?')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                     ->action(function (\App\Models\Appointment $record) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
                         $time = $record->start_time->format('h:i A on d M Y');
@@ -193,6 +194,7 @@ class AppointmentsRelationManager extends RelationManager
                             ->default("Hello, please remember to avoid eating hot foods for the next 2 hours. Rinse with warm salt water tomorrow.")
                             ->required()
                     ])
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                     ->action(function (\App\Models\Appointment $record, array $data) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
                         

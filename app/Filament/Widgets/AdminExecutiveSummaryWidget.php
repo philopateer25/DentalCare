@@ -38,13 +38,13 @@ class AdminExecutiveSummaryWidget extends BaseWidget
                 ->description('Month to Date Revenue')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
-                ->url(route('filament.admin.resources.invoices.index')),
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')),
 
             Stat::make('MTD Expenses', number_format($monthlyExpenses, 2) . ' EGP')
                 ->description('Month to Date Expenses')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger')
-                ->url(route('filament.admin.resources.clinic-expenses.index')),
+                ->url(\App\Filament\Resources\ClinicExpenseResource::getUrl('index')),
 
             Stat::make('Net Profit', number_format($netProfit, 2) . ' EGP')
                 ->description('Revenue minus Expenses')
@@ -55,7 +55,7 @@ class AdminExecutiveSummaryWidget extends BaseWidget
                 ->description('Unpaid balances from patients')
                 ->descriptionIcon('heroicon-m-exclamation-circle')
                 ->color('warning')
-                ->url(route('filament.admin.resources.invoices.index', ['tableFilters[status][value]' => 'unpaid'])),
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index', ['tableFilters[status][value]' => 'unpaid'])),
         ];
     }
 }

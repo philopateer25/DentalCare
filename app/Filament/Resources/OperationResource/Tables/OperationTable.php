@@ -29,7 +29,7 @@ class OperationTable
             TextColumn::make('patient.full_name')
                 ->label('Patient')
                 ->searchable()
-                ->url(fn (Appointment $record): string => route('filament.admin.resources.patients.view', ['record' => $record->patient_id])),
+                ->url(fn (\App\Models\Appointment $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id])),
             TextColumn::make('doctor.name')
                 ->label('Doctor')
                 ->searchable()
@@ -153,6 +153,7 @@ class OperationTable
                 ->label('WhatsApp Check-up')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
+                ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                 ->action(function (Appointment $record) {
                     \App\Jobs\SendPostOpCheckupJob::dispatch($record);
                     

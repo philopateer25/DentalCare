@@ -37,7 +37,7 @@ class DoctorScheduleWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Patient')
                     ->searchable()
-                    ->url(fn (Appointment $record): string => route('filament.admin.resources.patients.view', ['record' => $record->patient_id])),
+                    ->url(fn (\App\Models\Appointment $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id])),
                 Tables\Columns\TextColumn::make('operatory.name')
                     ->label('Room'),
                 Tables\Columns\TextColumn::make('chief_complaint')
@@ -59,7 +59,7 @@ class DoctorScheduleWidget extends BaseWidget
                     ->label('Start Treatment')
                     ->icon('heroicon-o-play')
                     ->color('danger')
-                    ->url(fn (Appointment $record): string => route('filament.admin.resources.patients.view', ['record' => $record->patient_id]) . '?activeRelationManager=0') // Navigates to Odontogram
+                    ->url(fn (\App\Models\Appointment $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id]) . '?activeRelationManager=0') // Navigates to Odontogram
                     ->openUrlInNewTab()
                     ->visible(fn (Appointment $record) => in_array($record->status, ['arrived', 'in_chair'])),
             ])

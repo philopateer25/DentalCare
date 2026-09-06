@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-<<<<<<< HEAD
         User::firstOrCreate(
             ['email' => 'admin@dentalcare.com'],
             [
@@ -27,17 +26,16 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            DentalInventorySeeder::class,
-            DentalLabSeeder::class,
-            DentalFinanceSeeder::class,
-            DentalStaffAndInsuranceSeeder::class,
-=======
-        $this->call([
             RoleSeeder::class,
             ClinicDataSeeder::class,
             DentalCatalogSeeder::class,
             PatientDataSeeder::class,
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
+            DentalInventorySeeder::class,
+            DentalLabSeeder::class,
+            DentalFinanceSeeder::class,
+            DentalStaffAndInsuranceSeeder::class,
+            MultiClinicSeeder::class,
+            OperatorySeeder::class,
         ]);
     }
 }

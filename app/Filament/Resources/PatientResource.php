@@ -92,7 +92,7 @@ class PatientResource extends Resource
 
                         \Filament\Infolists\Components\Tabs\Tab::make('3D Mouth Chart')
                             ->icon('heroicon-o-sparkles')
-                            ->visible(fn () => auth()->user()->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']))
+                            ->visible(fn () => auth()->user()->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']) && \Filament\Facades\Filament::getTenant()->hasFeature('3d_model'))
                             ->schema([
                                 \Filament\Infolists\Components\View::make('filament.resources.patient-resource.tabs.odontogram')
                             ]),

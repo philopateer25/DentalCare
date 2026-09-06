@@ -336,6 +336,9 @@ class DentalLabSeeder extends Seeder
             ],
         ];
 
+        foreach ($orders as $order) {
+            $order['practice_id'] = $practice->id;
+            \App\Models\LabOrder::create($order);
         }
     }
 }

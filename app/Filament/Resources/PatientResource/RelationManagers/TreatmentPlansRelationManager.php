@@ -213,13 +213,13 @@ class TreatmentPlansRelationManager extends RelationManager
                     ->action(function (\Illuminate\Database\Eloquent\Model $record) {
                         // Create Invoice
                         $invoice = \App\Models\Invoice::create([
-                            'practice_id' => 1, // Defaulting to practice 1
+                            'practice_id' => \Filament\Facades\Filament::getTenant()->id,
                             'patient_id' => $record->patient_id,
                             'treatment_plan_id' => $record->id,
                             'invoice_number' => 'INV-' . strtoupper(uniqid()),
                             'total_amount' => $record->total_amount,
                             'paid_amount' => 0,
-                            'remaining_balance' => $record->total_amount,
+                            'balance_due' => $record->total_amount,
                             'status' => 'unpaid',
                             'issue_date' => now(),
                             'due_date' => now()->addDays(30),
@@ -232,11 +232,10 @@ class TreatmentPlansRelationManager extends RelationManager
                                     'invoice_id' => $invoice->id,
                                     'invoiceable_type' => \App\Models\TreatmentProcedure::class,
                                     'invoiceable_id' => $procedure->id,
-                                    'procedure_name' => ($procedure->procedureCode->title ?? 'Procedure') . ($procedure->tooth_number_fdi ? " (Tooth {$procedure->tooth_number_fdi})" : ''),
-                                    'tooth_number' => $procedure->tooth_number_fdi,
+                                    'description' => ($procedure->procedureCode->title ?? 'Procedure') . ($procedure->tooth_number_fdi ? " (Tooth {$procedure->tooth_number_fdi})" : ''),
                                     'quantity' => 1,
                                     'unit_price' => $procedure->fee,
-                                    'total' => $procedure->net_amount,
+                                    'total_price' => $procedure->net_amount,
                                 ]);
                             }
                         }

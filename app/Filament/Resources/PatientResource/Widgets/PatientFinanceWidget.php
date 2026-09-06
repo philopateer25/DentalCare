@@ -55,7 +55,7 @@ class PatientFinanceWidget extends BaseWidget
                     ->model(Invoice::class)
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['patient_id'] = $this->record->id;
-                        $data['practice_id'] = $this->record->practice_id ?? \App\Models\Practice::first()->id;
+                        $data['practice_id'] = $this->record->practice_id ?? \Filament\Facades\Filament::getTenant()->id;
                         $data['invoice_number'] = 'INV-' . strtoupper(uniqid());
                         
                         $total = 0;

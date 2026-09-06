@@ -34,7 +34,7 @@ class Settings extends Page implements HasForms
 
     public function mount(): void
     {
-        $practice = Practice::first();
+        $practice = \Filament\Facades\Filament::getTenant();
         if ($practice) {
             $this->form->fill($practice->toArray());
         } else {
@@ -109,11 +109,9 @@ class Settings extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        $practice = Practice::first();
+        $practice = \Filament\Facades\Filament::getTenant();
         if ($practice) {
             $practice->update($data);
-        } else {
-            Practice::create($data);
         }
 
         Notification::make()

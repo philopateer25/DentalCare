@@ -37,7 +37,7 @@ class LiveReceptionQueueWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Patient')
                     ->searchable()
-                    ->url(fn (Appointment $record): string => route('filament.admin.resources.patients.view', ['record' => $record->patient_id])),
+                    ->url(fn (\App\Models\Appointment $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id])),
                 Tables\Columns\TextColumn::make('doctor.name')
                     ->label('Doctor')
                     ->searchable(),

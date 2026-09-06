@@ -53,7 +53,7 @@ class ActionRequiredWidget extends BaseWidget
                 Tables\Actions\Action::make('view_invoice')
                     ->label('Collect')
                     ->icon('heroicon-o-banknotes')
-                    ->url(fn (Invoice $record): string => route('filament.admin.resources.patients.view', ['record' => $record->patient_id]) . '?activeRelationManager=4')
+                    ->url(fn (\App\Models\Invoice $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id]) . '?activeRelationManager=4')
                     ->openUrlInNewTab(),
             ])
             ->paginated(false);

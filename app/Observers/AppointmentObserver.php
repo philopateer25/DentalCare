@@ -20,23 +20,22 @@ class AppointmentObserver
 
         $invoice = Invoice::create([
             'patient_id' => $appointment->patient_id,
-            'practice_id' => $appointment->practice_id ?? \App\Models\Practice::first()?->id,
+            'practice_id' => $appointment->practice_id ?? \Filament\Facades\Filament::getTenant()?->id,
             'invoice_number' => 'INV-' . strtoupper(uniqid()),
             'issue_date' => now(),
             'total_amount' => $appointment->consultation_fee,
             'paid_amount' => 0,
-            'remaining_balance' => $appointment->consultation_fee,
+            'balance_due' => $appointment->consultation_fee,
             'status' => 'unpaid',
         ]);
 
         $invoice->items()->create([
             'invoiceable_type' => Appointment::class,
             'invoiceable_id' => $appointment->id,
-            'procedure_name' => 'Consultation Fee - ' . ($appointment->chief_complaint ?: 'General Consultation'),
-            'tooth_number' => null,
+            'description' => 'Consultation Fee - ' . ($appointment->chief_complaint ?: 'General Consultation'),
             'quantity' => 1,
             'unit_price' => $appointment->consultation_fee,
-            'total' => $appointment->consultation_fee,
+            'total_price' => $appointment->consultation_fee,
         ]);
     }
 
@@ -60,37 +59,36 @@ class AppointmentObserver
 
                 $item->update([
                     'unit_price' => $newFee,
-                    'total' => $newFee,
+                    'total_price' => $newFee,
                 ]);
 
                 // Update invoice totals
                 $invoice = $item->invoice;
                 if ($invoice) {
                     $invoice->total_amount += $diff;
-                    $invoice->remaining_balance += $diff;
+                    $invoice->balance_due += $diff;
                     $invoice->save();
                 }
             } elseif ($newFee > 0) {
                 // No existing item — create a new invoice
                 $invoice = Invoice::create([
                     'patient_id' => $appointment->patient_id,
-                    'practice_id' => $appointment->practice_id ?? \App\Models\Practice::first()?->id,
+                    'practice_id' => $appointment->practice_id ?? \Filament\Facades\Filament::getTenant()?->id,
                     'invoice_number' => 'INV-' . strtoupper(uniqid()),
                     'issue_date' => now(),
                     'total_amount' => $newFee,
                     'paid_amount' => 0,
-                    'remaining_balance' => $newFee,
+                    'balance_due' => $newFee,
                     'status' => 'unpaid',
                 ]);
 
                 $invoice->items()->create([
                     'invoiceable_type' => Appointment::class,
                     'invoiceable_id' => $appointment->id,
-                    'procedure_name' => 'Consultation Fee - ' . ($appointment->chief_complaint ?: 'General Consultation'),
-                    'tooth_number' => null,
+                    'description' => 'Consultation Fee - ' . ($appointment->chief_complaint ?: 'General Consultation'),
                     'quantity' => 1,
                     'unit_price' => $newFee,
-                    'total' => $newFee,
+                    'total_price' => $newFee,
                 ]);
             }
         }

@@ -10,14 +10,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-<<<<<<< HEAD
-        "filament/filament": "^3.2",
-        "inertiajs/inertia-laravel": "^2.0",
-=======
         "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "^3.2.0",
         "inertiajs/inertia-laravel": "^3.3",
->>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",

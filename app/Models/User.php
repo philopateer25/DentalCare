@@ -3,16 +3,19 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     use HasFactory, Notifiable, HasRoles;
 
@@ -71,11 +74,25 @@ class User extends Authenticatable implements FilamentUser
 
     public function isDoctor(): bool
     {
-        return in_array($this->role, ['dentist', 'senior_consultant']);
+        return $this->hasRole('doctor');
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'system') {
+            return $this->hasRole('developer');
+        }
+
         return $this->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
+    }
+
+    public function getTenants(Panel $panel): array|Collection
+    {
+        return $this->practice ? collect([$this->practice]) : collect();
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->practice_id == $tenant->id;
     }
 }

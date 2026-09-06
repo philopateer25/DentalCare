@@ -171,6 +171,7 @@ class DentalStaffAndInsuranceSeeder extends Seeder
                 ],
                 [
                     'practice_id' => $practice->id,
+                    'payslip_number' => 'PAY-' . $currentYear . $currentMonth . str_pad($staff->id, 3, '0', STR_PAD_LEFT),
                     'base_salary' => $base,
                     'overtime_amount' => $overtime,
                     'bonus_amount' => $bonus,

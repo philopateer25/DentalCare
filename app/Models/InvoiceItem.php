@@ -15,11 +15,10 @@ class InvoiceItem extends Model
         'treatment_procedure_id',
         'invoiceable_type',
         'invoiceable_id',
-        'procedure_name',
-        'tooth_number',
+        'description',
         'quantity',
         'unit_price',
-        'total',
+        'total_price',
         'doctor_commission_percentage',
         'doctor_commission_amount',
     ];
@@ -27,7 +26,7 @@ class InvoiceItem extends Model
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
-        'total' => 'decimal:2',
+        'total_price' => 'decimal:2',
     ];
 
     public function invoice(): BelongsTo

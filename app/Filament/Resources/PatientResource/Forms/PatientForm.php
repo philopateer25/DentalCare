@@ -129,7 +129,7 @@ class PatientForm
                         ->schema([
                             \Filament\Forms\Components\View::make('filament.resources.patient-resource.tabs.odontogram')
                         ])
-                        ->hidden(fn (?Patient $record) => $record === null),
+                        ->hidden(fn (?Patient $record) => $record === null || !\Filament\Facades\Filament::getTenant()->hasFeature('3d_model')),
                 ])->columnSpanFull(),
         ];
     }

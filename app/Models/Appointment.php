@@ -24,6 +24,7 @@ class Appointment extends Model
         'chief_complaint',
         'status',
         'type',
+        'consultation_fee',
         'parent_appointment_id',
         'cancellation_reason',
         'notes',

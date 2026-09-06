@@ -30,20 +30,34 @@ class PatientOdontogramController extends Controller
             }
         }
 
-        $teethRecords = $patient->teeth()
-            ->get(['tooth_number', 'condition', 'notes', 'surfaces'])
-            ->keyBy('tooth_number')
-            ->map(function ($tooth) {
-                return [
-                    'condition' => $tooth->condition,
-                    'notes' => $tooth->notes,
-                    'surfaces' => $tooth->surfaces,
-                ];
-            })
-            ->toArray();
+        // Get or create the latest examination
+        $examination = $patient->examinations()->latest('examined_at')->first();
+        if (!$examination) {
+            $examination = $patient->examinations()->create([
+                'doctor_id' => auth()->id(),
+                'type' => 'initial',
+            ]);
+        }
+
+        $examination->load('toothFindings.surfaceFindings');
+        
+        $teethRecords = [];
+        foreach ($examination->toothFindings as $finding) {
+            $surfaces = [];
+            foreach ($finding->surfaceFindings as $surfaceFinding) {
+                $surfaces[$surfaceFinding->surface] = $surfaceFinding->finding_type;
+            }
+
+            $teethRecords[$finding->tooth_number_fdi] = [
+                'condition' => $finding->finding_type,
+                'notes' => $finding->notes,
+                'surfaces' => (object)$surfaces,
+            ];
+        }
 
         return Inertia::render('Dental/Test3DOdontogram', [
             'patient' => $patient,
+            'examination' => $examination,
             'initialRecords' => $teethRecords,
             'initialViewMode' => 'clean',
         ]);
@@ -58,20 +72,34 @@ class PatientOdontogramController extends Controller
             $patient = Patient::first();
         }
 
-        $teethRecords = $patient->teeth()
-            ->get(['tooth_number', 'condition', 'notes', 'surfaces'])
-            ->keyBy('tooth_number')
-            ->map(function ($tooth) {
-                return [
-                    'condition' => $tooth->condition,
-                    'notes' => $tooth->notes,
-                    'surfaces' => $tooth->surfaces,
-                ];
-            })
-            ->toArray();
+        // Get or create the latest examination
+        $examination = $patient->examinations()->latest('examined_at')->first();
+        if (!$examination) {
+            $examination = $patient->examinations()->create([
+                'doctor_id' => auth()->id(),
+                'type' => 'initial',
+            ]);
+        }
+
+        $examination->load('toothFindings.surfaceFindings');
+        
+        $teethRecords = [];
+        foreach ($examination->toothFindings as $finding) {
+            $surfaces = [];
+            foreach ($finding->surfaceFindings as $surfaceFinding) {
+                $surfaces[$surfaceFinding->surface] = $surfaceFinding->finding_type;
+            }
+
+            $teethRecords[$finding->tooth_number_fdi] = [
+                'condition' => $finding->finding_type,
+                'notes' => $finding->notes,
+                'surfaces' => (object)$surfaces,
+            ];
+        }
 
         return Inertia::render('Dental/Test3DOdontogram', [
             'patient' => $patient,
+            'examination' => $examination,
             'initialRecords' => $teethRecords,
             'initialViewMode' => 'detailed',
         ]);

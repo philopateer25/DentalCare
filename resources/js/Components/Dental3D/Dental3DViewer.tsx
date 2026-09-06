@@ -7,6 +7,7 @@ import { CONDITION_COLORS, CONDITION_LABELS, ToothRecord } from './types';
 
 interface Dental3DViewerProps {
   teethRecords: Record<string, ToothRecord>;
+  plannedProcedures?: Record<string, any[]>;
   selectedTooth: string | null;
   onSelectTooth: (toothNumber: string) => void;
   onDoubleClickTooth?: (toothNumber: string) => void;
@@ -58,10 +59,11 @@ export function isIgnoredNode(nodeName: string): boolean {
 const GLTFDentalArch: React.FC<{
   modelUrl: string;
   teethRecords: Record<string, ToothRecord>;
+  plannedProcedures?: Record<string, any[]>;
   selectedTooth: string | null;
   onSelectTooth: (toothNumber: string) => void;
   onDoubleClickTooth?: (toothNumber: string) => void;
-}> = ({ modelUrl, teethRecords, selectedTooth, onSelectTooth, onDoubleClickTooth }) => {
+}> = ({ modelUrl, teethRecords, plannedProcedures, selectedTooth, onSelectTooth, onDoubleClickTooth }) => {
   const gltf = useGLTF(modelUrl) as any;
   const [hoveredTooth, setHoveredTooth] = useState<string | null>(null);
   const [hoveredPos, setHoveredPos] = useState<THREE.Vector3 | null>(null);
@@ -136,6 +138,7 @@ const GLTFDentalArch: React.FC<{
           const toothNum = nodeMap.get(child.uuid);
           if (toothNum) {
             const record = teethRecords[toothNum];
+            const hasPlanned = plannedProcedures && plannedProcedures[toothNum] && plannedProcedures[toothNum].length > 0;
             const condition = record?.condition || 'healthy';
             const isSelected = selectedTooth === toothNum;
             const isHovered = hoveredTooth === toothNum;
@@ -149,6 +152,15 @@ const GLTFDentalArch: React.FC<{
             }
 
             child.material.color.set(displayColor);
+            
+            // Add a purple glow for planned treatments
+            if (hasPlanned && !isSelected && !isHovered) {
+              child.material.emissive.set('#8B5CF6');
+              child.material.emissiveIntensity = 0.4;
+            } else {
+              child.material.emissive.set('#000000');
+              child.material.emissiveIntensity = 0;
+            }
             
             const isMissing = condition === 'missing';
             const isImplant = condition === 'implant';
@@ -164,7 +176,7 @@ const GLTFDentalArch: React.FC<{
         }
       }
     });
-  }, [scene, nodeMap, teethRecords, selectedTooth, hoveredTooth]);
+  }, [scene, nodeMap, teethRecords, plannedProcedures, selectedTooth, hoveredTooth]);
 
   return (
     <group>
@@ -217,6 +229,14 @@ const GLTFDentalArch: React.FC<{
             {teethRecords[hoveredTooth]?.condition === 'custom' && teethRecords[hoveredTooth]?.notes && (
               <div className="text-xs text-rose-400 mt-1 italic">
                 "{teethRecords[hoveredTooth].notes}"
+              </div>
+            )}
+            {plannedProcedures && plannedProcedures[hoveredTooth] && plannedProcedures[hoveredTooth].length > 0 && (
+              <div className="text-xs text-purple-400 mt-1 font-semibold flex flex-col gap-0.5">
+                <span>Planned Treatments:</span>
+                {plannedProcedures[hoveredTooth].map((proc: any, idx: number) => (
+                  <span key={idx} className="text-[10px] text-purple-300 ml-2">- {proc.procedure_code?.title || proc.procedure_code_id}</span>
+                ))}
               </div>
             )}
             <div className="text-[9px] text-slate-500 uppercase mt-1.5 font-semibold">
@@ -345,6 +365,7 @@ class GLTFBoundary extends React.Component<
 
 export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
   teethRecords = {},
+  plannedProcedures = {},
   selectedTooth,
   onSelectTooth,
   onDoubleClickTooth,
@@ -382,6 +403,7 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
               <GLTFDentalArch
                 modelUrl={modelUrl}
                 teethRecords={teethRecords}
+                plannedProcedures={plannedProcedures}
                 selectedTooth={selectedTooth}
                 onSelectTooth={onSelectTooth}
                 onDoubleClickTooth={onDoubleClickTooth}

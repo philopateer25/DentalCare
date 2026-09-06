@@ -85,6 +85,12 @@ class AppointmentsRelationManager extends RelationManager
                             ->default('booked')
                             ->required(),
 
+                        Forms\Components\TextInput::make('consultation_fee')
+                            ->numeric()
+                            ->default(0)
+                            ->label('Consultation Fee')
+                            ->required(),
+                            
                         Forms\Components\TextInput::make('chief_complaint')
                             ->maxLength(255)
                             ->columnSpanFull(),

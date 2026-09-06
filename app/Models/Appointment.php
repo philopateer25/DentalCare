@@ -21,6 +21,8 @@ class Appointment extends Model
         'end_time',
         'chief_complaint',
         'status',
+        'type',
+        'parent_appointment_id',
         'cancellation_reason',
         'notes',
     ];
@@ -58,5 +60,15 @@ class Appointment extends Model
     public function procedure(): BelongsTo
     {
         return $this->belongsTo(TreatmentProcedure::class, 'treatment_procedure_id');
+    }
+
+    public function parentAppointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class, 'parent_appointment_id');
+    }
+
+    public function followUps(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Appointment::class, 'parent_appointment_id');
     }
 }

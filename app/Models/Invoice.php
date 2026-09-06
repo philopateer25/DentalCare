@@ -24,7 +24,7 @@ class Invoice extends Model
         'patient_copay_amount',
         'total_amount',
         'paid_amount',
-        'balance_due',
+        'remaining_balance',
         'status',
         'issue_date',
         'due_date',
@@ -40,7 +40,7 @@ class Invoice extends Model
         'patient_copay_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
-        'balance_due' => 'decimal:2',
+        'remaining_balance' => 'decimal:2',
         'issue_date' => 'date',
         'due_date' => 'date',
     ];

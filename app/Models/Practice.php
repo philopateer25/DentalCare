@@ -16,6 +16,7 @@ class Practice extends Model
         'currency',
         'timezone',
         'logo_url',
+        'prescription_template',
         'is_active',
     ];
 

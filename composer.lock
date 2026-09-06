@@ -4,7 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
+<<<<<<< HEAD
     "content-hash": "b5f19551e6dfe115da96d277789e0d7e",
+=======
+    "content-hash": "6cad8206ca033fd68d7fd4f71fd83a3c",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -72,6 +76,86 @@
             "time": "2026-08-07T06:14:19+00:00"
         },
         {
+<<<<<<< HEAD
+=======
+            "name": "barryvdh/laravel-dompdf",
+            "version": "v3.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/barryvdh/laravel-dompdf.git",
+                "reference": "ee3b72b19ccdf57d0243116ecb2b90261344dedc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/barryvdh/laravel-dompdf/zipball/ee3b72b19ccdf57d0243116ecb2b90261344dedc",
+                "reference": "ee3b72b19ccdf57d0243116ecb2b90261344dedc",
+                "shasum": ""
+            },
+            "require": {
+                "dompdf/dompdf": "^3.0",
+                "illuminate/support": "^9|^10|^11|^12|^13.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.7|^3.0",
+                "orchestra/testbench": "^7|^8|^9.16|^10|^11.0",
+                "phpro/grumphp": "^2.5",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "PDF": "Barryvdh\\DomPDF\\Facade\\Pdf",
+                        "Pdf": "Barryvdh\\DomPDF\\Facade\\Pdf"
+                    },
+                    "providers": [
+                        "Barryvdh\\DomPDF\\ServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Barryvdh\\DomPDF\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Barry vd. Heuvel",
+                    "email": "barryvdh@gmail.com"
+                }
+            ],
+            "description": "A DOMPDF Wrapper for Laravel",
+            "keywords": [
+                "dompdf",
+                "laravel",
+                "pdf"
+            ],
+            "support": {
+                "issues": "https://github.com/barryvdh/laravel-dompdf/issues",
+                "source": "https://github.com/barryvdh/laravel-dompdf/tree/v3.1.2"
+            },
+            "funding": [
+                {
+                    "url": "https://fruitcake.nl",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/barryvdh",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-02-21T08:51:10+00:00"
+        },
+        {
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             "name": "blade-ui-kit/blade-heroicons",
             "version": "2.7.0",
             "source": {
@@ -849,6 +933,161 @@
                 }
             ],
             "time": "2024-02-05T11:56:58+00:00"
+        },
+        {
+            "name": "dompdf/dompdf",
+            "version": "v3.1.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dompdf/dompdf.git",
+                "reference": "6d4b4eb8500f7a786da8868ba463a71b725a4005"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/6d4b4eb8500f7a786da8868ba463a71b725a4005",
+                "reference": "6d4b4eb8500f7a786da8868ba463a71b725a4005",
+                "shasum": ""
+            },
+            "require": {
+                "dompdf/php-font-lib": "^1.0.0",
+                "dompdf/php-svg-lib": "^1.0.0",
+                "ext-dom": "*",
+                "ext-mbstring": "*",
+                "masterminds/html5": "^2.0",
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "ext-gd": "*",
+                "ext-json": "*",
+                "ext-zip": "*",
+                "mockery/mockery": "^1.3",
+                "phpunit/phpunit": "^7.5 || ^8 || ^9 || ^10 || ^11",
+                "squizlabs/php_codesniffer": "^3.5",
+                "symfony/process": "^4.4 || ^5.4 || ^6.2 || ^7.0"
+            },
+            "suggest": {
+                "ext-gd": "Needed to process images",
+                "ext-gmagick": "Improves image processing performance",
+                "ext-imagick": "Improves image processing performance",
+                "ext-zlib": "Needed for pdf stream compression"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Dompdf\\": "src/"
+                },
+                "classmap": [
+                    "lib/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1"
+            ],
+            "authors": [
+                {
+                    "name": "The Dompdf Community",
+                    "homepage": "https://github.com/dompdf/dompdf/blob/master/AUTHORS.md"
+                }
+            ],
+            "description": "DOMPDF is a CSS 2.1 compliant HTML to PDF converter",
+            "homepage": "https://github.com/dompdf/dompdf",
+            "support": {
+                "issues": "https://github.com/dompdf/dompdf/issues",
+                "source": "https://github.com/dompdf/dompdf/tree/v3.1.6"
+            },
+            "time": "2026-07-20T12:29:38+00:00"
+        },
+        {
+            "name": "dompdf/php-font-lib",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dompdf/php-font-lib.git",
+                "reference": "a6e9a688a2a80016ac080b97be73d3e10c444c9a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dompdf/php-font-lib/zipball/a6e9a688a2a80016ac080b97be73d3e10c444c9a",
+                "reference": "a6e9a688a2a80016ac080b97be73d3e10c444c9a",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7.5 || ^8 || ^9 || ^10 || ^11 || ^12"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "FontLib\\": "src/FontLib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "The FontLib Community",
+                    "homepage": "https://github.com/dompdf/php-font-lib/blob/master/AUTHORS.md"
+                }
+            ],
+            "description": "A library to read, parse, export and make subsets of different types of font files.",
+            "homepage": "https://github.com/dompdf/php-font-lib",
+            "support": {
+                "issues": "https://github.com/dompdf/php-font-lib/issues",
+                "source": "https://github.com/dompdf/php-font-lib/tree/1.0.2"
+            },
+            "time": "2026-01-20T14:10:26+00:00"
+        },
+        {
+            "name": "dompdf/php-svg-lib",
+            "version": "1.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dompdf/php-svg-lib.git",
+                "reference": "8259ffb930817e72b1ff1caef5d226501f3dfeb1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dompdf/php-svg-lib/zipball/8259ffb930817e72b1ff1caef5d226501f3dfeb1",
+                "reference": "8259ffb930817e72b1ff1caef5d226501f3dfeb1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "php": "^7.1 || ^8.0",
+                "sabberworm/php-css-parser": "^8.4 || ^9.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7.5 || ^8 || ^9 || ^10 || ^11"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Svg\\": "src/Svg"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "The SvgLib Community",
+                    "homepage": "https://github.com/dompdf/php-svg-lib/blob/master/AUTHORS.md"
+                }
+            ],
+            "description": "A library to read, parse and export to PDF SVG files.",
+            "homepage": "https://github.com/dompdf/php-svg-lib",
+            "support": {
+                "issues": "https://github.com/dompdf/php-svg-lib/issues",
+                "source": "https://github.com/dompdf/php-svg-lib/tree/1.0.2"
+            },
+            "time": "2026-01-02T16:01:13+00:00"
         },
         {
             "name": "dragonmantank/cron-expression",
@@ -1959,6 +2198,144 @@
                 }
             ],
             "time": "2026-08-24T17:13:02+00:00"
+<<<<<<< HEAD
+=======
+        },
+        {
+            "name": "inertiajs/inertia-laravel",
+            "version": "v3.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inertiajs/inertia-laravel.git",
+                "reference": "7bfd75e352938b703180574b943d81963555a0aa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inertiajs/inertia-laravel/zipball/7bfd75e352938b703180574b943d81963555a0aa",
+                "reference": "7bfd75e352938b703180574b943d81963555a0aa",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "laravel/framework": "^11.35|^12.0|^13.0",
+                "php": "^8.2.0",
+                "symfony/console": "^7.0|^8.0"
+            },
+            "conflict": {
+                "laravel/boost": "<2.5.0"
+            },
+            "require-dev": {
+                "guzzlehttp/guzzle": "^7.15.2|^8.0",
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.16",
+                "mockery/mockery": "^1.3.3",
+                "orchestra/testbench": "^9.2|^10.0|^11.0",
+                "phpunit/phpunit": "^11.5|^12.0"
+            },
+            "suggest": {
+                "ext-pcntl": "Recommended when running the Inertia SSR server via the `inertia:start-ssr` artisan command."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Inertia\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "./helpers.php"
+                ],
+                "psr-4": {
+                    "Inertia\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jonathan Reinink",
+                    "email": "jonathan@reinink.ca",
+                    "homepage": "https://reinink.ca"
+                }
+            ],
+            "description": "The Laravel adapter for Inertia.js.",
+            "keywords": [
+                "inertia",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/inertiajs/inertia-laravel/issues",
+                "source": "https://github.com/inertiajs/inertia-laravel/tree/v3.3.1"
+            },
+            "time": "2026-08-04T21:58:51+00:00"
+        },
+        {
+            "name": "kirschbaum-development/eloquent-power-joins",
+            "version": "4.3.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kirschbaum-development/eloquent-power-joins.git",
+                "reference": "c609dbbe4ad2051b667e937f1ab554067519d64b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kirschbaum-development/eloquent-power-joins/zipball/c609dbbe4ad2051b667e937f1ab554067519d64b",
+                "reference": "c609dbbe4ad2051b667e937f1ab554067519d64b",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^11.42|^12.0|^13.0",
+                "illuminate/support": "^11.42|^12.0|^13.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "dev-master",
+                "laravel/legacy-factories": "^1.0@dev|dev-master",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^10.0|^11.0|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Kirschbaum\\PowerJoins\\PowerJoinsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Kirschbaum\\PowerJoins\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Luis Dalmolin",
+                    "email": "luis.nh@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "The Laravel magic applied to joins.",
+            "homepage": "https://github.com/kirschbaum-development/eloquent-power-joins",
+            "keywords": [
+                "eloquent",
+                "join",
+                "laravel",
+                "mysql"
+            ],
+            "support": {
+                "issues": "https://github.com/kirschbaum-development/eloquent-power-joins/issues",
+                "source": "https://github.com/kirschbaum-development/eloquent-power-joins/tree/4.3.3"
+            },
+            "time": "2026-07-23T11:41:37+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "inertiajs/inertia-laravel",
@@ -2380,6 +2757,69 @@
                 "source": "https://github.com/laravel/prompts/tree/v0.3.24"
             },
             "time": "2026-08-20T12:55:36+00:00"
+        },
+        {
+            "name": "laravel/sanctum",
+            "version": "v4.3.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/sanctum.git",
+                "reference": "fee27a573d1a013af3721d86153a65e0b11927e6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sanctum/zipball/fee27a573d1a013af3721d86153a65e0b11927e6",
+                "reference": "fee27a573d1a013af3721d86153a65e0b11927e6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/console": "^11.0|^12.0|^13.0",
+                "illuminate/contracts": "^11.0|^12.0|^13.0",
+                "illuminate/database": "^11.0|^12.0|^13.0",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "php": "^8.2",
+                "symfony/console": "^7.0|^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.15|^10.8|^11.0",
+                "phpstan/phpstan": "^1.10"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Sanctum\\SanctumServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Sanctum\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Laravel Sanctum provides a featherweight authentication system for SPAs and simple APIs.",
+            "keywords": [
+                "auth",
+                "laravel",
+                "sanctum"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/sanctum/issues",
+                "source": "https://github.com/laravel/sanctum"
+            },
+            "time": "2026-06-23T18:26:55+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -3163,6 +3603,7 @@
         },
         {
             "name": "livewire/livewire",
+<<<<<<< HEAD
             "version": "v3.8.7",
             "source": {
                 "type": "git",
@@ -3173,6 +3614,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/livewire/livewire/zipball/ff019f8f6f48b7a2315922e45a70ad8fd75d1934",
                 "reference": "ff019f8f6f48b7a2315922e45a70ad8fd75d1934",
+=======
+            "version": "v3.8.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/livewire/livewire.git",
+                "reference": "be5729e9accfa9255a28d82f7759a3cc4be0f079"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/livewire/livewire/zipball/be5729e9accfa9255a28d82f7759a3cc4be0f079",
+                "reference": "be5729e9accfa9255a28d82f7759a3cc4be0f079",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -3227,7 +3680,11 @@
             "description": "A front-end framework for Laravel.",
             "support": {
                 "issues": "https://github.com/livewire/livewire/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/livewire/livewire/tree/v3.8.7"
+=======
+                "source": "https://github.com/livewire/livewire/tree/v3.8.6"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -3235,7 +3692,11 @@
                     "type": "github"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-31T15:40:46+00:00"
+=======
+            "time": "2026-08-24T15:02:02+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "masterminds/html5",
@@ -4755,6 +5216,89 @@
             "time": "2026-03-19T10:36:26+00:00"
         },
         {
+<<<<<<< HEAD
+=======
+            "name": "sabberworm/php-css-parser",
+            "version": "v9.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/MyIntervals/PHP-CSS-Parser.git",
+                "reference": "fd3bf9fb173e0df649bc4e3e0d088a1b2417c08f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/MyIntervals/PHP-CSS-Parser/zipball/fd3bf9fb173e0df649bc4e3e0d088a1b2417c08f",
+                "reference": "fd3bf9fb173e0df649bc4e3e0d088a1b2417c08f",
+                "shasum": ""
+            },
+            "require": {
+                "ext-iconv": "*",
+                "php": "^7.2.0 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+                "thecodingmachine/safe": "^1.3 || ^2.5 || ^3.4"
+            },
+            "require-dev": {
+                "php-parallel-lint/php-parallel-lint": "1.4.0",
+                "phpstan/extension-installer": "1.4.3",
+                "phpstan/phpstan": "1.12.33 || 2.2.2",
+                "phpstan/phpstan-phpunit": "1.4.2 || 2.0.16",
+                "phpstan/phpstan-strict-rules": "1.6.2 || 2.0.11",
+                "phpunit/phpunit": "8.5.52",
+                "rawr/phpunit-data-provider": "3.3.1",
+                "rector/rector": "1.2.10 || 2.4.6",
+                "rector/type-perfect": "1.0.0 || 2.1.3",
+                "squizlabs/php_codesniffer": "4.0.1",
+                "thecodingmachine/phpstan-safe-rule": "1.2.0 || 1.4.3"
+            },
+            "suggest": {
+                "ext-mbstring": "for parsing UTF-8 CSS"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "9.5.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/Rule/Rule.php",
+                    "src/RuleSet/RuleContainer.php"
+                ],
+                "psr-4": {
+                    "Sabberworm\\CSS\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Raphael Schweikert"
+                },
+                {
+                    "name": "Oliver Klee",
+                    "email": "github@oliverklee.de"
+                },
+                {
+                    "name": "Jake Hotson",
+                    "email": "jake.github@qzdesign.co.uk"
+                }
+            ],
+            "description": "Parser for CSS Files written in PHP",
+            "homepage": "https://www.sabberworm.com/blog/2010/6/10/php-css-parser",
+            "keywords": [
+                "css",
+                "parser",
+                "stylesheet"
+            ],
+            "support": {
+                "issues": "https://github.com/MyIntervals/PHP-CSS-Parser/issues",
+                "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v9.4.0"
+            },
+            "time": "2026-06-18T15:10:53+00:00"
+        },
+        {
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             "name": "spatie/color",
             "version": "1.8.0",
             "source": {
@@ -4874,6 +5418,7 @@
         },
         {
             "name": "spatie/laravel-package-tools",
+<<<<<<< HEAD
             "version": "1.93.2",
             "source": {
                 "type": "git",
@@ -4884,6 +5429,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/e927d5b5b05e9fecae098e559e51918aa608ad02",
                 "reference": "e927d5b5b05e9fecae098e559e51918aa608ad02",
+=======
+            "version": "1.93.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-package-tools.git",
+                "reference": "d5552849801f2642aea710557463234b59ef65eb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/d5552849801f2642aea710557463234b59ef65eb",
+                "reference": "d5552849801f2642aea710557463234b59ef65eb",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -4923,7 +5480,11 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/laravel-package-tools/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/spatie/laravel-package-tools/tree/1.93.2"
+=======
+                "source": "https://github.com/spatie/laravel-package-tools/tree/1.93.1"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -4931,7 +5492,99 @@
                     "type": "github"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-26T09:13:25+00:00"
+=======
+            "time": "2026-05-19T14:06:37+00:00"
+        },
+        {
+            "name": "spatie/laravel-permission",
+            "version": "8.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-permission.git",
+                "reference": "60e8ed5b2fbf043c2264433fc2680c76b8b66aa6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-permission/zipball/60e8ed5b2fbf043c2264433fc2680c76b8b66aa6",
+                "reference": "60e8ed5b2fbf043c2264433fc2680c76b8b66aa6",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/auth": "^12.0|^13.0",
+                "illuminate/container": "^12.0|^13.0",
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/database": "^12.0|^13.0",
+                "php": "^8.3",
+                "spatie/laravel-package-tools": "^1.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.9",
+                "laravel/octane": "^2.0",
+                "laravel/passport": "^13.0",
+                "laravel/pint": "^1.0",
+                "orchestra/testbench": "^10.0|^11.0",
+                "pestphp/pest": "^3.0|^4.0",
+                "pestphp/pest-plugin-laravel": "^3.0|^4.1",
+                "phpstan/phpstan": "^2.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Spatie\\Permission\\PermissionServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "8.x-dev",
+                    "dev-master": "8.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Spatie\\Permission\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Permission handling for Laravel 12 and up",
+            "homepage": "https://github.com/spatie/laravel-permission",
+            "keywords": [
+                "acl",
+                "laravel",
+                "permission",
+                "permissions",
+                "rbac",
+                "roles",
+                "security",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-permission/issues",
+                "source": "https://github.com/spatie/laravel-permission/tree/8.3.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-07-03T15:36:01+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "symfony/clock",
@@ -5012,6 +5665,7 @@
         },
         {
             "name": "symfony/console",
+<<<<<<< HEAD
             "version": "v7.4.18",
             "source": {
                 "type": "git",
@@ -5022,6 +5676,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/console/zipball/23d6f88a29f6d0eac45bd77d70307adf83ba7ab0",
                 "reference": "23d6f88a29f6d0eac45bd77d70307adf83ba7ab0",
+=======
+            "version": "v7.4.17",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/console.git",
+                "reference": "962e18f09ebe68a49039b4c82fc0ea4871824fca"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/console/zipball/962e18f09ebe68a49039b4c82fc0ea4871824fca",
+                "reference": "962e18f09ebe68a49039b4c82fc0ea4871824fca",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -5086,7 +5752,11 @@
                 "terminal"
             ],
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/console/tree/v7.4.18"
+=======
+                "source": "https://github.com/symfony/console/tree/v7.4.17"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -5106,6 +5776,7 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-25T14:18:37+00:00"
         },
         {
@@ -5120,6 +5791,22 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/css-selector/zipball/08e2905152a39cf3fd1745d83f8c483e258887d9",
                 "reference": "08e2905152a39cf3fd1745d83f8c483e258887d9",
+=======
+            "time": "2026-08-21T12:09:28+00:00"
+        },
+        {
+            "name": "symfony/css-selector",
+            "version": "v8.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/css-selector.git",
+                "reference": "a291fb5adb65f52a4bb315db2d803698315dc64d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/css-selector/zipball/a291fb5adb65f52a4bb315db2d803698315dc64d",
+                "reference": "a291fb5adb65f52a4bb315db2d803698315dc64d",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -5155,7 +5842,11 @@
             "description": "Converts CSS selectors to XPath expressions",
             "homepage": "https://symfony.com",
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/css-selector/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/css-selector/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -5175,7 +5866,11 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-23T10:06:25+00:00"
+=======
+            "time": "2026-08-21T17:47:34+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -5565,6 +6260,7 @@
         },
         {
             "name": "symfony/html-sanitizer",
+<<<<<<< HEAD
             "version": "v7.4.18",
             "source": {
                 "type": "git",
@@ -5575,6 +6271,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/html-sanitizer/zipball/5394e10c12b6190c019e3112e8b534180c22f0da",
                 "reference": "5394e10c12b6190c019e3112e8b534180c22f0da",
+=======
+            "version": "v7.4.14",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/html-sanitizer.git",
+                "reference": "c328df69f5b6f44a0d031d757903d955bebb23b3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/html-sanitizer/zipball/c328df69f5b6f44a0d031d757903d955bebb23b3",
+                "reference": "c328df69f5b6f44a0d031d757903d955bebb23b3",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -5615,7 +6323,11 @@
                 "sanitizer"
             ],
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/html-sanitizer/tree/v7.4.18"
+=======
+                "source": "https://github.com/symfony/html-sanitizer/tree/v7.4.14"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -5635,6 +6347,7 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-30T00:47:26+00:00"
         },
         {
@@ -5649,6 +6362,22 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/http-foundation/zipball/093b78326f649c3a9db922b9f17123b6aeb3b8fb",
                 "reference": "093b78326f649c3a9db922b9f17123b6aeb3b8fb",
+=======
+            "time": "2026-06-06T11:10:32+00:00"
+        },
+        {
+            "name": "symfony/http-foundation",
+            "version": "v8.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/http-foundation.git",
+                "reference": "ee16f97e95cfa011a742714d7c8c8f70fe7423f4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/ee16f97e95cfa011a742714d7c8c8f70fe7423f4",
+                "reference": "ee16f97e95cfa011a742714d7c8c8f70fe7423f4",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -5696,7 +6425,11 @@
             "description": "Defines an object-oriented layer for the HTTP specification",
             "homepage": "https://symfony.com",
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/http-foundation/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/http-foundation/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -5716,6 +6449,7 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-30T20:10:55+00:00"
         },
         {
@@ -5730,6 +6464,22 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/http-kernel/zipball/2f73beb7c6f1a97d2c17bbf4dbd59da8cc18b355",
                 "reference": "2f73beb7c6f1a97d2c17bbf4dbd59da8cc18b355",
+=======
+            "time": "2026-08-20T09:59:12+00:00"
+        },
+        {
+            "name": "symfony/http-kernel",
+            "version": "v8.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/http-kernel.git",
+                "reference": "0306e1e65b90023fe40de6c6be95d06396bcb2e6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/http-kernel/zipball/0306e1e65b90023fe40de6c6be95d06396bcb2e6",
+                "reference": "0306e1e65b90023fe40de6c6be95d06396bcb2e6",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -5806,7 +6556,11 @@
             "description": "Provides a structured process for converting a Request into a Response",
             "homepage": "https://symfony.com",
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/http-kernel/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/http-kernel/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -5826,7 +6580,11 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-30T21:40:49+00:00"
+=======
+            "time": "2026-08-22T13:45:00+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "symfony/mailer",
@@ -5910,7 +6668,11 @@
         },
         {
             "name": "symfony/mime",
+<<<<<<< HEAD
             "version": "v8.1.6",
+=======
+            "version": "v8.1.5",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/mime.git",
@@ -5972,7 +6734,11 @@
                 "mime-type"
             ],
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/mime/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/mime/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -6905,7 +7671,11 @@
         },
         {
             "name": "symfony/process",
+<<<<<<< HEAD
             "version": "v8.1.6",
+=======
+            "version": "v8.1.5",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
@@ -6946,7 +7716,11 @@
             "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/process/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/process/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -6970,7 +7744,11 @@
         },
         {
             "name": "symfony/routing",
+<<<<<<< HEAD
             "version": "v8.1.6",
+=======
+            "version": "v8.1.5",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/routing.git",
@@ -7026,7 +7804,11 @@
                 "url"
             ],
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/routing/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/routing/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -7480,6 +8262,7 @@
         },
         {
             "name": "symfony/var-dumper",
+<<<<<<< HEAD
             "version": "v8.1.6",
             "source": {
                 "type": "git",
@@ -7490,6 +8273,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/var-dumper/zipball/3783365b58972f4779254d98372af80fbf15e170",
                 "reference": "3783365b58972f4779254d98372af80fbf15e170",
+=======
+            "version": "v8.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/var-dumper.git",
+                "reference": "61743d9bc7ab23b194527ca1be2fafd7dc93b74a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/61743d9bc7ab23b194527ca1be2fafd7dc93b74a",
+                "reference": "61743d9bc7ab23b194527ca1be2fafd7dc93b74a",
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
                 "shasum": ""
             },
             "require": {
@@ -7543,7 +8338,11 @@
                 "dump"
             ],
             "support": {
+<<<<<<< HEAD
                 "source": "https://github.com/symfony/var-dumper/tree/v8.1.6"
+=======
+                "source": "https://github.com/symfony/var-dumper/tree/v8.1.5"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             },
             "funding": [
                 {
@@ -7563,7 +8362,154 @@
                     "type": "tidelift"
                 }
             ],
+<<<<<<< HEAD
             "time": "2026-08-30T20:10:55+00:00"
+=======
+            "time": "2026-08-21T12:16:08+00:00"
+        },
+        {
+            "name": "thecodingmachine/safe",
+            "version": "v3.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thecodingmachine/safe.git",
+                "reference": "705683a25bacf0d4860c7dea4d7947bfd09eea19"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thecodingmachine/safe/zipball/705683a25bacf0d4860c7dea4d7947bfd09eea19",
+                "reference": "705683a25bacf0d4860c7dea4d7947bfd09eea19",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "php-parallel-lint/php-parallel-lint": "^1.4",
+                "phpstan/phpstan": "^2",
+                "phpunit/phpunit": "^10",
+                "squizlabs/php_codesniffer": "^3.2"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "lib/special_cases.php",
+                    "generated/apache.php",
+                    "generated/apcu.php",
+                    "generated/array.php",
+                    "generated/bzip2.php",
+                    "generated/calendar.php",
+                    "generated/classobj.php",
+                    "generated/com.php",
+                    "generated/cubrid.php",
+                    "generated/curl.php",
+                    "generated/datetime.php",
+                    "generated/dir.php",
+                    "generated/eio.php",
+                    "generated/errorfunc.php",
+                    "generated/exec.php",
+                    "generated/fileinfo.php",
+                    "generated/filesystem.php",
+                    "generated/filter.php",
+                    "generated/fpm.php",
+                    "generated/ftp.php",
+                    "generated/funchand.php",
+                    "generated/gettext.php",
+                    "generated/gmp.php",
+                    "generated/gnupg.php",
+                    "generated/hash.php",
+                    "generated/ibase.php",
+                    "generated/ibmDb2.php",
+                    "generated/iconv.php",
+                    "generated/image.php",
+                    "generated/imap.php",
+                    "generated/info.php",
+                    "generated/inotify.php",
+                    "generated/json.php",
+                    "generated/ldap.php",
+                    "generated/libxml.php",
+                    "generated/lzf.php",
+                    "generated/mailparse.php",
+                    "generated/mbstring.php",
+                    "generated/misc.php",
+                    "generated/mysql.php",
+                    "generated/mysqli.php",
+                    "generated/network.php",
+                    "generated/oci8.php",
+                    "generated/opcache.php",
+                    "generated/openssl.php",
+                    "generated/outcontrol.php",
+                    "generated/pcntl.php",
+                    "generated/pcre.php",
+                    "generated/pgsql.php",
+                    "generated/posix.php",
+                    "generated/ps.php",
+                    "generated/pspell.php",
+                    "generated/readline.php",
+                    "generated/rnp.php",
+                    "generated/rpminfo.php",
+                    "generated/rrd.php",
+                    "generated/sem.php",
+                    "generated/session.php",
+                    "generated/shmop.php",
+                    "generated/sockets.php",
+                    "generated/sodium.php",
+                    "generated/solr.php",
+                    "generated/spl.php",
+                    "generated/sqlsrv.php",
+                    "generated/ssdeep.php",
+                    "generated/ssh2.php",
+                    "generated/stream.php",
+                    "generated/strings.php",
+                    "generated/swoole.php",
+                    "generated/uodbc.php",
+                    "generated/uopz.php",
+                    "generated/url.php",
+                    "generated/var.php",
+                    "generated/xdiff.php",
+                    "generated/xml.php",
+                    "generated/xmlrpc.php",
+                    "generated/yaml.php",
+                    "generated/yaz.php",
+                    "generated/zip.php",
+                    "generated/zlib.php"
+                ],
+                "classmap": [
+                    "lib/DateTime.php",
+                    "lib/DateTimeImmutable.php",
+                    "lib/Exceptions/",
+                    "generated/Exceptions/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHP core functions that throw exceptions instead of returning FALSE on error",
+            "support": {
+                "issues": "https://github.com/thecodingmachine/safe/issues",
+                "source": "https://github.com/thecodingmachine/safe/tree/v3.4.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/OskarStark",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/shish",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/silasjoisten",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/staabm",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-02-04T18:08:13+00:00"
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",

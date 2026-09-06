@@ -15,6 +15,7 @@ class LabOrder extends Model
         'tracking_number',
         'patient_id',
         'doctor_id',
+        'treatment_plan_id',
         'dental_lab_id',
         'order_type',
         'sub_type',
@@ -92,6 +93,7 @@ class LabOrder extends Model
         return $this->belongsTo(DentalLab::class);
     }
 
+<<<<<<< HEAD
     public function fittingAppointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class, 'fitting_appointment_id');
@@ -112,5 +114,10 @@ class LabOrder extends Model
         }
 
         return false;
+=======
+    public function treatmentPlan(): BelongsTo
+    {
+        return $this->belongsTo(TreatmentPlan::class);
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
     }
 }

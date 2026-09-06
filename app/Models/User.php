@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     public function canAccessPanel(Panel $panel): bool
     {
@@ -76,5 +77,10 @@ class User extends Authenticatable implements FilamentUser
     public function isDoctor(): bool
     {
         return in_array($this->role, ['dentist', 'senior_consultant']);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
     }
 }

@@ -336,11 +336,6 @@ class DentalLabSeeder extends Seeder
             ],
         ];
 
-        foreach ($orders as $order) {
-            LabOrder::firstOrCreate(
-                ['tracking_number' => $order['tracking_number']],
-                array_merge($order, ['practice_id' => $practice->id])
-            );
         }
     }
 }

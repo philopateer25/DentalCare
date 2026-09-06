@@ -27,9 +27,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+<<<<<<< HEAD
             ->brandName('DentalCare Management')
             ->colors([
                 'primary' => Color::Teal,
+=======
+            ->colors([
+                'primary' => Color::Amber,
+>>>>>>> 8fed1df (feat: Add Patient Modules, Odontogram, 3D Integration, Finance, Lab Orders, Prescriptions, WhatsApp, and Settings)
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

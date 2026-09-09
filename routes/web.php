@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\PushSubscriptionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome/Welcome');
@@ -74,6 +75,8 @@ Route::get('/locale/{lang}', function (string $lang) {
     }
     return redirect()->back();
 })->name('locale.switch');
+
+Route::middleware('auth')->post('/push/subscribe', [PushSubscriptionController::class, 'update'])->name('push.subscribe');
 
 Route::get('/patients/{patient?}/odontogram', [\App\Http\Controllers\PatientOdontogramController::class, 'showTest'])->name('patient.odontogram');
 Route::get('/patients/{patient?}/odontogram-details', [\App\Http\Controllers\PatientOdontogramController::class, 'showDetails'])->name('patient.odontogram.details');

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\InventoryResource\Widgets;
 
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
+use App\Services\CurrencyHelper;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -35,7 +36,7 @@ class InventoryStatsOverview extends BaseWidget
                 ->icon('heroicon-o-archive-box')
                 ->color('primary'),
 
-            Stat::make('Total Inventory Valuation', '$' . number_format($totalValuation, 2))
+            Stat::make('Total Inventory Valuation', CurrencyHelper::format($totalValuation))
                 ->description('Current remaining stock value')
                 ->icon('heroicon-o-currency-dollar')
                 ->color('success'),

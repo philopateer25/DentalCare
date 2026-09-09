@@ -7,6 +7,7 @@ use App\Models\ClinicExpense;
 use App\Models\DentalLab;
 use App\Models\Practice;
 use App\Models\Supplier;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -82,9 +83,9 @@ class ClinicExpenseResource extends Resource
                 Forms\Components\Section::make('Financial Disbursement & Compliance')
                     ->schema([
                         Forms\Components\TextInput::make('amount')
-                            ->label('Expense Amount ($)')
+                            ->label('Expense Amount')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required(),
                         Forms\Components\DatePicker::make('expense_date')
                             ->label('Transaction Date')
@@ -157,7 +158,7 @@ class ClinicExpenseResource extends Resource
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Disbursed Amount')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->weight('bold')
                     ->color('danger')
                     ->sortable(),

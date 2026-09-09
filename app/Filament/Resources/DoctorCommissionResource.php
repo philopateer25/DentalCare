@@ -3,9 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DoctorCommissionResource\Pages;
+use App\Filament\Resources\PaymentResource;
 use App\Models\DoctorCommission;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -50,18 +52,18 @@ class DoctorCommissionResource extends Resource
                 Forms\Components\Section::make('Commission Calculations & Lab Split')
                     ->schema([
                         Forms\Components\TextInput::make('gross_amount')
-                            ->label('Gross Procedure Revenue ($)')
+                            ->label('Gross Procedure Revenue')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
                                 $set('commission_amount', DoctorCommission::calculateCommission((float)$state, (float)$get('lab_deduction_amount'), (float)$get('commission_percentage')))
                             ),
                         Forms\Components\TextInput::make('lab_deduction_amount')
-                            ->label('Lab Fee Deductions ($)')
+                            ->label('Lab Fee Deductions')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -78,9 +80,9 @@ class DoctorCommissionResource extends Resource
                                 $set('commission_amount', DoctorCommission::calculateCommission((float)$get('gross_amount'), (float)$get('lab_deduction_amount'), (float)$state))
                             ),
                         Forms\Components\TextInput::make('commission_amount')
-                            ->label('Net Payable Commission ($)')
+                            ->label('Net Payable Commission')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required(),
                         Forms\Components\Select::make('status')
                             ->options([
@@ -105,15 +107,21 @@ class DoctorCommissionResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('payment_id')
+                    ->label('Payment #')
+                    ->formatStateUsing(fn ($state) => "Payment #{$state}")
+                    ->url(fn (DoctorCommission $record) => $record->payment_id ? PaymentResource::getUrl('edit', ['record' => $record->payment_id]) : null)
+                    ->color('primary')
+                    ->badge()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('gross_amount')
                     ->label('Gross Rev')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('lab_deduction_amount')
                     ->label('Lab Cost')
-                    ->money('USD')
-                    ->color('danger')
-                    ->placeholder('$0.00'),
+                    ->money(fn () => CurrencyHelper::currentCurrency())
+                    ->color('danger'),
                 Tables\Columns\TextColumn::make('commission_percentage')
                     ->label('Split %')
                     ->formatStateUsing(fn ($state) => "{$state}%")
@@ -121,7 +129,7 @@ class DoctorCommissionResource extends Resource
                     ->color('info'),
                 Tables\Columns\TextColumn::make('commission_amount')
                     ->label('Doctor Commission')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->weight('bold')
                     ->color('success')
                     ->sortable(),

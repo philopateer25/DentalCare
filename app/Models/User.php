@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         'branch_id',
         'role',
         'phone',
+        'locale',
     ];
 
     protected $hidden = [

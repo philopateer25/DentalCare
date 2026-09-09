@@ -7,6 +7,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Patient;
 use App\Models\PatientInsurancePolicy;
 use App\Models\Practice;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -89,21 +90,21 @@ class PatientInsurancePolicyResource extends Resource
                 Forms\Components\Section::make('Financial Maximums & Co-Insurance Coverage')
                     ->schema([
                         Forms\Components\TextInput::make('annual_maximum')
-                            ->label('Annual Benefit Maximum ($)')
+                            ->label('Annual Benefit Maximum')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(1500.00)
                             ->required(),
                         Forms\Components\TextInput::make('annual_deductible')
-                            ->label('Annual Individual Deductible ($)')
+                            ->label('Annual Individual Deductible')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(50.00)
                             ->required(),
                         Forms\Components\TextInput::make('deductible_met')
-                            ->label('Current Year Deductible Met ($)')
+                            ->label('Current Year Deductible Met')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('preventive_coverage_pct')
                             ->label('Preventive & Cleanings %')
@@ -129,9 +130,9 @@ class PatientInsurancePolicyResource extends Resource
                             ->suffix('%')
                             ->default(50.00),
                         Forms\Components\TextInput::make('ortho_lifetime_max')
-                            ->label('Ortho Lifetime Max ($)')
+                            ->label('Ortho Lifetime Max')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(1500.00),
                     ])->columns(4),
 
@@ -176,7 +177,7 @@ class PatientInsurancePolicyResource extends Resource
                     ->color('info'),
                 Tables\Columns\TextColumn::make('annual_maximum')
                     ->label('Annual Max')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('coverage_summary')
                     ->label('Coverage (Prev/Basic/Major)')

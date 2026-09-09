@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\LabOrder;
+use App\Services\CurrencyHelper;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -37,7 +38,7 @@ class AdminLabDebtsWidget extends BaseWidget
                     ->badge(),
                 Tables\Columns\TextColumn::make('total_debt')
                     ->label('Total Owed')
-                    ->money('EGP')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('danger')
                     ->weight('bold'),
             ])

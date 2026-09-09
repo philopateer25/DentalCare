@@ -67,17 +67,18 @@ class Settings extends Page implements HasForms
                     ]),
 
                 Section::make('Localization')
-                    ->description('Set your local currency and timezone.')
+                    ->description('Set your local language, currency and timezone.')
                     ->schema([
-                        Grid::make(2)->schema([
+                        Grid::make(3)->schema([
+                            Select::make('locale')
+                                ->label('Default Clinic Language')
+                                ->options(\App\Services\LanguageHelper::getOptions())
+                                ->default('en')
+                                ->required(),
                             Select::make('currency')
                                 ->label('Default Currency')
-                                ->options([
-                                    'EGP' => 'Egyptian Pound (EGP)',
-                                    'USD' => 'US Dollar (USD)',
-                                    'EUR' => 'Euro (EUR)',
-                                    'GBP' => 'British Pound (GBP)',
-                                ])
+                                ->options(\App\Services\CurrencyHelper::getOptions())
+                                ->searchable()
                                 ->required(),
                             Select::make('timezone')
                                 ->label('Timezone')
@@ -112,6 +113,11 @@ class Settings extends Page implements HasForms
         $practice = \Filament\Facades\Filament::getTenant();
         if ($practice) {
             $practice->update($data);
+        }
+
+        if (!empty($data['locale'])) {
+            session(['locale' => $data['locale']]);
+            app()->setLocale($data['locale']);
         }
 
         Notification::make()

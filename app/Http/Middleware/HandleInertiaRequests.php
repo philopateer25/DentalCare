@@ -45,6 +45,10 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                 ] : null,
             ],
+            'locale' => \App\Services\LanguageHelper::currentLocale(),
+            'direction' => \App\Services\LanguageHelper::direction(),
+            'availableLocales' => \App\Services\LanguageHelper::LOCALES,
+            'translations' => \App\Services\LanguageHelper::getFrontendTranslations(),
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
                 'success' => fn () => $request->session()->get('success'),

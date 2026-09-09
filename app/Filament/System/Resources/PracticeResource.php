@@ -31,11 +31,14 @@ class PracticeResource extends Resource
                         Forms\Components\TextInput::make('tax_id')
                             ->maxLength(255),
                         Forms\Components\Select::make('currency')
-                            ->options([
-                                'USD' => 'USD ($)',
-                                'EUR' => 'EUR (€)',
-                                'EGP' => 'EGP (E£)',
-                            ])
+                            ->options(\App\Services\CurrencyHelper::getOptions())
+                            ->searchable()
+                            ->default('EGP')
+                            ->required(),
+                        Forms\Components\Select::make('locale')
+                            ->label('Default Language')
+                            ->options(\App\Services\LanguageHelper::getOptions())
+                            ->default('en')
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Is Active')

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full {{ request('dark') == '1' ? 'dark' : '' }} bg-slate-50">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ \App\Services\LanguageHelper::direction() }}" class="h-full {{ request('dark') == '1' ? 'dark' : '' }} bg-slate-50">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

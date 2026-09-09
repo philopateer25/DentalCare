@@ -6,6 +6,7 @@ use App\Filament\Resources\StaffMemberResource\Pages;
 use App\Models\Practice;
 use App\Models\StaffMember;
 use App\Models\User;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -104,14 +105,14 @@ class StaffMemberResource extends Resource
                 Forms\Components\Section::make('Compensation & Direct Deposit Payroll')
                     ->schema([
                         Forms\Components\TextInput::make('base_salary')
-                            ->label('Monthly Base Salary ($)')
+                            ->label('Monthly Base Salary')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('hourly_rate')
-                            ->label('Hourly Wage Rate ($/hr)')
+                            ->label('Hourly Wage Rate')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('bank_name')
                             ->label('Primary Bank Name')
@@ -151,7 +152,7 @@ class StaffMemberResource extends Resource
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Monthly Salary')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('phone')

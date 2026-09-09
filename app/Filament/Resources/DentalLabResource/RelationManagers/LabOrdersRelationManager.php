@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\DentalLabResource\RelationManagers;
 
 use App\Models\LabOrder;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -59,7 +60,7 @@ class LabOrdersRelationManager extends RelationManager
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('cost')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
             ])
             ->headerActions([

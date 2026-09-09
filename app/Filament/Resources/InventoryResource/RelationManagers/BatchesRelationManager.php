@@ -4,6 +4,7 @@ namespace App\Filament\Resources\InventoryResource\RelationManagers;
 
 use App\Models\InventoryBatch;
 use App\Models\Supplier;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -41,7 +42,7 @@ class BatchesRelationManager extends RelationManager
                 Forms\Components\TextInput::make('unit_cost')
                     ->label('Unit Cost')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => CurrencyHelper::symbol())
                     ->default(0.00)
                     ->required(),
                 Forms\Components\TextInput::make('quantity_received')
@@ -105,7 +106,7 @@ class BatchesRelationManager extends RelationManager
                     }),
                 Tables\Columns\TextColumn::make('unit_cost')
                     ->label('Unit Cost')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity_received')
                     ->label('Received')

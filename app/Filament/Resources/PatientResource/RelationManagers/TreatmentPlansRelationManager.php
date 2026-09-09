@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use App\Models\ProcedureCode;
+use App\Services\CurrencyHelper;
 
 class TreatmentPlansRelationManager extends RelationManager
 {
@@ -176,10 +177,10 @@ class TreatmentPlansRelationManager extends RelationManager
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->money('EGP')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('net_amount')
-                    ->money('EGP')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->date()

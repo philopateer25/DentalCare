@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class InstallmentPlan extends Model
 {
@@ -31,6 +32,18 @@ class InstallmentPlan extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function practice(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Practice::class,
+            Invoice::class,
+            'id',
+            'id',
+            'invoice_id',
+            'practice_id'
+        );
     }
 
     public function schedules(): HasMany

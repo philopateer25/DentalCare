@@ -6,6 +6,7 @@ use App\Filament\Resources\DentalLabResource\Pages;
 use App\Filament\Resources\DentalLabResource\RelationManagers\LabOrdersRelationManager;
 use App\Models\DentalLab;
 use App\Models\Practice;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -148,11 +149,11 @@ class DentalLabResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_billed_amount')
                     ->label('Total Billed')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('pending_payable_amount')
                     ->label('Pending Payable')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color(fn ($state) => (float)$state > 0 ? 'danger' : 'success')
                     ->weight('bold')
                     ->toggleable(),

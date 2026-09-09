@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Invoice;
+use App\Services\CurrencyHelper;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -37,7 +38,7 @@ class ActionRequiredWidget extends BaseWidget
                     ->label('Patient'),
                 Tables\Columns\TextColumn::make('remaining_balance')
                     ->label('Amount Due')
-                    ->money('EGP')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('danger')
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('status')

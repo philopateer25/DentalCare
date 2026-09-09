@@ -6,6 +6,7 @@ use App\Filament\Resources\PayrollSlipResource\Pages;
 use App\Models\PayrollSlip;
 use App\Models\Practice;
 use App\Models\StaffMember;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -77,9 +78,9 @@ class PayrollSlipResource extends Resource
                 Forms\Components\Section::make('Earnings & Allowances')
                     ->schema([
                         Forms\Components\TextInput::make('base_salary')
-                            ->label('Base Contract Salary ($)')
+                            ->label('Base Contract Salary')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required()
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -89,9 +90,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('overtime_amount')
-                            ->label('Overtime & Weekend Pay ($)')
+                            ->label('Overtime & Weekend Pay')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -101,9 +102,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('bonus_amount')
-                            ->label('Performance Bonus ($)')
+                            ->label('Performance Bonus')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -113,9 +114,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('allowance_amount')
-                            ->label('Transport / Healthcare Allowance ($)')
+                            ->label('Transport / Healthcare Allowance')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -129,9 +130,9 @@ class PayrollSlipResource extends Resource
                 Forms\Components\Section::make('Statutory Deductions & Net Take-Home')
                     ->schema([
                         Forms\Components\TextInput::make('tax_deduction')
-                            ->label('Tax Withholding ($)')
+                            ->label('Tax Withholding')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -141,9 +142,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('insurance_deduction')
-                            ->label('Health & Social Insurance ($)')
+                            ->label('Health & Social Insurance')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -153,9 +154,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('other_deductions')
-                            ->label('Other Deductions / Advances ($)')
+                            ->label('Other Deductions / Advances')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
@@ -165,9 +166,9 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('net_salary')
-                            ->label('Net Payable Salary ($)')
+                            ->label('Net Payable Salary')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required(),
                     ])->columns(4),
 
@@ -221,10 +222,10 @@ class PayrollSlipResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
-                    ->money('USD'),
+                    ->money(fn () => CurrencyHelper::currentCurrency()),
                 Tables\Columns\TextColumn::make('net_salary')
                     ->label('Net Take-Home')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->weight('bold')
                     ->color('success')
                     ->sortable(),

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Practice extends Model
 {
@@ -15,6 +16,7 @@ class Practice extends Model
         'tax_id',
         'currency',
         'timezone',
+        'locale',
         'logo_url',
         'prescription_template',
         'is_active',
@@ -55,6 +57,35 @@ class Practice extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function installmentPlans(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            InstallmentPlan::class,
+            Invoice::class,
+            'practice_id',
+            'invoice_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function doctorCommissions(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            DoctorCommission::class,
+            Payment::class,
+            'practice_id',
+            'payment_id',
+            'id',
+            'id'
+        );
     }
 
     public function dentalLabs(): HasMany

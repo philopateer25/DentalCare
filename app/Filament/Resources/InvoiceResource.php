@@ -5,9 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Resources\InvoiceResource\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\InvoiceResource\RelationManagers\PaymentsRelationManager;
+use App\Filament\Resources\PatientResource;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Practice;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -78,36 +80,36 @@ class InvoiceResource extends Resource
                 Forms\Components\Section::make('Financial Ledger & Cost Breakdown')
                     ->schema([
                         Forms\Components\TextInput::make('subtotal')
-                            ->label('Subtotal ($)')
+                            ->label('Subtotal')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
                                 $set('total_amount', max(0, (float)$state - (float)$get('discount_amount') + (float)$get('tax_amount')))
                             ),
                         Forms\Components\TextInput::make('discount_amount')
-                            ->label('Courtesy / Discount ($)')
+                            ->label('Courtesy / Discount')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
                                 $set('total_amount', max(0, (float)$get('subtotal') - (float)$state + (float)$get('tax_amount')))
                             ),
                         Forms\Components\TextInput::make('tax_amount')
-                            ->label('Sales / Service Tax ($)')
+                            ->label('Sales / Service Tax')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
                                 $set('total_amount', max(0, (float)$get('subtotal') - (float)$get('discount_amount') + (float)$state))
                             ),
                         Forms\Components\TextInput::make('total_amount')
-                            ->label('Total Invoiced Amount ($)')
+                            ->label('Total Invoiced Amount')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->required()
                             ->live(onBlur: true)
@@ -115,29 +117,29 @@ class InvoiceResource extends Resource
                                 $set('balance_due', max(0, (float)$state - (float)$get('paid_amount')))
                             ),
                         Forms\Components\TextInput::make('paid_amount')
-                            ->label('Total Paid / Collected ($)')
+                            ->label('Total Paid / Collected')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
                                 $set('balance_due', max(0, (float)$get('total_amount') - (float)$state))
                             ),
                         Forms\Components\TextInput::make('balance_due')
-                            ->label('Remaining Balance Due ($)')
+                            ->label('Remaining Balance Due')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->required(),
                         Forms\Components\TextInput::make('insurance_covered_amount')
-                            ->label('Insurance / TPA Portion ($)')
+                            ->label('Insurance / TPA Portion')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('patient_copay_amount')
-                            ->label('Patient Co-Pay ($)')
+                            ->label('Patient Co-Pay')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                     ])->columns(3),
 
@@ -168,6 +170,8 @@ class InvoiceResource extends Resource
                     ->label('Patient Name')
                     ->formatStateUsing(fn (Invoice $record) => "{$record->patient?->first_name} {$record->patient?->last_name}")
                     ->description(fn (Invoice $record) => "File: {$record->patient?->file_number}")
+                    ->url(fn (Invoice $record) => $record->patient_id ? PatientResource::getUrl('view', ['record' => $record->patient_id]) : null)
+                    ->color('primary')
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('issue_date')
@@ -176,17 +180,17 @@ class InvoiceResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Invoiced')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('paid_amount')
                     ->label('Collected')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('success')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance_due')
                     ->label('Balance Due')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color(fn ($state) => (float)$state > 0 ? 'danger' : 'gray')
                     ->weight('bold')
                     ->sortable(),

@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\PatientResource\Widgets;
 
+use App\Filament\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 
 class PatientFinanceWidget extends BaseWidget
@@ -25,20 +27,30 @@ class PatientFinanceWidget extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Invoice #')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (Invoice $record) => InvoiceResource::getUrl('edit', ['record' => $record]))
+                    ->color('primary')
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('issue_date')
+                    ->label('Issue Date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->money('EGP')
+                    ->label('Total')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paid_amount')
-                    ->money('EGP')
+                    ->label('Paid')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
-                Tables\Columns\TextColumn::make('remaining_balance')
-                    ->money('EGP')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('balance_due')
+                    ->label('Remaining Balance')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
+                    ->sortable()
+                    ->color(fn ($state) => (float)$state > 0 ? 'danger' : 'success')
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -66,8 +78,9 @@ class PatientFinanceWidget extends BaseWidget
                             }
                         }
                         
+                        $data['subtotal'] = $total;
                         $data['total_amount'] = $total;
-                        $data['remaining_balance'] = $total;
+                        $data['balance_due'] = $total;
                         $data['paid_amount'] = 0;
                         $data['status'] = 'unpaid';
                         
@@ -79,11 +92,10 @@ class PatientFinanceWidget extends BaseWidget
                                 $record->items()->create([
                                     'invoiceable_type' => $item['invoiceable_type'] ?? null,
                                     'invoiceable_id' => $item['invoiceable_id'] ?? null,
-                                    'procedure_name' => $item['procedure_name'],
-                                    'tooth_number' => $item['tooth_number'] ?? null,
-                                    'quantity' => $item['quantity'],
-                                    'unit_price' => $item['unit_price'],
-                                    'total' => $item['quantity'] * $item['unit_price'],
+                                    'description' => $item['procedure_name'] ?? $item['description'] ?? 'Dental Service',
+                                    'quantity' => $item['quantity'] ?? 1,
+                                    'unit_price' => $item['unit_price'] ?? 0,
+                                    'total_price' => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0),
                                 ]);
                             }
                         }
@@ -198,16 +210,17 @@ class PatientFinanceWidget extends BaseWidget
                         Forms\Components\Repeater::make('items')
                             ->relationship()
                             ->schema([
-                                Forms\Components\TextInput::make('procedure_name')->columnSpan(2)->label('Item Name'),
+                                Forms\Components\TextInput::make('description')->columnSpan(2)->label('Item Name / Description'),
                                 Forms\Components\TextInput::make('invoiceable_type')->label('Source Type')
                                     ->formatStateUsing(fn ($state) => match($state) {
-                                        \App\Models\TreatmentProcedure::class => 'Treatment',
-                                        \App\Models\Appointment::class => 'Appointment',
-                                        \App\Models\LabOrder::class => 'Lab Order',
-                                        default => 'Manual Entry',
+                                        \App\Models\TreatmentProcedure::class => 'Treatment Procedure',
+                                        \App\Models\Appointment::class => 'Appointment Consultation',
+                                        \App\Models\LabOrder::class => 'Dental Lab Order',
+                                        default => 'Manual Item',
                                     }),
                                 Forms\Components\TextInput::make('quantity')->numeric(),
-                                Forms\Components\TextInput::make('unit_price')->numeric(),
+                                Forms\Components\TextInput::make('unit_price')->numeric()->prefix(fn () => CurrencyHelper::symbol()),
+                                Forms\Components\TextInput::make('total_price')->numeric()->prefix(fn () => CurrencyHelper::symbol())->label('Total'),
                             ])
                             ->columns(5)
                             ->columnSpanFull()
@@ -215,6 +228,12 @@ class PatientFinanceWidget extends BaseWidget
                             ->disableItemDeletion()
                             ->disableItemMovement(),
                     ]),
+                Tables\Actions\Action::make('open_invoice')
+                    ->label('Open Invoice')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->color('primary')
+                    ->url(fn (Invoice $record) => InvoiceResource::getUrl('edit', ['record' => $record]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('record_payment')
                     ->label('Record Payment')
                     ->icon('heroicon-o-banknotes')
@@ -222,8 +241,9 @@ class PatientFinanceWidget extends BaseWidget
                     ->form([
                         Forms\Components\TextInput::make('amount')
                             ->numeric()
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required()
-                            ->default(fn (Invoice $record) => $record->remaining_balance),
+                            ->default(fn (Invoice $record) => $record->balance_due),
                         Forms\Components\Select::make('payment_method')
                             ->options([
                                 'cash' => 'Cash',
@@ -247,9 +267,9 @@ class PatientFinanceWidget extends BaseWidget
                         ]);
 
                         $record->paid_amount += $data['amount'];
-                        $record->remaining_balance -= $data['amount'];
+                        $record->balance_due = max(0, (float)$record->balance_due - (float)$data['amount']);
                         
-                        if ($record->remaining_balance <= 0) {
+                        if ($record->balance_due <= 0) {
                             $record->status = 'paid';
                         } else {
                             $record->status = 'partially_paid';
@@ -257,7 +277,7 @@ class PatientFinanceWidget extends BaseWidget
                         
                         $record->save();
                     })
-                    ->visible(fn (Invoice $record) => $record->remaining_balance > 0),
+                    ->visible(fn (Invoice $record) => (float)$record->balance_due > 0),
             ]);
     }
 }

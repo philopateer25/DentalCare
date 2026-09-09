@@ -7,6 +7,7 @@ use App\Filament\Resources\InventoryResource\RelationManagers\BatchesRelationMan
 use App\Models\InventoryItem;
 use App\Models\Practice;
 use App\Models\Supplier;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -127,13 +128,13 @@ class InventoryResource extends Resource
                                 Forms\Components\TextInput::make('unit_price')
                                     ->label('Unit Cost Price')
                                     ->numeric()
-                                    ->prefix('$')
+                                    ->prefix(fn () => CurrencyHelper::symbol())
                                     ->default(0.00)
                                     ->required(),
                                 Forms\Components\TextInput::make('selling_price')
                                     ->label('Procedure / Patient Billing Price (Optional)')
                                     ->numeric()
-                                    ->prefix('$')
+                                    ->prefix(fn () => CurrencyHelper::symbol())
                                     ->helperText('If billable directly on patient invoice'),
                             ])->columns(2),
 
@@ -199,7 +200,7 @@ class InventoryResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Cost')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_stock')
                     ->label('Available Stock')

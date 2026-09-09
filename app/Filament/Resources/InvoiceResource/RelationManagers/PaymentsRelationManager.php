@@ -22,7 +22,7 @@ class PaymentsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('amount')
                     ->label('Payment Amount')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => \App\Services\CurrencyHelper::symbol())
                     ->required(),
                 Forms\Components\Select::make('payment_method')
                     ->label('Payment Method')
@@ -57,7 +57,7 @@ class PaymentsRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount Received')
-                    ->money('USD')
+                    ->money(fn () => \App\Services\CurrencyHelper::currentCurrency())
                     ->weight('bold')
                     ->color('success'),
                 Tables\Columns\TextColumn::make('payment_method')

@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\PatientResource;
 use App\Filament\Resources\InstallmentPlanResource\Pages;
 use App\Filament\Resources\InstallmentPlanResource\RelationManagers\SchedulesRelationManager;
 use App\Models\InstallmentPlan;
 use App\Models\Invoice;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -48,14 +51,14 @@ class InstallmentPlanResource extends Resource
                                 }
                             }),
                         Forms\Components\TextInput::make('total_funded_amount')
-                            ->label('Total Financed Principal ($)')
+                            ->label('Total Financed Principal')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required(),
                         Forms\Components\TextInput::make('down_payment')
-                            ->label('Upfront Down Payment ($)')
+                            ->label('Upfront Down Payment')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('number_of_installments')
                             ->label('Tenure (# of Installments)')
@@ -97,19 +100,23 @@ class InstallmentPlanResource extends Resource
                     ->label('Invoice #')
                     ->searchable()
                     ->sortable()
+                    ->url(fn (InstallmentPlan $record) => $record->invoice_id ? InvoiceResource::getUrl('edit', ['record' => $record->invoice_id]) : null)
+                    ->color('primary')
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('invoice.patient.first_name')
                     ->label('Patient')
                     ->formatStateUsing(fn (InstallmentPlan $record) => "{$record->invoice?->patient?->first_name} {$record->invoice?->patient?->last_name}")
+                    ->url(fn (InstallmentPlan $record) => $record->invoice?->patient_id ? PatientResource::getUrl('view', ['record' => $record->invoice->patient_id]) : null)
+                    ->color('primary')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_funded_amount')
                     ->label('Financed Amount')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('down_payment')
                     ->label('Down Payment')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('success'),
                 Tables\Columns\TextColumn::make('number_of_installments')
                     ->label('Tenure')

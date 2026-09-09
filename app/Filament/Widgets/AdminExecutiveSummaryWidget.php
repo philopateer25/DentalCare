@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\ClinicExpense;
 use App\Models\Invoice;
+use App\Services\CurrencyHelper;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -34,24 +35,24 @@ class AdminExecutiveSummaryWidget extends BaseWidget
         $outstandingDebt = Invoice::whereIn('status', ['unpaid', 'partially_paid', 'overdue'])->sum('remaining_balance');
 
         return [
-            Stat::make('MTD Revenue', number_format($monthlyRevenue, 2) . ' EGP')
+            Stat::make('MTD Revenue', CurrencyHelper::format($monthlyRevenue))
                 ->description('Month to Date Revenue')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
                 ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')),
 
-            Stat::make('MTD Expenses', number_format($monthlyExpenses, 2) . ' EGP')
+            Stat::make('MTD Expenses', CurrencyHelper::format($monthlyExpenses))
                 ->description('Month to Date Expenses')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger')
                 ->url(\App\Filament\Resources\ClinicExpenseResource::getUrl('index')),
 
-            Stat::make('Net Profit', number_format($netProfit, 2) . ' EGP')
+            Stat::make('Net Profit', CurrencyHelper::format($netProfit))
                 ->description('Revenue minus Expenses')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color($netProfit >= 0 ? 'success' : 'danger'),
 
-            Stat::make('Outstanding Patient Debt', number_format($outstandingDebt, 2) . ' EGP')
+            Stat::make('Outstanding Patient Debt', CurrencyHelper::format($outstandingDebt))
                 ->description('Unpaid balances from patients')
                 ->descriptionIcon('heroicon-m-exclamation-circle')
                 ->color('warning')

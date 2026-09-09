@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\PatientResource;
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Models\Invoice;
 use App\Models\Patient;
@@ -58,9 +60,9 @@ class PaymentResource extends Resource
                             ->searchable()
                             ->required(),
                         Forms\Components\TextInput::make('amount')
-                            ->label('Collected Amount ($)')
+                            ->label('Collected Amount')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => \App\Services\CurrencyHelper::symbol())
                             ->required(),
                         Forms\Components\Select::make('payment_method')
                             ->label('Payment Method')
@@ -109,6 +111,8 @@ class PaymentResource extends Resource
                     ->label('Patient')
                     ->formatStateUsing(fn (Payment $record) => "{$record->patient?->first_name} {$record->patient?->last_name}")
                     ->description(fn (Payment $record) => "File: {$record->patient?->file_number}")
+                    ->url(fn (Payment $record) => $record->patient_id ? PatientResource::getUrl('view', ['record' => $record->patient_id]) : null)
+                    ->color('primary')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('invoice.invoice_number')
@@ -116,7 +120,8 @@ class PaymentResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color('gray'),
+                    ->url(fn (Payment $record) => $record->invoice_id ? InvoiceResource::getUrl('edit', ['record' => $record->invoice_id]) : null)
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('payment_method')
                     ->label('Method')
                     ->badge()
@@ -130,7 +135,7 @@ class PaymentResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount Collected')
-                    ->money('USD')
+                    ->money(fn () => \App\Services\CurrencyHelper::currentCurrency())
                     ->weight('bold')
                     ->color('success')
                     ->sortable(),

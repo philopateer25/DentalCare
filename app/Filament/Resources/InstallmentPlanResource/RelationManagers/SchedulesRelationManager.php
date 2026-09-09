@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InstallmentPlanResource\RelationManagers;
 
 use App\Models\InstallmentSchedule;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -27,14 +28,14 @@ class SchedulesRelationManager extends RelationManager
                     ->label('Due Date')
                     ->required(),
                 Forms\Components\TextInput::make('amount')
-                    ->label('Scheduled Amount ($)')
+                    ->label('Scheduled Amount')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => CurrencyHelper::symbol())
                     ->required(),
                 Forms\Components\TextInput::make('paid_amount')
-                    ->label('Paid Amount ($)')
+                    ->label('Paid Amount')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => CurrencyHelper::symbol())
                     ->default(0.00),
                 Forms\Components\Select::make('status')
                     ->options([
@@ -65,11 +66,11 @@ class SchedulesRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount Due')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('paid_amount')
                     ->label('Amount Paid')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('success'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()

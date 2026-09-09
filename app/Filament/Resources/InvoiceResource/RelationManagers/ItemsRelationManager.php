@@ -30,12 +30,12 @@ class ItemsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('unit_price')
                     ->label('Unit Price')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => \App\Services\CurrencyHelper::symbol())
                     ->required(),
                 Forms\Components\TextInput::make('total_price')
                     ->label('Line Total')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => \App\Services\CurrencyHelper::symbol())
                     ->required(),
             ]);
     }
@@ -53,10 +53,10 @@ class ItemsRelationManager extends RelationManager
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Price')
-                    ->money('USD'),
+                    ->money(fn () => \App\Services\CurrencyHelper::currentCurrency()),
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Total')
-                    ->money('USD')
+                    ->money(fn () => \App\Services\CurrencyHelper::currentCurrency())
                     ->weight('bold'),
             ])
             ->headerActions([

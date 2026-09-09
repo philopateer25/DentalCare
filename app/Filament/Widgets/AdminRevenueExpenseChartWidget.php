@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\ClinicExpense;
 use App\Models\Invoice;
+use App\Services\CurrencyHelper;
 use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 
@@ -44,13 +45,13 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Collected Revenue (EGP)',
+                    'label' => 'Collected Revenue (' . CurrencyHelper::symbol() . ')',
                     'data' => $revenueData,
                     'backgroundColor' => '#10b981', // Emerald 500
                     'borderColor' => '#059669', // Emerald 600
                 ],
                 [
-                    'label' => 'Clinic Expenses (EGP)',
+                    'label' => 'Clinic Expenses (' . CurrencyHelper::symbol() . ')',
                     'data' => $expenseData,
                     'backgroundColor' => '#ef4444', // Red 500
                     'borderColor' => '#dc2626', // Red 600

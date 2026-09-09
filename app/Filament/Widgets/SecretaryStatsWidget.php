@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\LabOrder;
 use App\Models\Payment;
+use App\Services\CurrencyHelper;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -32,7 +33,7 @@ class SecretaryStatsWidget extends BaseWidget
             ->count();
 
         return [
-            Stat::make("Today's Cash Safe", number_format($cashCollected, 2) . ' EGP')
+            Stat::make("Today's Cash Safe", CurrencyHelper::format($cashCollected))
                 ->description('Total cash collected today')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')

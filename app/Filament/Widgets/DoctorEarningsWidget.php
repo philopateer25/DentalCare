@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Appointment;
 use App\Models\DoctorCommission;
+use App\Services\CurrencyHelper;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -46,13 +47,13 @@ class DoctorEarningsWidget extends BaseWidget
                 ->color('primary')
                 ->url(\App\Filament\Resources\AppointmentResource::getUrl('index', ['tableFilters[start_time][created_from]' => $today->format('Y-m-d'), 'tableFilters[doctor_id][value]' => $userId])),
 
-            Stat::make('Monthly Earnings', number_format($monthlyEarnings, 2) . ' EGP')
+            Stat::make('Monthly Earnings', CurrencyHelper::format($monthlyEarnings))
                 ->description('Total commission earned this month')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
                 ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')), // If commissions have a separate page, we can link it later
 
-            Stat::make('Unsettled Balance', number_format($unsettledCommission, 2) . ' EGP')
+            Stat::make('Unsettled Balance', CurrencyHelper::format($unsettledCommission))
                 ->description('Earnings pending settlement from clinic')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning')

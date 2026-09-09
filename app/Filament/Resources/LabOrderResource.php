@@ -9,6 +9,7 @@ use App\Models\LabOrder;
 use App\Models\Patient;
 use App\Models\Practice;
 use App\Models\User;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -264,15 +265,15 @@ class LabOrderResource extends Resource
                             ->icon('heroicon-o-banknotes')
                             ->schema([
                                 Forms\Components\TextInput::make('cost')
-                                    ->label('Lab Invoice Cost ($)')
+                                    ->label('Lab Invoice Cost')
                                     ->numeric()
-                                    ->prefix('$')
+                                    ->prefix(fn () => CurrencyHelper::symbol())
                                     ->default(0.00)
                                     ->required(),
                                 Forms\Components\TextInput::make('patient_charge')
-                                    ->label('Patient Procedure Fee ($)')
+                                    ->label('Patient Procedure Fee')
                                     ->numeric()
-                                    ->prefix('$'),
+                                    ->prefix(fn () => CurrencyHelper::symbol()),
                                 Forms\Components\TextInput::make('lab_invoice_number')
                                     ->label('Lab Invoice / Statement #')
                                     ->placeholder('e.g. INV-99381'),
@@ -365,7 +366,7 @@ class LabOrderResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('cost')
                     ->label('Lab Cost')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable()
                     ->toggleable(),
             ])

@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\InvoiceItem;
+use App\Services\CurrencyHelper;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -41,7 +42,7 @@ class AdminTopTreatmentsWidget extends BaseWidget
                     ->color('primary'),
                 Tables\Columns\TextColumn::make('generated_revenue')
                     ->label('Revenue')
-                    ->money('EGP')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('success')
                     ->weight('bold'),
             ])

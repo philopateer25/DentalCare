@@ -39,11 +39,16 @@ class SystemPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::USER_MENU_BEFORE,
+                fn () => view('filament.components.language-switch')
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                \App\Http\Middleware\SetLocale::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,

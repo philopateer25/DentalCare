@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SupplierResource\RelationManagers;
 
 use App\Models\InventoryItem;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -34,7 +35,7 @@ class InventoryItemsRelationManager extends RelationManager
                     ->required(),
                 Forms\Components\TextInput::make('unit_price')
                     ->numeric()
-                    ->prefix('$')
+                    ->prefix(fn () => CurrencyHelper::symbol())
                     ->default(0.00),
             ]);
     }
@@ -58,7 +59,7 @@ class InventoryItemsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('category')
                     ->badge(),
                 Tables\Columns\TextColumn::make('unit_price')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_stock')
                     ->label('Stock')

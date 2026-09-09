@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class DoctorCommission extends Model
 {
@@ -38,6 +39,18 @@ class DoctorCommission extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    public function practice(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Practice::class,
+            Payment::class,
+            'id',
+            'id',
+            'payment_id',
+            'practice_id'
+        );
     }
 
     public function procedure(): BelongsTo

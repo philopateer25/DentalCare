@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\PatientInsurancePolicy;
 use App\Models\Practice;
 use App\Models\User;
+use App\Services\CurrencyHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -91,24 +92,24 @@ class InsuranceClaimResource extends Resource
                 Forms\Components\Section::make('Adjudication, Benefits & EOB Breakdown')
                     ->schema([
                         Forms\Components\TextInput::make('total_claimed_amount')
-                            ->label('Total Billed / Claimed ($)')
+                            ->label('Total Billed / Claimed')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->required(),
                         Forms\Components\TextInput::make('estimated_insurance_amount')
-                            ->label('Estimated Insurance Benefit ($)')
+                            ->label('Estimated Insurance Benefit')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('patient_copay_amount')
-                            ->label('Patient Co-Pay / Out-of-Pocket ($)')
+                            ->label('Patient Co-Pay / Out-of-Pocket')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('actual_paid_amount')
-                            ->label('Actual Paid by Insurance ($)')
+                            ->label('Actual Paid by Insurance')
                             ->numeric()
-                            ->prefix('$')
+                            ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00),
                         Forms\Components\TextInput::make('eob_reference_number')
                             ->label('EOB (Explanation of Benefits) Ref #')
@@ -170,11 +171,11 @@ class InsuranceClaimResource extends Resource
                     ->formatStateUsing(fn ($state) => $state === 'pre_authorization' ? 'Pre-Auth' : 'Claim'),
                 Tables\Columns\TextColumn::make('total_claimed_amount')
                     ->label('Claimed')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->sortable(),
                 Tables\Columns\TextColumn::make('actual_paid_amount')
                     ->label('Paid by Carrier')
-                    ->money('USD')
+                    ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('success')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')

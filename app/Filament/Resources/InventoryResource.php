@@ -31,6 +31,16 @@ class InventoryResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('inventory', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -88,7 +98,7 @@ class InventoryResource extends Resource
                                 Forms\Components\Select::make('practice_id')
                                     ->label('Practice / Clinic')
                                     ->relationship('practice', 'name')
-                                    ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                                    ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                                     ->required(),
                             ])->columns(2),
 
@@ -280,6 +290,67 @@ class InventoryResource extends Resource
                     })),
             ])
             ->actions([
+                Tables\Actions\Action::make('adjustStock')
+                    ->label('Adjust Stock')
+                    ->icon('heroicon-o-scale')
+                    ->color('warning')
+                    ->visible(fn (InventoryItem $record): bool => auth()->user()?->can('adjustStock', $record) ?? false)
+                    ->form([
+                        Forms\Components\Select::make('type')
+                            ->label('Adjustment Type')
+                            ->options([
+                                'addition' => 'Increase Stock (Purchase / Addition / Recount)',
+                                'subtraction' => 'Decrease Stock (Waste / Damaged / Expired / Recount)',
+                            ])
+                            ->default('addition')
+                            ->required()
+                            ->live(),
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Quantity')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default(1)
+                            ->required(),
+                        Forms\Components\Select::make('inventory_batch_id')
+                            ->label('Target Batch (Optional)')
+                            ->options(fn (InventoryItem $record) => $record->batches()->pluck('batch_number', 'id'))
+                            ->placeholder('Auto / FIFO Batches')
+                            ->searchable(),
+                        Forms\Components\TextInput::make('unit_cost')
+                            ->label('Unit Cost')
+                            ->numeric()
+                            ->prefix(fn () => CurrencyHelper::symbol())
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'addition'),
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Reason for Adjustment')
+                            ->placeholder('e.g., Annual physical inventory count discrepancy, broken seal, expired batch')
+                            ->required(),
+                    ])
+                    ->action(function (InventoryItem $record, array $data): void {
+                        $service = app(\App\Services\InventoryStockService::class);
+                        $batch = !empty($data['inventory_batch_id']) ? \App\Models\InventoryBatch::find($data['inventory_batch_id']) : null;
+                        
+                        try {
+                            $service->adjustStock(
+                                item: $record,
+                                quantity: (int) $data['quantity'],
+                                type: $data['type'],
+                                reason: $data['reason'],
+                                batch: $batch,
+                                unitCost: !empty($data['unit_cost']) ? (float) $data['unit_cost'] : null
+                            );
+                            \Filament\Notifications\Notification::make()
+                                ->title('Stock Adjusted')
+                                ->success()
+                                ->send();
+                        } catch (\InvalidArgumentException $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Stock Adjustment Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -293,6 +364,7 @@ class InventoryResource extends Resource
     {
         return [
             BatchesRelationManager::class,
+            \App\Filament\Resources\InventoryResource\RelationManagers\MovementsRelationManager::class,
         ];
     }
 

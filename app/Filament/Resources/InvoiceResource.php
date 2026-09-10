@@ -29,6 +29,16 @@ class InvoiceResource extends Resource
 
     protected static ?string $modelLabel = 'Invoice';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('finance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Invoices & Billing Hub';
 
     protected static ?int $navigationSort = 1;
@@ -47,7 +57,7 @@ class InvoiceResource extends Resource
                             ->placeholder('Auto-generated (e.g. INV-2026-00001)'),
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable(['first_name', 'last_name', 'file_number'])
                             ->preload()
@@ -62,7 +72,7 @@ class InvoiceResource extends Resource
                         Forms\Components\Select::make('practice_id')
                             ->label('Practice')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                         Forms\Components\Select::make('status')
                             ->label('Payment Status')

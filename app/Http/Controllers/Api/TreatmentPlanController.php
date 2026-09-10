@@ -13,11 +13,26 @@ use Illuminate\Support\Facades\DB;
 
 class TreatmentPlanController extends Controller
 {
+    protected function authorizePatient(Patient $patient): void
+    {
+        if (auth()->check() && auth()->user()->practice_id) {
+            abort_unless($patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
+        }
+    }
+
+    protected function authorizePlan(TreatmentPlan $plan): void
+    {
+        if (auth()->check() && auth()->user()->practice_id) {
+            abort_unless($plan->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant treatment plan access.');
+        }
+    }
+
     /**
      * Get all treatment plans for a patient
      */
     public function index(Patient $patient)
     {
+        $this->authorizePatient($patient);
         $plans = $patient->treatmentPlans()
             ->with(['phases.procedures.procedureCode'])
             ->latest()
@@ -31,6 +46,7 @@ class TreatmentPlanController extends Controller
      */
     public function store(Patient $patient, Request $request)
     {
+        $this->authorizePatient($patient);
         $validated = $request->validate([
             'title' => 'required|string|max:255',
         ]);
@@ -57,6 +73,7 @@ class TreatmentPlanController extends Controller
      */
     public function getActivePlan(Patient $patient)
     {
+        $this->authorizePatient($patient);
         // Try to find an existing active plan
         $plan = $patient->treatmentPlans()
             ->whereIn('status', ['draft', 'in_progress'])
@@ -90,6 +107,7 @@ class TreatmentPlanController extends Controller
      */
     public function addProcedure(TreatmentPlan $plan, Request $request)
     {
+        $this->authorizePlan($plan);
         $validated = $request->validate([
             'tooth_number_fdi' => 'required|integer',
             'surface' => 'nullable|string',

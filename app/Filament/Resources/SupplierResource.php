@@ -28,6 +28,16 @@ class SupplierResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('inventory', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -50,7 +60,7 @@ class SupplierResource extends Resource
                         Forms\Components\Select::make('practice_id')
                             ->label('Practice')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id),
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Contact Information & Logistics')

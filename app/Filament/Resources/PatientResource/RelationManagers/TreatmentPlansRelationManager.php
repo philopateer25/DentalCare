@@ -211,42 +211,23 @@ class TreatmentPlansRelationManager extends RelationManager
                     ->icon('heroicon-o-document-currency-dollar')
                     ->color('success')
                     ->requiresConfirmation()
+                    ->visible(fn (\Illuminate\Database\Eloquent\Model $record): bool => auth()->user()?->can('create', \App\Models\Invoice::class) ?? false)
                     ->action(function (\Illuminate\Database\Eloquent\Model $record) {
-                        // Create Invoice
-                        $invoice = \App\Models\Invoice::create([
-                            'practice_id' => \Filament\Facades\Filament::getTenant()->id,
-                            'patient_id' => $record->patient_id,
-                            'treatment_plan_id' => $record->id,
-                            'invoice_number' => 'INV-' . strtoupper(uniqid()),
-                            'total_amount' => $record->total_amount,
-                            'paid_amount' => 0,
-                            'balance_due' => $record->total_amount,
-                            'status' => 'unpaid',
-                            'issue_date' => now(),
-                            'due_date' => now()->addDays(30),
-                        ]);
-                        
-                        // Create Invoice Items from Procedures
-                        foreach ($record->phases as $phase) {
-                            foreach ($phase->procedures as $procedure) {
-                                \App\Models\InvoiceItem::create([
-                                    'invoice_id' => $invoice->id,
-                                    'invoiceable_type' => \App\Models\TreatmentProcedure::class,
-                                    'invoiceable_id' => $procedure->id,
-                                    'description' => ($procedure->procedureCode->title ?? 'Procedure') . ($procedure->tooth_number_fdi ? " (Tooth {$procedure->tooth_number_fdi})" : ''),
-                                    'quantity' => 1,
-                                    'unit_price' => $procedure->fee,
-                                    'total_price' => $procedure->net_amount,
-                                ]);
-                            }
+                        $service = app(\App\Services\InvoiceGenerationService::class);
+                        try {
+                            $invoice = $service->generateInvoiceFromPlan($record);
+                            \Filament\Notifications\Notification::make()
+                                ->title("Invoice {$invoice->invoice_number} Generated Successfully")
+                                ->success()
+                                ->send();
+                        } catch (\InvalidArgumentException $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Invoice Generation Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
                         }
-                        
-                        \Filament\Notifications\Notification::make()
-                            ->title('Invoice Generated Successfully')
-                            ->success()
-                            ->send();
-                    })
-                    ->hidden(fn (\Illuminate\Database\Eloquent\Model $record) => $record->invoices()->exists() ?? false),
+                    }),
                     
                 Tables\Actions\Action::make('draft_prescription')
                     ->label('Draft Rx')

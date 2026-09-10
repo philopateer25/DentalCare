@@ -25,15 +25,15 @@ class AppointmentResource extends Resource
                 Forms\Components\Section::make('Appointment Details')
                     ->schema([
                         Forms\Components\Select::make('patient_id')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable(['first_name', 'last_name', 'file_number'])
                             ->required(),
                         Forms\Components\Select::make('doctor_id')
-                            ->relationship('doctor', 'name')
+                            ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->required(),
                         Forms\Components\Select::make('operatory_id')
-                            ->relationship('operatory', 'name'),
+                            ->relationship('operatory', 'name', fn ($query) => $query->whereHas('branch', fn ($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'scheduled' => 'Scheduled',

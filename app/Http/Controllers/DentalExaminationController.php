@@ -9,11 +9,26 @@ use Illuminate\Http\Request;
 
 class DentalExaminationController extends Controller
 {
+    protected function authorizePatient(Patient $patient): void
+    {
+        if (auth()->check() && auth()->user()->practice_id) {
+            abort_unless($patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
+        }
+    }
+
+    protected function authorizeExamination(DentalExamination $examination): void
+    {
+        if (auth()->check() && auth()->user()->practice_id) {
+            abort_unless($examination->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant examination access.');
+        }
+    }
+
     /**
      * Get all examinations for a patient.
      */
     public function index(Patient $patient)
     {
+        $this->authorizePatient($patient);
         $examinations = $patient->examinations()->orderBy('examined_at', 'desc')->get();
         return response()->json($examinations);
     }
@@ -23,6 +38,7 @@ class DentalExaminationController extends Controller
      */
     public function store(Request $request, Patient $patient)
     {
+        $this->authorizePatient($patient);
         $validated = $request->validate([
             'type' => 'required|string|in:initial,periodic,emergency',
             'notes' => 'nullable|string',
@@ -42,6 +58,7 @@ class DentalExaminationController extends Controller
      */
     public function show(DentalExamination $examination)
     {
+        $this->authorizeExamination($examination);
         // Load findings with their surface findings
         $examination->load('toothFindings.surfaceFindings');
 
@@ -69,6 +86,7 @@ class DentalExaminationController extends Controller
      */
     public function updateFinding(Request $request, DentalExamination $examination)
     {
+        $this->authorizeExamination($examination);
         $validated = $request->validate([
             'tooth_number' => 'required|string',
             'condition' => 'required|string', // mapping to finding_type

@@ -14,7 +14,8 @@ class AppointmentPolicy
 
     public function view(User $user, Appointment $appointment): bool
     {
-        return $user->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
+        return $user->practice_id === $appointment->practice_id
+            && $user->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
     }
 
     public function create(User $user): bool
@@ -24,11 +25,13 @@ class AppointmentPolicy
 
     public function update(User $user, Appointment $appointment): bool
     {
-        return $user->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
+        return $user->practice_id === $appointment->practice_id
+            && $user->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin']);
     }
 
     public function delete(User $user, Appointment $appointment): bool
     {
-        return $user->hasAnyRole(['clinic_admin', 'super_admin']);
+        return $user->practice_id === $appointment->practice_id
+            && $user->hasAnyRole(['clinic_admin', 'super_admin']);
     }
 }

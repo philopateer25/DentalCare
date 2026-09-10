@@ -62,11 +62,7 @@ class PracticeResource extends Resource
                             ->maxLength(255),
                         Forms\Components\CheckboxList::make('features')
                             ->label('Enabled Features')
-                            ->options([
-                                'whatsapp' => 'WhatsApp Integration',
-                                '3d_model' => '3D Odontogram Viewer',
-                                'ai_analysis' => 'AI X-Ray Analysis',
-                            ])
+                            ->options(\App\Services\FeatureManager::getOptions())
                             ->columns(3)
                             ->columnSpanFull(),
                     ])->columns(2),

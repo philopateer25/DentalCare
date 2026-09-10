@@ -26,6 +26,16 @@ class ClinicExpenseResource extends Resource
 
     protected static ?string $modelLabel = 'Clinic Expense';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('finance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Clinic Expenses & Overhead';
 
     protected static ?int $navigationSort = 5;
@@ -66,17 +76,17 @@ class ClinicExpenseResource extends Resource
                             ->placeholder('e.g. Henry Schein Dental, City Power & Water, Landlord Realty LLC'),
                         Forms\Components\Select::make('supplier_id')
                             ->label('Linked Supplier (if applicable)')
-                            ->relationship('supplier', 'name')
+                            ->relationship('supplier', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->placeholder('None / Direct Vendor'),
                         Forms\Components\Select::make('dental_lab_id')
                             ->label('Linked Dental Lab (if applicable)')
-                            ->relationship('dentalLab', 'name')
+                            ->relationship('dentalLab', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->placeholder('None / Not Lab Fee'),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

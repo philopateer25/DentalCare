@@ -29,6 +29,16 @@ class LabOrderResource extends Resource
 
     protected static ?string $modelLabel = 'Lab Case';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('labs', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Dental Lab Cases & Orders';
 
     protected static ?int $navigationSort = 1;
@@ -47,27 +57,27 @@ class LabOrderResource extends Resource
                             ->placeholder('Auto-generated (e.g. LAB-2026-00001)'),
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable(['first_name', 'last_name', 'file_number'])
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('doctor_id')
                             ->label('Prescribing Doctor')
-                            ->relationship('doctor', 'name')
+                            ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->default(fn () => User::first()?->id)
                             ->searchable()
                             ->required(),
                         Forms\Components\Select::make('dental_lab_id')
                             ->label('Dental Lab Partner')
-                            ->relationship('dentalLab', 'name')
+                            ->relationship('dentalLab', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('practice_id')
                             ->label('Practice')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

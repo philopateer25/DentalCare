@@ -27,6 +27,16 @@ class InstallmentPlanResource extends Resource
 
     protected static ?string $modelLabel = 'Installment Plan';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && (!\App\Services\FeatureManager::isEnabled('installments', $tenant) || !\App\Services\FeatureManager::isEnabled('finance', $tenant))) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Patient Financing Contracts';
 
     protected static ?int $navigationSort = 3;
@@ -39,7 +49,7 @@ class InstallmentPlanResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('invoice_id')
                             ->label('Target Invoice')
-                            ->relationship('invoice', 'invoice_number')
+                            ->relationship('invoice', 'invoice_number', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Invoice $record) => "{$record->invoice_number} - {$record->patient?->first_name} {$record->patient?->last_name} (Total: \${$record->total_amount})")
                             ->searchable()
                             ->preload()

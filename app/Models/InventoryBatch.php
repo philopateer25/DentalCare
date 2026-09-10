@@ -55,6 +55,11 @@ class InventoryBatch extends Model
         return $this->hasMany(ProcedureConsumption::class);
     }
 
+    public function movements(): HasMany
+    {
+        return $this->hasMany(InventoryStockMovement::class);
+    }
+
     public function getExpiryStatusAttribute(): string
     {
         if (! $this->expiry_date) {

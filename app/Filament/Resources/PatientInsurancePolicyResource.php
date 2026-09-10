@@ -26,6 +26,16 @@ class PatientInsurancePolicyResource extends Resource
 
     protected static ?string $modelLabel = 'Patient Policy';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('insurance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Patient Insurance Policies';
 
     protected static ?int $navigationSort = 2;
@@ -38,14 +48,14 @@ class PatientInsurancePolicyResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('insurance_provider_id')
                             ->label('Insurance Carrier / Payer')
-                            ->relationship('insuranceProvider', 'name')
+                            ->relationship('insuranceProvider', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -83,7 +93,7 @@ class PatientInsurancePolicyResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

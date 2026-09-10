@@ -82,7 +82,7 @@ class StaffMemberResource extends Resource
                             ->placeholder('None (No system login)'),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

@@ -22,7 +22,8 @@ return new class extends Migration
         Schema::connection($connection)->create($tableName, function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->morphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
-            $table->string('endpoint', PushSubscription::ENDPOINT_MAX_LENGTH)
+            $endpointLength = defined('NotificationChannels\WebPush\PushSubscription::ENDPOINT_MAX_LENGTH') ? PushSubscription::ENDPOINT_MAX_LENGTH : 500;
+            $table->string('endpoint', $endpointLength)
                 ->charset('ascii')
                 ->unique();
             $table->string('public_key')->nullable();

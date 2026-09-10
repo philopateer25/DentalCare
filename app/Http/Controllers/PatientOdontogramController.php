@@ -13,22 +13,44 @@ class PatientOdontogramController extends Controller
     /**
      * Display the 3D Odontogram test page for a patient.
      */
-    public function showTest(?Patient $patient = null): Response
+    protected function authorizePatientAccess(?Patient $patient): Patient
     {
-        if (!$patient || !$patient->exists) {
-            $patient = Patient::first();
-            if (!$patient) {
-                $patient = Patient::create([
+        $userPracticeId = auth()->user()?->practice_id ?? \Filament\Facades\Filament::getTenant()?->id;
+
+        if ($patient && $patient->exists) {
+            if ($userPracticeId && $patient->practice_id !== $userPracticeId) {
+                abort(403, 'Unauthorized cross-tenant patient access.');
+            }
+            return $patient;
+        }
+
+        if ($userPracticeId) {
+            $patient = Patient::where('practice_id', $userPracticeId)->first();
+        }
+
+        if (!$patient) {
+            $patient = Patient::firstOrCreate(
+                ['practice_id' => $userPracticeId],
+                [
                     'file_number' => 'DEMO-001',
-                    'full_name' => 'Demo Patient',
                     'first_name' => 'Demo',
                     'last_name' => 'Patient',
                     'gender' => 'male',
                     'phone' => '0000000000',
                     'status' => 'active',
-                ]);
-            }
+                ]
+            );
         }
+
+        return $patient;
+    }
+
+    /**
+     * Display the 3D Odontogram test page for a patient.
+     */
+    public function showTest(?Patient $patient = null): Response
+    {
+        $patient = $this->authorizePatientAccess($patient);
 
         // Get or create the latest examination
         $examination = $patient->examinations()->latest('examined_at')->first();
@@ -68,9 +90,7 @@ class PatientOdontogramController extends Controller
      */
     public function showDetails(?Patient $patient = null): Response
     {
-        if (!$patient || !$patient->exists) {
-            $patient = Patient::first();
-        }
+        $patient = $this->authorizePatientAccess($patient);
 
         // Get or create the latest examination
         $examination = $patient->examinations()->latest('examined_at')->first();
@@ -110,6 +130,8 @@ class PatientOdontogramController extends Controller
      */
     public function getTeeth(Patient $patient)
     {
+        $patient = $this->authorizePatientAccess($patient);
+
         $teethRecords = $patient->teeth()
             ->get(['tooth_number', 'condition', 'notes', 'surfaces'])
             ->keyBy('tooth_number')
@@ -130,6 +152,8 @@ class PatientOdontogramController extends Controller
      */
     public function updateTooth(Request $request, Patient $patient)
     {
+        $patient = $this->authorizePatientAccess($patient);
+
         $validated = $request->validate([
             'tooth_number' => 'required|string',
             'condition' => 'required|string|in:healthy,active_caries,composite_filled,crown,root_canal,missing,implant,custom',

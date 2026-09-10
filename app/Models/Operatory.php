@@ -28,6 +28,18 @@ class Operatory extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    public function practice(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Practice::class,
+            Branch::class,
+            'id',
+            'id',
+            'branch_id',
+            'practice_id'
+        );
+    }
+
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);

@@ -29,6 +29,16 @@ class InsuranceClaimResource extends Resource
 
     protected static ?string $modelLabel = 'Insurance Claim';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('insurance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Insurance Claims & EOBs';
 
     protected static ?int $navigationSort = 3;
@@ -47,7 +57,7 @@ class InsuranceClaimResource extends Resource
                             ->placeholder('Auto-generated (e.g. CLM-2026-00001)'),
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable()
                             ->preload()
@@ -61,18 +71,18 @@ class InsuranceClaimResource extends Resource
                             }),
                         Forms\Components\Select::make('insurance_provider_id')
                             ->label('Insurance Carrier / Payer')
-                            ->relationship('insuranceProvider', 'name')
+                            ->relationship('insuranceProvider', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('patient_insurance_policy_id')
                             ->label('Active Patient Policy')
-                            ->relationship('policy', 'policy_number')
+                            ->relationship('policy', 'policy_number', fn ($query) => $query->whereHas('patient', fn ($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)))
                             ->searchable()
                             ->placeholder('Select Policy'),
                         Forms\Components\Select::make('doctor_id')
                             ->label('Treating Dentist (NPI / Provider)')
-                            ->relationship('doctor', 'name')
+                            ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->default(fn () => User::first()?->id)
                             ->searchable()
                             ->required(),
@@ -85,7 +95,7 @@ class InsuranceClaimResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

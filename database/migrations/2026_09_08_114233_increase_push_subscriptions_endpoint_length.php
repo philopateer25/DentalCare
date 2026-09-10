@@ -20,7 +20,8 @@ return new class extends Migration
         });
 
         Schema::connection($connection)->table($table, function (Blueprint $blueprint): void {
-            $blueprint->string('endpoint', PushSubscription::ENDPOINT_MAX_LENGTH)
+            $endpointLength = defined('NotificationChannels\WebPush\PushSubscription::ENDPOINT_MAX_LENGTH') ? PushSubscription::ENDPOINT_MAX_LENGTH : 500;
+            $blueprint->string('endpoint', $endpointLength)
                 ->charset('ascii')
                 ->unique()
                 ->change();

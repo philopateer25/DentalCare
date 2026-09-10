@@ -4,6 +4,7 @@ import { Stethoscope, Lock, ExternalLink, ArrowRight, Menu } from 'lucide-react'
 import Button from './Button';
 import Badge from './Badge';
 import LanguageSelector from './LanguageSelector';
+import NotificationCenter from './NotificationCenter';
 import { useLocale } from '../Contexts/LocaleContext';
 
 export default function Navbar({ auth, appName = 'DentalCare', onMenuClick }) {
@@ -50,6 +51,7 @@ export default function Navbar({ auth, appName = 'DentalCare', onMenuClick }) {
 
                 {/* Right Action Buttons */}
                 <div className="flex items-center gap-2.5 sm:gap-3">
+                    <NotificationCenter />
                     <LanguageSelector />
 
                     <a 

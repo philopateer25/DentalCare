@@ -28,6 +28,16 @@ class PaymentResource extends Resource
 
     protected static ?string $modelLabel = 'Payment';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('finance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Treasury & Collections';
 
     protected static ?int $navigationSort = 2;
@@ -40,7 +50,7 @@ class PaymentResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('invoice_id')
                             ->label('Target Invoice')
-                            ->relationship('invoice', 'invoice_number')
+                            ->relationship('invoice', 'invoice_number', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Invoice $record) => "{$record->invoice_number} - {$record->patient?->first_name} {$record->patient?->last_name} (Balance Due: \${$record->balance_due})")
                             ->searchable()
                             ->preload()
@@ -55,7 +65,7 @@ class PaymentResource extends Resource
                             }),
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name')
+                            ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable()
                             ->required(),
@@ -90,7 +100,7 @@ class PaymentResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                         Forms\Components\Textarea::make('notes')
                             ->label('Receipt Notes / Co-Pay Details')

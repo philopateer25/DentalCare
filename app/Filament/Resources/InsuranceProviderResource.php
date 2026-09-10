@@ -27,6 +27,16 @@ class InsuranceProviderResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('insurance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -53,7 +63,7 @@ class InsuranceProviderResource extends Resource
                             ->suffix('days'),
                         Forms\Components\Select::make('practice_id')
                             ->relationship('practice', 'name')
-                            ->default(fn () => Practice::firstOrCreate(['name' => 'Main Clinic'])->id)
+                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

@@ -13,13 +13,13 @@ class OperationForm
     {
         return [
             Select::make('patient_id')
-                ->relationship('patient', 'first_name')
+                ->relationship('patient', 'first_name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                 ->required(),
             Select::make('doctor_id')
-                ->relationship('doctor', 'name')
+                ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                 ->required(),
             Select::make('operatory_id')
-                ->relationship('operatory', 'name')
+                ->relationship('operatory', 'name', fn ($query) => $query->whereHas('branch', fn ($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)))
                 ->required(),
             DateTimePicker::make('start_time')
                 ->required(),

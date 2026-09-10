@@ -23,20 +23,45 @@ class Practice extends Model
         'license_key',
         'license_status',
         'features',
+        'onboarding_completed_at',
+        'onboarding_step',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'features' => 'array',
+        'onboarding_completed_at' => 'datetime',
+        'onboarding_step' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Practice $practice) {
+            if ($practice->onboarding_completed_at === null && $practice->onboarding_step === null) {
+                $practice->onboarding_completed_at = now();
+                $practice->onboarding_step = 6;
+            }
+        });
+    }
 
     public function hasFeature(string $feature): bool
     {
         $features = $this->features;
+
+        if (is_null($features)) {
+            return \App\Services\FeatureManager::FEATURES[$feature]['default'] ?? true;
+        }
+
         if (!is_array($features)) {
             return false;
         }
+
         return in_array($feature, $features, true) || (isset($features[$feature]) && $features[$feature] === true);
+    }
+
+    public function isOnboarded(): bool
+    {
+        return $this->onboarding_completed_at !== null;
     }
 
     public function branches(): HasMany

@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
+        $middleware->alias([
+            'feature' => \App\Http\Middleware\RequireFeature::class,
+            'onboarding' => \App\Http\Middleware\EnsureOnboardingIsCompleted::class,
+        ]);
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
@@ -24,4 +28,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->respond(function ($response, \Throwable $exception, Request $request) {
+            $status = $response->getStatusCode();
+
+            if (! app()->environment('local', 'testing') && in_array($status, [403, 404, 419, 500])) {
+                if ($request->header('X-Inertia')) {
+                    return \Inertia\Inertia::render('Error', [
+                        'status' => $status,
+                    ])->toResponse($request)->setStatusCode($status);
+                }
+            }
+
+            return $response;
+        });
     })->create();

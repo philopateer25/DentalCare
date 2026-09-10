@@ -14,7 +14,8 @@ class TreatmentPlanPolicy
 
     public function view(User $user, TreatmentPlan $treatmentPlan): bool
     {
-        return $user->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']);
+        return $user->practice_id === $treatmentPlan->patient->practice_id
+            && $user->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']);
     }
 
     public function create(User $user): bool
@@ -24,11 +25,13 @@ class TreatmentPlanPolicy
 
     public function update(User $user, TreatmentPlan $treatmentPlan): bool
     {
-        return $user->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']);
+        return $user->practice_id === $treatmentPlan->patient->practice_id
+            && $user->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']);
     }
 
     public function delete(User $user, TreatmentPlan $treatmentPlan): bool
     {
-        return $user->hasAnyRole(['clinic_admin', 'super_admin']);
+        return $user->practice_id === $treatmentPlan->patient->practice_id
+            && $user->hasAnyRole(['clinic_admin', 'super_admin']);
     }
 }

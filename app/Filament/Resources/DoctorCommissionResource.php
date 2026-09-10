@@ -26,9 +26,31 @@ class DoctorCommissionResource extends Resource
 
     protected static ?string $modelLabel = 'Doctor Commission';
 
+    public static function canAccess(): bool
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('finance', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $pluralModelLabel = 'Doctor Payroll & Commission Ledgers';
 
     protected static ?int $navigationSort = 4;
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && $user->hasRole('doctor') && !$user->hasAnyRole(['clinic_admin', 'super_admin', 'developer'])) {
+            $query->where('doctor_id', $user->id);
+        }
+
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
@@ -38,12 +60,12 @@ class DoctorCommissionResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('doctor_id')
                             ->label('Doctor / Associate')
-                            ->relationship('doctor', 'name')
+                            ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->required(),
                         Forms\Components\Select::make('payment_id')
                             ->label('Linked Payment Transaction')
-                            ->relationship('payment', 'id')
+                            ->relationship('payment', 'id', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->getOptionLabelFromRecordUsing(fn (Payment $record) => "Payment #{$record->id} - \${$record->amount} ({$record->patient?->first_name} {$record->patient?->last_name})")
                             ->searchable()
                             ->required(),

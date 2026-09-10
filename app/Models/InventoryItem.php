@@ -67,6 +67,11 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryBatch::class);
     }
 
+    public function movements(): HasMany
+    {
+        return $this->hasMany(InventoryStockMovement::class);
+    }
+
     public function getTotalStockAttribute(): int
     {
         return (int) $this->batches()->sum('quantity_remaining');

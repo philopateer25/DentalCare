@@ -134,6 +134,7 @@ class PatientResource extends Resource
         return [
             RelationManagers\AppointmentsRelationManager::class,
             RelationManagers\TreatmentPlansRelationManager::class,
+            RelationManagers\CommunicationsRelationManager::class,
             RelationManagers\FilesRelationManager::class,
             RelationManagers\PrescriptionsRelationManager::class,
         ];

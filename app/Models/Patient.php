@@ -26,10 +26,14 @@ class Patient extends Model
         'address',
         'emergency_contact',
         'status',
+        'bot_state',
+        'bot_step',
+        'bot_data',
     ];
 
     protected $casts = [
         'dob' => 'date',
+        'bot_data' => 'array',
     ];
 
     protected static function booted()
@@ -109,5 +113,10 @@ class Patient extends Model
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function communications(): HasMany
+    {
+        return $this->hasMany(CommunicationLog::class);
     }
 }

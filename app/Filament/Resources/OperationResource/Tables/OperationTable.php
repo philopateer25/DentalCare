@@ -150,16 +150,35 @@ class OperationTable
                         ->send();
                 }),
             Tables\Actions\Action::make('send_whatsapp_checkup')
-                ->label('WhatsApp Check-up')
+                ->label('Send Post-Op Checkup')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
-                ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                 ->action(function (Appointment $record) {
-                    \App\Jobs\SendPostOpCheckupJob::dispatch($record);
+                    $practice = \Filament\Facades\Filament::getTenant();
+                    $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
+                    
+                    $phone = $record->patient->phone ?? $record->patient->phone_number ?? '';
+                    
+                    if(empty($phone)) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Missing Phone Number')
+                            ->body('This patient does not have a phone number on file.')
+                            ->send();
+                        return;
+                    }
+                    
+                    $clinicName = $practice ? $practice->name : 'our clinic';
+                    $patientName = $record->patient->first_name ?? 'there';
+                    
+                    $message = "Hello {$patientName}, this is {$clinicName}. We are checking in to see how you are feeling after your recent dental procedure. Please reply to this message if you have any questions or concerns!";
+                    
+                    \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $message);
                     
                     Notification::make()
                         ->success()
-                        ->title('WhatsApp check-up queued for dispatch!')
+                        ->title('WhatsApp check-up queued!')
                         ->send();
                 }),
             Tables\Actions\ViewAction::make(),

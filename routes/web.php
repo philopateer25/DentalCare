@@ -160,3 +160,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/support/tickets/{ticket}/reply', [\App\Http\Controllers\Api\SupportTicketController::class, 'reply']);
     Route::patch('/api/support/tickets/{ticket}/status', [\App\Http\Controllers\Api\SupportTicketController::class, 'updateStatus']);
 });
+
+// WhatsApp Webhook Route
+Route::post('/api/whatsapp/webhook', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);

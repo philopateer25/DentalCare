@@ -171,17 +171,24 @@ class AppointmentsRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->modalHeading('Send WhatsApp Reminder')
                     ->modalDescription('Are you sure you want to send a reminder to the patient via WhatsApp?')
-                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                    // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                     ->action(function (\App\Models\Appointment $record) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
+                        
+                        if (empty($phone)) {
+                            \Filament\Notifications\Notification::make()->title('Missing Phone Number')->danger()->send();
+                            return;
+                        }
+                        
                         $time = $record->start_time->format('h:i A on d M Y');
                         $message = "Hello {$record->patient->first_name}, this is a friendly reminder for your dental appointment at {$time}. Reply to confirm or cancel.";
                         
-                        if (\App\Services\WhatsAppService::sendMessage($phone, $message)) {
-                            \Filament\Notifications\Notification::make()->title('Reminder Sent!')->success()->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()->title('Failed to send WhatsApp')->danger()->send();
-                        }
+                        $practice = \Filament\Facades\Filament::getTenant();
+                        $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
+                        
+                        \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $message);
+                        
+                        \Filament\Notifications\Notification::make()->title('Reminder Queued!')->success()->send();
                     }),
                     
                 Tables\Actions\Action::make('whatsapp_instructions')
@@ -194,15 +201,21 @@ class AppointmentsRelationManager extends RelationManager
                             ->default("Hello, please remember to avoid eating hot foods for the next 2 hours. Rinse with warm salt water tomorrow.")
                             ->required()
                     ])
-                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                    // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
                     ->action(function (\App\Models\Appointment $record, array $data) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
                         
-                        if (\App\Services\WhatsAppService::sendMessage($phone, $data['custom_message'])) {
-                            \Filament\Notifications\Notification::make()->title('Instructions Sent!')->success()->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()->title('Failed to send WhatsApp')->danger()->send();
+                        if (empty($phone)) {
+                            \Filament\Notifications\Notification::make()->title('Missing Phone Number')->danger()->send();
+                            return;
                         }
+                        
+                        $practice = \Filament\Facades\Filament::getTenant();
+                        $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
+                        
+                        \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $data['custom_message']);
+                        
+                        \Filament\Notifications\Notification::make()->title('Instructions Queued!')->success()->send();
                     }),
 
                 Tables\Actions\EditAction::make(),

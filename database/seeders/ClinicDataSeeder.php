@@ -23,6 +23,7 @@ class ClinicDataSeeder extends Seeder
         $practice = Practice::firstOrCreate(
             ['name' => 'DentalCare Main Clinic'],
             [
+                'type' => 'dental',
                 'tax_id' => '123456789',
                 'currency' => 'EGP',
                 'timezone' => 'Africa/Cairo',

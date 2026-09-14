@@ -98,7 +98,7 @@ class PaymentResource extends Resource
                             ->relationship('loggedBy', 'name')
                             ->default(fn () => auth()->id() ?? User::first()?->id)
                             ->required(),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
@@ -167,6 +167,9 @@ class PaymentResource extends Resource
                         'bank_transfer' => 'Bank Transfer',
                         'insurance_tpa' => 'Insurance / TPA',
                     ]),
+                Tables\Filters\Filter::make('mtd')
+                    ->label('This Month (MTD)')
+                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

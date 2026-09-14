@@ -25,7 +25,7 @@ class PatientForm
                         ->schema([
                             Section::make('Demographics')
                                 ->schema([
-                                    Select::make('practice_id')
+                                    Select::make('practice_id')->hidden()
                                         ->relationship('practice', 'name')
                                         ->required(),
                                     TextInput::make('file_number')
@@ -106,6 +106,17 @@ class PatientForm
                                             Toggle::make('penicillin_allergy')->label('Penicillin Allergy'),
                                             Toggle::make('local_anesthetic_allergy')->label('Local Anesthetic Allergy'),
                                         ])->columns(3),
+
+                                    Section::make('Ophthalmology History')
+                                        ->schema([
+                                            Toggle::make('glaucoma_history')->label('Glaucoma'),
+                                            Toggle::make('cataract_history')->label('Cataracts'),
+                                            Toggle::make('dry_eye_syndrome')->label('Dry Eye Syndrome'),
+                                            Toggle::make('wears_contact_lenses')->label('Wears Contact Lenses'),
+                                            Toggle::make('vision_correction_history')->label('Prior Vision Correction Surgery'),
+                                        ])
+                                        ->columns(3)
+                                        ->visible(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology'),
 
                                     Section::make('Additional Information')
                                         ->schema([

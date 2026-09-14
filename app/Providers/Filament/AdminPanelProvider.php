@@ -37,6 +37,8 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('3s')
             ->navigationGroups([
                 'Clinical Management',
                 'Finance & Treasury',

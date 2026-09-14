@@ -29,11 +29,13 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             
-            $revenue = Invoice::whereYear('created_at', $month->year)
+            $revenue = Invoice::where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                ->whereYear('created_at', $month->year)
                 ->whereMonth('created_at', $month->month)
                 ->sum('paid_amount');
 
-            $expense = ClinicExpense::whereYear('expense_date', $month->year)
+            $expense = ClinicExpense::where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                ->whereYear('expense_date', $month->year)
                 ->whereMonth('expense_date', $month->month)
                 ->sum('amount');
 

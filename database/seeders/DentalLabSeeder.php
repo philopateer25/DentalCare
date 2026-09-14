@@ -12,9 +12,11 @@ use Illuminate\Database\Seeder;
 
 class DentalLabSeeder extends Seeder
 {
+    public ?Practice $targetPractice = null;
+
     public function run(): void
     {
-        $practice = Practice::firstOrCreate(
+        $practice = $this->targetPractice ?? Practice::firstOrCreate(
             ['name' => 'Main Dental Clinic'],
             ['currency' => 'USD', 'timezone' => 'UTC', 'is_active' => true]
         );

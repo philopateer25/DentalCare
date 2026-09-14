@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
             DentalStaffAndInsuranceSeeder::class,
             MultiClinicSeeder::class,
             OperatorySeeder::class,
+            EyeCatalogSeeder::class,
+            EyeInventorySeeder::class,
+            EyeLabSeeder::class,
         ]);
     }
 }

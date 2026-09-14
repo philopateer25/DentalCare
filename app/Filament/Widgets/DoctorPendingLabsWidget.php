@@ -24,6 +24,7 @@ class DoctorPendingLabsWidget extends BaseWidget
         return $table
             ->query(
                 LabOrder::query()
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->where('doctor_id', auth()->id())
                     ->where('status', '!=', 'delivered')
                     ->orderBy('expected_delivery_at', 'asc')

@@ -61,7 +61,7 @@ class InsuranceProviderResource extends Resource
                             ->numeric()
                             ->default(14)
                             ->suffix('days'),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),

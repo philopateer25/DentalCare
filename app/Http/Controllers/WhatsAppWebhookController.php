@@ -8,6 +8,7 @@ use App\Models\CommunicationLog;
 use App\Models\Appointment;
 use App\Services\GeminiService;
 use App\Jobs\SendWhatsAppMessageJob;
+use Filament\Notifications\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -50,12 +51,19 @@ class WhatsAppWebhookController extends Controller
             $practiceId = $matches[1];
         }
 
-        // Get the text content or audio base64
+        // Get the text content, list row ID, or audio base64
         $text = '';
         $audioBase64 = null;
         $audioMimeType = null;
+        $interactiveRowId = null;
 
-        if (isset($messageData['conversation'])) {
+        if (isset($messageData['listResponseMessage']['singleSelectReply']['selectedRowId'])) {
+            $interactiveRowId = $messageData['listResponseMessage']['singleSelectReply']['selectedRowId'];
+            $text = $messageData['listResponseMessage']['title'] ?? $interactiveRowId;
+        } elseif (isset($messageData['buttonsResponseMessage']['selectedButtonId'])) {
+            $interactiveRowId = $messageData['buttonsResponseMessage']['selectedButtonId'];
+            $text = $messageData['buttonsResponseMessage']['selectedDisplayText'] ?? $interactiveRowId;
+        } elseif (isset($messageData['conversation'])) {
             $text = $messageData['conversation'];
         } elseif (isset($messageData['extendedTextMessage']['text'])) {
             $text = $messageData['extendedTextMessage']['text'];
@@ -168,22 +176,113 @@ class WhatsAppWebhookController extends Controller
                 $patient->status = 'active'; // Strictly lowercase for SQLite CHECK constraint
                 $patient->save();
                 
-                $this->reply($instanceName, $phoneNumber, "Thank you! You are now registered. How can we help you today?\n\n1️⃣ Book an Appointment\n2️⃣ Speak to the Secretary");
+                $this->sendMenu($instanceName, $phoneNumber);
+            }
+            return response()->json(['status' => 'success']);
+        }
+
+        if ($state === 'rescheduling') {
+            $requestId = $patient->bot_step;
+            $request = \App\Models\WhatsAppAppointmentRequest::find($requestId);
+            
+            if (!$request || $request->status !== 'pending') {
+                $patient->bot_state = 'menu';
+                $patient->bot_step = null;
+                $patient->save();
+                $this->sendMenu($instanceName, $phoneNumber);
+                return response()->json(['status' => 'success']);
+            }
+
+            $lowerText = strtolower(trim($text));
+            if (in_array($lowerText, ['yes', 'ok', 'sure', 'y', 'perfect', 'sounds good']) || str_contains($lowerText, 'yes')) {
+                $request->notes .= "\n[Patient accepted proposed time: $text]";
+                $request->save();
+                $patient->bot_state = 'menu';
+                $patient->bot_step = null;
+                $patient->save();
+
+                $this->reply($instanceName, $phoneNumber, "Perfect! Your appointment is confirmed. The secretary has been notified.");
+                
+                $users = \App\Models\User::where('practice_id', $practiceId)->get();
+                Notification::make()
+                    ->title("Patient Accepted Reschedule")
+                    ->body("{$patient->first_name} accepted the new time for their appointment request.")
+                    ->success()
+                    ->sendToDatabase($users);
+            } else {
+                $parsed = GeminiService::parseAppointmentRequest($text, $audioBase64, $audioMimeType);
+                if ($parsed && isset($parsed['action']) && $parsed['action'] === 'request_appointment') {
+                    $date = $parsed['date'] && $parsed['date'] !== 'unknown date' ? $parsed['date'] : $request->requested_date;
+                    $time = $parsed['time'] ?? null;
+                    
+                    $parsedTime = $request->requested_time;
+                    if ($time && $time !== 'unknown time') {
+                        if (str_contains(strtolower($time), 'morning')) {
+                            $parsedTime = '09:00:00';
+                        } elseif (str_contains(strtolower($time), 'evening') || str_contains(strtolower($time), 'afternoon')) {
+                            $parsedTime = '16:00:00';
+                        } else {
+                            try {
+                                $parsedTime = \Carbon\Carbon::parse($time)->format('H:i:s');
+                            } catch (\Exception $e) {
+                                // Keep old time
+                            }
+                        }
+                    }
+                    
+                    $request->update([
+                        'requested_date' => $date,
+                        'requested_time' => $parsedTime,
+                        'notes' => $request->notes . "\n[Patient proposed new time: $text]",
+                    ]);
+                    
+                    $patient->bot_state = 'menu';
+                    $patient->bot_step = null;
+                    $patient->save();
+
+                    $formattedTime = \Carbon\Carbon::parse($parsedTime)->format('h:i A');
+                    $this->reply($instanceName, $phoneNumber, "Got it! Your new proposed time for $date at $formattedTime has been sent to the secretary for review.");
+                    
+                    $users = \App\Models\User::where('practice_id', $practiceId)->get();
+                    Notification::make()
+                        ->title("Patient Proposed New Time")
+                        ->body("{$patient->first_name} proposed a different time: {$date} at {$formattedTime}.")
+                        ->warning()
+                        ->sendToDatabase($users);
+                } else {
+                    $this->reply($instanceName, $phoneNumber, "I couldn't understand the time. Please reply with 'Yes' to accept the proposed time, or clearly state the new time you prefer.");
+                }
             }
             return response()->json(['status' => 'success']);
         }
 
         if ($state === 'menu') {
-            if (trim($text) === '1') {
+            $lowerText = strtolower(trim($text));
+            if ($interactiveRowId === 'book_appointment' || $lowerText === '1' || str_contains($lowerText, 'book')) {
                 $patient->bot_state = 'booking';
                 $patient->save();
                 $this->reply($instanceName, $phoneNumber, "Great! When would you like to book your appointment? You can type a message or send a voice note with your preferred date and time.");
-            } elseif (trim($text) === '2') {
+            } elseif ($interactiveRowId === 'speak_human' || $lowerText === '2' || str_contains($lowerText, 'human')) {
                 $patient->bot_state = 'human';
                 $patient->save();
                 $this->reply($instanceName, $phoneNumber, "I've notified the secretary. They will reply to you here shortly.");
+                
+                // Notify Secretary
+                $users = \App\Models\User::where('practice_id', $practiceId)->get();
+                Notification::make()
+                    ->title("Patient Requesting Human")
+                    ->body("{$patient->first_name} {$patient->last_name} ({$patient->phone}) wants to speak to a secretary via WhatsApp.")
+                    ->warning()
+                    ->sendToDatabase($users);
             } else {
-                $this->reply($instanceName, $phoneNumber, "Please reply with a number:\n\n1️⃣ Book an Appointment\n2️⃣ Speak to the Secretary");
+                // To prevent spamming on unrecognized generic messages like "Thank you", 
+                // we only resend the menu if they explicitly use a wake word.
+                $wakeWords = ['hi', 'hello', 'menu', 'help', 'start', 'options'];
+                
+                // If it's a completely empty interaction or explicitly contains a wake word, resend menu.
+                if (empty($lowerText) || array_intersect($wakeWords, explode(' ', preg_replace('/[^a-z0-9 ]/', '', $lowerText)))) {
+                    $this->sendMenu($instanceName, $phoneNumber);
+                }
             }
             return response()->json(['status' => 'success']);
         }
@@ -198,27 +297,51 @@ class WhatsAppWebhookController extends Controller
             $parsed = GeminiService::parseAppointmentRequest($text, $audioBase64, $audioMimeType);
 
             if ($parsed && isset($parsed['action']) && $parsed['action'] === 'request_appointment') {
-                $date = $parsed['date'] ?? 'unknown date';
-                $time = $parsed['time'] ?? 'unknown time';
+                $date = $parsed['date'] ?? null;
+                $time = $parsed['time'] ?? null;
                 $notes = $parsed['notes'] ?? '';
 
-                  // Create appointment request
-                  $branchId = \App\Models\Branch::where('practice_id', $practiceId)->first()->id ?? 1;
-                  
-                  Appointment::create([
-                      'practice_id' => $practiceId,
-                      'branch_id' => $branchId,
-                      'patient_id' => $patient->id,
-                      'status' => 'booked', // ENUM limits us, so we use 'booked'
-                      'start_time' => $date !== 'unknown date' ? $date . ' 00:00:00' : now(),
-                      'chief_complaint' => "PATIENT REQUESTED via WhatsApp. Date: $date, Time: $time. Notes: $notes",
-                      'procedure_name' => 'General Checkup',
-                  ]);
+                if (!$date || $date === 'unknown date') {
+                    $date = now()->addDay()->format('Y-m-d');
+                }
+                
+                $parsedTime = '09:00:00';
+                if ($time && $time !== 'unknown time') {
+                    if (str_contains(strtolower($time), 'morning')) {
+                        $parsedTime = '09:00:00';
+                    } elseif (str_contains(strtolower($time), 'evening') || str_contains(strtolower($time), 'afternoon')) {
+                        $parsedTime = '16:00:00';
+                    } else {
+                        try {
+                            $parsedTime = \Carbon\Carbon::parse($time)->format('H:i:s');
+                        } catch (\Exception $e) {
+                            $parsedTime = '09:00:00';
+                        }
+                    }
+                }
+
+                \App\Models\WhatsAppAppointmentRequest::create([
+                    'practice_id' => $practiceId,
+                    'patient_id' => $patient->id,
+                    'requested_date' => $date,
+                    'requested_time' => $parsedTime,
+                    'notes' => $notes,
+                    'status' => 'pending',
+                ]);
 
                 $patient->bot_state = 'menu';
                 $patient->save();
 
-                $this->reply($instanceName, $phoneNumber, "Your appointment request for $date ($time) has been submitted! The secretary will review and confirm shortly. Reply 'Menu' for options.");
+                $formattedTime = \Carbon\Carbon::parse($parsedTime)->format('h:i A');
+                $this->reply($instanceName, $phoneNumber, "Your appointment request for $date at $formattedTime has been submitted! The secretary will review and confirm shortly. Reply 'Menu' for options.");
+                
+                // Notify Secretary
+                $users = \App\Models\User::where('practice_id', $practiceId)->get();
+                Notification::make()
+                    ->title("New Appointment Request")
+                    ->body("{$patient->first_name} {$patient->last_name} requested an appointment on {$date} at {$formattedTime}.")
+                    ->info()
+                    ->sendToDatabase($users);
             } elseif ($parsed && isset($parsed['action']) && $parsed['action'] === 'api_error') {
                 $this->reply($instanceName, $phoneNumber, "Sorry, I'm receiving too many requests right now and hit my rate limit. Please wait about 30 seconds and try sending your request again!");
             } else {
@@ -233,5 +356,12 @@ class WhatsAppWebhookController extends Controller
     private function reply($instanceName, $phone, $message)
     {
         SendWhatsAppMessageJob::dispatch($instanceName, $phone, $message);
+    }
+
+    private function sendMenu($instanceName, $phone)
+    {
+        $menuText = "DentalCare Assistant\nHow can we help you today?\n\n1️⃣ Book Appointment\n2️⃣ Speak to Secretary\n\n*(Please reply with 1 or 2)*";
+        
+        SendWhatsAppMessageJob::dispatch($instanceName, $phone, $menuText);
     }
 }

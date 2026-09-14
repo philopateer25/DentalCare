@@ -25,6 +25,7 @@ class DoctorScheduleWidget extends BaseWidget
         return $table
             ->query(
                 Appointment::query()
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->whereDate('start_time', Carbon::today())
                     ->where('doctor_id', auth()->id())
                     ->orderBy('start_time', 'asc')

@@ -69,7 +69,7 @@ class InvoiceResource extends Resource
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Due Date')
                             ->default(now()->addDays(30)),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->label('Practice')
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)

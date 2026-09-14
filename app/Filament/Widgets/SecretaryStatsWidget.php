@@ -21,14 +21,17 @@ class SecretaryStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         $today = Carbon::today();
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id;
 
         // 1. Today's Cash Safe
-        $cashCollected = Payment::whereDate('paid_at', $today)
+        $cashCollected = Payment::where('practice_id', $practiceId)
+            ->whereDate('paid_at', $today)
             ->where('payment_method', 'cash')
             ->sum('amount');
 
         // 2. Arriving Lab Orders
-        $arrivingLabs = LabOrder::whereDate('expected_delivery_at', $today)
+        $arrivingLabs = LabOrder::where('practice_id', $practiceId)
+            ->whereDate('expected_delivery_at', $today)
             ->where('status', '!=', 'delivered')
             ->count();
 

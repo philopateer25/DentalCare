@@ -79,7 +79,7 @@ class PayrollSlipResource extends Resource
                             ->numeric()
                             ->default((int) date('Y'))
                             ->required(),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),

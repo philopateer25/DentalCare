@@ -26,6 +26,7 @@ class ActionRequiredWidget extends BaseWidget
         return $table
             ->query(
                 Invoice::query()
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
                     ->orderBy('created_at', 'desc')
                     ->limit(5)

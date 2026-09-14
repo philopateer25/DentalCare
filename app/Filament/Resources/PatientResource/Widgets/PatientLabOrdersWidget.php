@@ -26,8 +26,9 @@ class PatientLabOrdersWidget extends BaseWidget
                     ->label('Lab')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tooth_number_fdi')
+                Tables\Columns\TextColumn::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                     ->label('Tooth')
+                    ->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('material')
                     ->searchable(),
@@ -68,19 +69,24 @@ class PatientLabOrdersWidget extends BaseWidget
                                 'invoice_number' => 'INV-' . strtoupper(uniqid()),
                                 'issue_date' => now(),
                                 'due_date' => $record->expected_delivery_at ?? now()->addDays(7),
+                                'subtotal' => $data['cost'],
                                 'total_amount' => $data['cost'],
-                                'remaining_balance' => $data['cost'],
+                                'balance_due' => $data['cost'],
                                 'paid_amount' => 0,
                                 'status' => 'unpaid',
                             ]);
 
                             $invoice->items()->create([
-                                'procedure_name' => 'Lab Order: ' . $record->material . ' (' . $record->shade . ')',
-                                'tooth_number' => $record->tooth_number_fdi,
+                                'invoiceable_type' => \App\Models\LabOrder::class,
+                                'invoiceable_id' => $record->id,
+                                'description' => "Lab Fee: {$record->material} ({$record->shade})",
                                 'quantity' => 1,
                                 'unit_price' => $data['cost'],
-                                'total' => $data['cost'],
+                                'total_price' => $data['cost'],
                             ]);
+
+                            $this->dispatch('refreshPatientFinance');
+
                         }
                     })
                     ->form([
@@ -103,8 +109,9 @@ class PatientLabOrdersWidget extends BaseWidget
                             ->label('Dental Lab')
                             ->options(fn () => \App\Models\DentalLab::pluck('name', 'id'))
                             ->required(),
-                        Forms\Components\TextInput::make('tooth_number_fdi')
+                        Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->label('Tooth Number')
+                            ->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->numeric()
                             ->required(),
                         Forms\Components\TextInput::make('material')
@@ -131,7 +138,7 @@ class PatientLabOrdersWidget extends BaseWidget
                             ->label('Dental Lab')
                             ->options(fn () => \App\Models\DentalLab::pluck('name', 'id'))
                             ->required(),
-                        Forms\Components\TextInput::make('tooth_number_fdi')
+                        Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->label('Tooth Number')
                             ->numeric()
                             ->required(),

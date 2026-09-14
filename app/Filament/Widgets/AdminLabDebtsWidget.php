@@ -27,6 +27,7 @@ class AdminLabDebtsWidget extends BaseWidget
             ->query(
                 LabOrder::query()
                     ->select('dental_lab_id', DB::raw('MAX(id) as id'), DB::raw('SUM(cost) as total_debt'), DB::raw('COUNT(id) as pending_orders'))
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->where('status', '!=', 'delivered')
                     ->groupBy('dental_lab_id')
             )
@@ -42,6 +43,11 @@ class AdminLabDebtsWidget extends BaseWidget
                     ->color('danger')
                     ->weight('bold'),
             ])
-            ->paginated(false);
+            ->paginated(false)
+            ->recordUrl(
+                fn (LabOrder $record): string => \App\Filament\Resources\LabOrderResource::getUrl('index', [
+                    'tableFilters[dental_lab_id][value]' => $record->dental_lab_id,
+                ])
+            );
     }
 }

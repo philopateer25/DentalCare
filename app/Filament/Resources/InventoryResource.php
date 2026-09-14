@@ -95,7 +95,7 @@ class InventoryResource extends Resource
                                 Forms\Components\TextInput::make('sub_category')
                                     ->label('Sub-Category / Type')
                                     ->placeholder('e.g. Rotary Files, Matrix Systems, Ultrasonic Inserts, Hemostats'),
-                                Forms\Components\Select::make('practice_id')
+                                Forms\Components\Select::make('practice_id')->hidden()
                                     ->label('Practice / Clinic')
                                     ->relationship('practice', 'name')
                                     ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)

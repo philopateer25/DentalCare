@@ -11,8 +11,16 @@ class Practice extends Model
 {
     use HasFactory;
 
+    public const TYPES = [
+        'dental' => 'Dental Clinic',
+        'ophthalmology' => 'Ophthalmology (Eyes)',
+        'plastic_surgery' => 'Plastic Surgery',
+        'general' => 'General Medical',
+    ];
+
     protected $fillable = [
         'name',
+        'type',
         'tax_id',
         'currency',
         'timezone',
@@ -56,7 +64,13 @@ class Practice extends Model
             return false;
         }
 
-        return in_array($feature, $features, true) || (isset($features[$feature]) && $features[$feature] === true);
+        // Handle legacy associative array format: ['feature' => true]
+        if (array_is_list($features) === false) {
+            return isset($features[$feature]) && $features[$feature];
+        }
+
+        // Handle flat array format: ['feature']
+        return in_array($feature, $features, true);
     }
 
     public function isOnboarded(): bool

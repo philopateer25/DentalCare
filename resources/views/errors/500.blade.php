@@ -21,7 +21,7 @@
         </div>
 
         <div class="pt-2">
-            <a href="/dashboard" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm shadow-lg transition-all">
+            <a href="/admin" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm shadow-lg transition-all">
                 Return to Dashboard
             </a>
         </div>

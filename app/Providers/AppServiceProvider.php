@@ -25,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
         
         \App\Models\TreatmentProcedure::observe(\App\Observers\TreatmentProcedureObserver::class);
         \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
+        \App\Models\Practice::observe(\App\Observers\PracticeObserver::class);
     }
 }

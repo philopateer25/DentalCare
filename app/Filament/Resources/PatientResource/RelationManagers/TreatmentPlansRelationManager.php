@@ -95,7 +95,7 @@ class TreatmentPlansRelationManager extends RelationManager
                                             $set('net_amount', max(0, $code->standard_fee - $discount));
                                         }
                                     }),
-                                Forms\Components\TextInput::make('tooth_number_fdi')
+                                Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                                     ->numeric()
                                     ->label('Tooth No.')
                                     ->nullable(),

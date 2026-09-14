@@ -68,7 +68,7 @@ class DentalLabResource extends Resource
                         Forms\Components\TextInput::make('contact_person')
                             ->label('Primary Lab Tech / Account Rep')
                             ->maxLength(255),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),

@@ -25,6 +25,7 @@ class PendingTasksWidget extends BaseWidget
         return $table
             ->query(
                 Appointment::query()
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->where('type', 'follow_up')
                     ->whereDate('start_time', Carbon::tomorrow())
                     ->where('status', 'scheduled')

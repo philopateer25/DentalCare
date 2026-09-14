@@ -84,7 +84,7 @@ class ClinicExpenseResource extends Resource
                             ->relationship('dentalLab', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->searchable()
                             ->placeholder('None / Not Lab Fee'),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
@@ -195,6 +195,9 @@ class ClinicExpenseResource extends Resource
                     ]),
                 Tables\Filters\TernaryFilter::make('tax_deductible')
                     ->label('Tax Deductible Only'),
+                Tables\Filters\Filter::make('mtd')
+                    ->label('This Month (MTD)')
+                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereMonth('expense_date', now()->month)->whereYear('expense_date', now()->year)),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

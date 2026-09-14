@@ -22,10 +22,17 @@
             <p class="text-sm text-slate-400 leading-relaxed">You do not have permission to access this page or resource.</p>
         </div>
 
-        <div class="pt-2">
-            <a href="/dashboard" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm shadow-lg transition-all">
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="/admin" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm shadow-lg transition-all w-full sm:w-auto">
                 Return to Dashboard
             </a>
+            
+            <form method="POST" action="/admin/logout" class="w-full sm:w-auto">
+                @csrf
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm shadow-lg transition-all border border-slate-700 w-full sm:w-auto">
+                    Sign Out
+                </button>
+            </form>
         </div>
     </div>
 </body>

@@ -25,6 +25,7 @@ class LiveReceptionQueueWidget extends BaseWidget
         return $table
             ->query(
                 Appointment::query()
+                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
                     ->whereDate('start_time', Carbon::today())
                     ->whereIn('status', ['booked', 'arrived', 'in_chair', 'completed'])
                     ->orderBy('start_time', 'asc')

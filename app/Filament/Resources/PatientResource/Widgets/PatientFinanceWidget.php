@@ -17,6 +17,8 @@ class PatientFinanceWidget extends BaseWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    protected $listeners = ['refreshPatientFinance' => '$refresh'];
+
     public function table(Table $table): Table
     {
         $patientId = $this->record?->id;
@@ -196,7 +198,7 @@ class PatientFinanceWidget extends BaseWidget
                                 Forms\Components\Hidden::make('invoiceable_type'),
                                 Forms\Components\Hidden::make('invoiceable_id'),
                                 Forms\Components\TextInput::make('procedure_name')->required()->columnSpan(2),
-                                Forms\Components\TextInput::make('tooth_number')->label('Tooth (Opt)'),
+                                Forms\Components\TextInput::make('tooth_number')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')->label('Tooth (Opt)'),
                                 Forms\Components\TextInput::make('quantity')->numeric()->default(1)->required()->live(),
                                 Forms\Components\TextInput::make('unit_price')->numeric()->required()->live(),
                             ])

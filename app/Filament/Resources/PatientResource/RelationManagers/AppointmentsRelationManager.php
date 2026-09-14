@@ -40,7 +40,7 @@ class AppointmentsRelationManager extends RelationManager
                             ->visible(fn (Forms\Get $get) => $get('type') === 'follow_up')
                             ->required(fn (Forms\Get $get) => $get('type') === 'follow_up'),
                             
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()->id)
                             ->required()

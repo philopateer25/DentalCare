@@ -12,10 +12,12 @@ use Illuminate\Support\Facades\DB;
 
 class DentalInventorySeeder extends Seeder
 {
+    public ?Practice $targetPractice = null;
+
     public function run(): void
     {
         // 1. Ensure Practice exists
-        $practice = Practice::firstOrCreate(
+        $practice = $this->targetPractice ?? Practice::firstOrCreate(
             ['name' => 'Main Dental Clinic'],
             [
                 'currency' => 'USD',

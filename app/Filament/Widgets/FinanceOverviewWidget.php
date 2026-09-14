@@ -12,6 +12,11 @@ class FinanceOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    public static function canView(): bool
+    {
+        return false; // Replaced by AdminExecutiveSummaryWidget
+    }
+
     protected function getStats(): array
     {
         $practiceId = Filament::getTenant()?->id ?? auth()->user()?->practice_id ?? 1;

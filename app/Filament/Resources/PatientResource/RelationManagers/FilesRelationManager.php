@@ -32,7 +32,7 @@ class FilesRelationManager extends RelationManager
                 Forms\Components\FileUpload::make('file_path')
                     ->label('File')
                     ->required(),
-                Forms\Components\TextInput::make('tooth_number_fdi')
+                Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                     ->label('Tooth Number (Optional)')
                     ->numeric(),
                 Forms\Components\Textarea::make('notes')

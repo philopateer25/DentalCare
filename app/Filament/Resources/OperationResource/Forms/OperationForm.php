@@ -26,7 +26,8 @@ class OperationForm
             DateTimePicker::make('end_time')
                 ->required(),
             TextInput::make('procedure_name'),
-            TextInput::make('tooth_number'),
+            TextInput::make('tooth_number')
+                ->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology'),
             Textarea::make('notes'),
         ];
     }

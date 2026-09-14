@@ -41,6 +41,7 @@ class OperationTable
                 ->label('Procedure')
                 ->searchable(),
             TextColumn::make('tooth_number')
+                ->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                 ->label('Tooth/Target')
                 ->searchable(),
             IconColumn::make('followUps')

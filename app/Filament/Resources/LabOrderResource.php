@@ -74,7 +74,7 @@ class LabOrderResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\Select::make('practice_id')
+                        Forms\Components\Select::make('practice_id')->hidden()
                             ->label('Practice')
                             ->relationship('practice', 'name')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
@@ -110,7 +110,8 @@ class LabOrderResource extends Resource
                                     ->label('Tooth Numbers (FDI System)')
                                     ->placeholder('e.g. 11, 21, 22 or Upper Arch')
                                     ->helperText('List all tooth positions involved in this restoration')
-                                    ->required(),
+                                    ->required(fn () => \Filament\Facades\Filament::getTenant()?->type !== 'ophthalmology')
+                                    ->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology'),
                                 Forms\Components\Select::make('material')
                                     ->label('Material Substrate & Brand')
                                     ->options([
@@ -330,7 +331,7 @@ class LabOrderResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_type')
                     ->label('Restoration')
-                    ->description(fn (LabOrder $record) => "Teeth: {$record->teeth_fdi}")
+                    ->description(fn (LabOrder $record) => \Filament\Facades\Filament::getTenant()?->type !== 'ophthalmology' ? "Teeth: {$record->teeth_fdi}" : null)
                     ->badge()
                     ->color('info')
                     ->sortable(),

@@ -25,6 +25,23 @@ class PracticeResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Clinic Information')
                     ->schema([
+                        Forms\Components\Select::make('type')
+                            ->label('Clinic Type')
+                            ->options(Practice::TYPES)
+                            ->default('dental')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                $features = $get('features') ?? [];
+                                if ($state !== 'dental') {
+                                    $features = array_diff($features, ['3d_model']);
+                                } else {
+                                    if (!in_array('3d_model', $features)) {
+                                        $features[] = '3d_model';
+                                    }
+                                }
+                                $set('features', array_values($features));
+                            }),
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
@@ -107,7 +124,7 @@ class PracticeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PracticeResource\RelationManagers\UsersRelationManager::class,
         ];
     }
 

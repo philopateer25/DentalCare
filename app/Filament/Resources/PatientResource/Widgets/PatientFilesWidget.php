@@ -55,7 +55,7 @@ class PatientFilesWidget extends BaseWidget
                                 'cbct', 'xray_panoramic', 'xray_periapical' => 'info',
                                 default => 'success',
                             }),
-                        Tables\Columns\TextColumn::make('tooth_number_fdi')
+                        Tables\Columns\TextColumn::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->formatStateUsing(fn ($state) => $state ? "Tooth {$state}" : '')
                             ->color('gray'),
                         Tables\Columns\TextColumn::make('created_at')
@@ -92,7 +92,7 @@ class PatientFilesWidget extends BaseWidget
                             ->required(),
                         Forms\Components\TextInput::make('title')
                             ->required(),
-                        Forms\Components\TextInput::make('tooth_number_fdi')
+                        Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->label('Tooth Number (Optional)')
                             ->numeric(),
                         Forms\Components\Textarea::make('notes')
@@ -120,7 +120,7 @@ class PatientFilesWidget extends BaseWidget
                             ->required(),
                         Forms\Components\TextInput::make('title')
                             ->required(),
-                        Forms\Components\TextInput::make('tooth_number_fdi')
+                        Forms\Components\TextInput::make('tooth_number_fdi')->hidden(fn () => \Filament\Facades\Filament::getTenant()?->type === 'ophthalmology')
                             ->label('Tooth Number (Optional)')
                             ->numeric(),
                         Forms\Components\Textarea::make('notes')

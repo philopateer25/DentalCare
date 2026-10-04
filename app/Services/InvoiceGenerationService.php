@@ -44,10 +44,10 @@ class InvoiceGenerationService
         }
 
         return DB::transaction(function () use ($plan, $patient, $procedureIds) {
-            // Fetch completed procedures for this plan
+            // Fetch billable procedures for this plan (allow planned, in_progress, and completed to be invoiced upfront)
             $query = TreatmentProcedure::whereHas('phase', function ($q) use ($plan) {
                 $q->where('treatment_plan_id', $plan->id);
-            })->where('status', 'completed');
+            })->whereIn('status', ['planned', 'in_progress', 'completed']);
 
             if (! empty($procedureIds)) {
                 $ids = is_array($procedureIds) ? $procedureIds : $procedureIds->toArray();
@@ -57,7 +57,7 @@ class InvoiceGenerationService
             $completedProcedures = $query->get();
 
             if ($completedProcedures->isEmpty()) {
-                throw new InvalidArgumentException('No completed procedures found for invoicing.');
+                throw new InvalidArgumentException('No billable procedures found for invoicing.');
             }
 
             // Find procedure IDs that are already invoiced

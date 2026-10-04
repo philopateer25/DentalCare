@@ -13,6 +13,7 @@ class WhatsAppSettings extends Page
     protected static ?string $navigationGroup = 'Settings';
     protected static string $view = 'filament.pages.whats-app-settings';
     protected static ?string $title = 'WhatsApp Integration';
+    protected static bool $shouldRegisterNavigation = false;
 
     public ?string $qrCodeBase64 = null;
     public bool $isConnected = false;
@@ -131,7 +132,17 @@ class WhatsAppSettings extends Page
                     $this->qrCodeBase64 = $data['qrcode']['base64'];
                     Notification::make()->title('Instance created. Please scan the QR code.')->success()->send();
                 } else {
-                    Notification::make()->title('Could not fetch QR Code from create. Try again.')->body(json_encode($data))->warning()->send();
+                    // In Evolution API v2, QR code generation is async. Wait a moment and fetch it explicitly.
+                    sleep(2);
+                    $connectResponse = Http::withHeaders(['apikey' => $apiKey])
+                        ->get("{$apiUrl}/instance/connect/{$instanceName}");
+                        
+                    if ($connectResponse->successful() && isset($connectResponse->json()['base64'])) {
+                        $this->qrCodeBase64 = $connectResponse->json()['base64'];
+                        Notification::make()->title('Instance created. Please scan the QR code.')->success()->send();
+                    } else {
+                        Notification::make()->title('Instance created, but QR code is still generating. Click connect again!')->warning()->send();
+                    }
                 }
             } else {
                 Notification::make()

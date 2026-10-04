@@ -183,12 +183,10 @@ class AppointmentsRelationManager extends RelationManager
                         $time = $record->start_time->format('h:i A on d M Y');
                         $message = "Hello {$record->patient->first_name}, this is a friendly reminder for your dental appointment at {$time}. Reply to confirm or cancel.";
                         
-                        $practice = \Filament\Facades\Filament::getTenant();
-                        $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
+                        $phoneFormat = preg_replace('/[^0-9]/', '', $phone);
+                        $url = "https://wa.me/{$phoneFormat}?text=" . urlencode($message);
                         
-                        \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $message);
-                        
-                        \Filament\Notifications\Notification::make()->title('Reminder Queued!')->success()->send();
+                        return redirect()->away($url);
                     }),
                     
                 Tables\Actions\Action::make('whatsapp_instructions')
@@ -210,12 +208,10 @@ class AppointmentsRelationManager extends RelationManager
                             return;
                         }
                         
-                        $practice = \Filament\Facades\Filament::getTenant();
-                        $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
+                        $phoneFormat = preg_replace('/[^0-9]/', '', $phone);
+                        $url = "https://wa.me/{$phoneFormat}?text=" . urlencode($data['custom_message']);
                         
-                        \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $data['custom_message']);
-                        
-                        \Filament\Notifications\Notification::make()->title('Instructions Queued!')->success()->send();
+                        return redirect()->away($url);
                     }),
 
                 Tables\Actions\EditAction::make(),

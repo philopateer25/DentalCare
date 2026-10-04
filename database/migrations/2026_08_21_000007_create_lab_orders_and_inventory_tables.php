@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('material')->nullable(); // Zirconia, E-Max, PFM, Acrylic
             $table->text('instructions')->nullable();
             $table->decimal('cost', 10, 2)->default(0.00);
-            $table->enum('status', ['impression_sent', 'in_production', 'delivered', 'fitted', 'returned_for_redo'])->default('impression_sent');
+            $table->enum('status', ['impression_sent', 'in_production', 'shipped_by_lab', 'received_at_clinic', 'delivered', 'fitted', 'returned_for_redo'])->default('impression_sent');
             $table->dateTime('sent_at');
             $table->dateTime('expected_delivery_at')->nullable();
             $table->dateTime('delivered_at')->nullable();

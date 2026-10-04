@@ -136,4 +136,9 @@ class Practice extends Model
     {
         return $this->hasMany(InventoryItem::class);
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

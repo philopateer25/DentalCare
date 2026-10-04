@@ -14,8 +14,12 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        host: 'localhost',
+        host: '0.0.0.0',
         port: 5173,
+        cors: true,
+        hmr: {
+            host: 'localhost', // Automatically replaced by Laravel Vite plugin dynamically
+        },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

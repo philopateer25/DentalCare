@@ -26,15 +26,15 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            RoleSeeder::class,
             ClinicDataSeeder::class,
+            MultiClinicSeeder::class,
+            RoleSeeder::class,
             DentalCatalogSeeder::class,
             PatientDataSeeder::class,
             DentalInventorySeeder::class,
             DentalLabSeeder::class,
             DentalFinanceSeeder::class,
             DentalStaffAndInsuranceSeeder::class,
-            MultiClinicSeeder::class,
             OperatorySeeder::class,
             EyeCatalogSeeder::class,
             EyeInventorySeeder::class,

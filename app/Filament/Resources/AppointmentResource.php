@@ -33,18 +33,18 @@ class AppointmentResource extends Resource
                             ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
                             ->required(),
                         Forms\Components\Select::make('operatory_id')
-                            ->relationship('operatory', 'name', fn ($query) => $query->whereHas('branch', fn ($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))),
+                            ->relationship('operatory', 'name', fn ($query) => $query->whereHas('branch', fn ($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)))
+                            ->required(),
                         Forms\Components\Select::make('status')
                             ->options([
-                                'scheduled' => 'Scheduled',
-                                'confirmed' => 'Confirmed',
-                                'checked_in' => 'Checked In',
-                                'in_progress' => 'In Progress',
+                                'booked' => 'Booked',
+                                'arrived' => 'Arrived',
+                                'in_chair' => 'In Chair',
                                 'completed' => 'Completed',
-                                'cancelled' => 'Cancelled',
                                 'no_show' => 'No Show',
+                                'cancelled' => 'Cancelled',
                             ])
-                            ->default('scheduled')
+                            ->default('booked')
                             ->required(),
                     ])->columns(2),
 
@@ -88,10 +88,9 @@ class AppointmentResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'scheduled' => 'gray',
-                        'confirmed' => 'info',
-                        'checked_in' => 'warning',
-                        'in_progress' => 'primary',
+                        'booked' => 'gray',
+                        'arrived' => 'info',
+                        'in_chair' => 'warning',
                         'completed' => 'success',
                         'cancelled', 'no_show' => 'danger',
                         default => 'gray',
@@ -100,11 +99,11 @@ class AppointmentResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'scheduled' => 'Scheduled',
-                        'confirmed' => 'Confirmed',
-                        'checked_in' => 'Checked In',
-                        'in_progress' => 'In Progress',
+                        'booked' => 'Booked',
+                        'arrived' => 'Arrived',
+                        'in_chair' => 'In Chair',
                         'completed' => 'Completed',
+                        'no_show' => 'No Show',
                         'cancelled' => 'Cancelled',
                     ]),
             ])

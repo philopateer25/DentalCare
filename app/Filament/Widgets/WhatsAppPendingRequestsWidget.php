@@ -22,6 +22,11 @@ class WhatsAppPendingRequestsWidget extends BaseWidget
     protected static ?int $sort = 1;
     protected int | string | array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     public function table(Table $table): Table
     {
         return $table

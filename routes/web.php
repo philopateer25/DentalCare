@@ -163,3 +163,7 @@ Route::middleware('auth')->group(function () {
 
 // WhatsApp Webhook Route
 Route::post('/api/whatsapp/webhook', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// Mock Central License API (For Local Testing of Phase 1)
+Route::post('/api/internal/license/enroll', [\App\Http\Controllers\Api\CentralLicenseMockController::class, 'enroll'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/api/internal/license/heartbeat', [\App\Http\Controllers\Api\CentralLicenseMockController::class, 'heartbeat'])->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
+        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
         $middleware->alias([
             'feature' => \App\Http\Middleware\RequireFeature::class,
             'onboarding' => \App\Http\Middleware\EnsureOnboardingIsCompleted::class,

@@ -66,7 +66,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Create volume mount point for persistent storage
-VOLUME ["/var/www/html/storage/app"]
+# VOLUME ["/var/www/html/storage/app"]
 
 # Expose PHP-FPM port
 EXPOSE 9000

@@ -36,16 +36,9 @@ export function extractToothNumber(nodeName: string): string | null {
 export function isSoftTissueNode(nodeName: string): boolean {
   const lower = nodeName.toLowerCase();
   return (
-    lower.includes('gum') ||
-    lower.includes('gingiva') ||
-    lower.includes('jaw') ||
-    lower.includes('tongue') ||
-    lower.includes('mouth') ||
-    lower.includes('base') ||
-    lower.includes('soft') ||
-    lower.includes('wet') ||
-    lower.includes('object_4') ||
-    lower.includes('object_8')
+    /gum|gingiva|jaw|tongue|mouth|base|soft|wet/.test(lower) ||
+    /\bobject_4\b/.test(lower) ||
+    /\bobject_8\b/.test(lower)
   );
 }
 
@@ -64,7 +57,7 @@ const GLTFDentalArch: React.FC<{
   onSelectTooth: (toothNumber: string) => void;
   onDoubleClickTooth?: (toothNumber: string) => void;
 }> = ({ modelUrl, teethRecords, plannedProcedures, selectedTooth, onSelectTooth, onDoubleClickTooth }) => {
-  const gltf = useGLTF(modelUrl) as any;
+  const gltf = useGLTF(modelUrl, true) as any;
   const [hoveredTooth, setHoveredTooth] = useState<string | null>(null);
   const [hoveredPos, setHoveredPos] = useState<THREE.Vector3 | null>(null);
 
@@ -116,12 +109,15 @@ const GLTFDentalArch: React.FC<{
 
     const box = new THREE.Box3().setFromObject(cloned);
     const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
     box.getSize(size);
+    box.getCenter(center);
     const maxDim = Math.max(size.x, size.y, size.z);
     
     if (maxDim > 0) {
       const scaleFactor = 6.5 / maxDim;
       cloned.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      cloned.position.set(-center.x * scaleFactor, -center.y * scaleFactor, -center.z * scaleFactor);
     }
 
     return { scene: cloned, nodeMap: map };
@@ -152,6 +148,7 @@ const GLTFDentalArch: React.FC<{
             }
 
             child.material.color.set(displayColor);
+            child.material.map = null; // Remove any baked textures
             
             // Add a purple glow for planned treatments
             if (hasPlanned && !isSelected && !isHovered) {
@@ -369,7 +366,7 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
   selectedTooth,
   onSelectTooth,
   onDoubleClickTooth,
-  modelUrl = '/models/teeth-seperated.glb',
+  modelUrl = '/models/teeth-seperated-optimized.glb',
   cleanMode = false,
 }) => {
   return (
@@ -380,27 +377,22 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
         <directionalLight position={[-5, -5, -5]} intensity={0.4} />
         <pointLight position={[0, 3, 2]} intensity={0.6} color="#ffffff" />
 
-        <Center>
-          {/* RULE ENFORCEMENT: Suspense and GLTFBoundary for graceful degradation */}
-          <Suspense
-            fallback={
-              <Html center>
-                <div className="text-white text-sm font-medium bg-slate-900/80 px-4 py-2 rounded-xl backdrop-blur-md border border-slate-700/60 shadow-xl whitespace-nowrap">
-                  Loading 3D Model...
-                </div>
-              </Html>
-            }
-          >
-            <GLTFBoundary
-              fallback={
-                <ProceduralDentalArch
-                  teethRecords={teethRecords}
-                  selectedTooth={selectedTooth}
-                  onSelectTooth={onSelectTooth}
-                />
-              }
-            >
-              <GLTFDentalArch
+        <group>
+          <GLTFBoundary fallback={
+            <ProceduralDentalArch 
+              teethRecords={teethRecords} 
+              selectedTooth={selectedTooth} 
+              onSelectTooth={onSelectTooth} 
+            />
+          }>
+            <Suspense fallback={
+              <ProceduralDentalArch 
+                teethRecords={teethRecords} 
+                selectedTooth={selectedTooth} 
+                onSelectTooth={onSelectTooth} 
+              />
+            }>
+              <GLTFDentalArch 
                 modelUrl={modelUrl}
                 teethRecords={teethRecords}
                 plannedProcedures={plannedProcedures}
@@ -408,9 +400,9 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
                 onSelectTooth={onSelectTooth}
                 onDoubleClickTooth={onDoubleClickTooth}
               />
-            </GLTFBoundary>
-          </Suspense>
-        </Center>
+            </Suspense>
+          </GLTFBoundary>
+        </group>
 
         <OrbitControls enablePan={false} minDistance={2} maxDistance={15} autoRotate={false} makeDefault />
       </Canvas>

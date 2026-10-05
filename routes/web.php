@@ -10,6 +10,8 @@ Route::get('/', function () {
     return Inertia::render('Welcome/Welcome');
 })->name('home');
 
+Route::get('/login', fn () => redirect()->route('filament.admin.auth.login'))->name('login');
+
 // Clinic Onboarding Routes
 Route::middleware('auth')->group(function () {
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');

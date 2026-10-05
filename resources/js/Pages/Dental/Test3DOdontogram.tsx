@@ -25,7 +25,42 @@ const FDI_TEETH = {
   lowerLeft: ['31', '32', '33', '34', '35', '36', '37', '38'],
 };
 
-export const Test3DOdontogram: React.FC<Props> = ({ patient, examination: initialExam, initialRecords = {}, initialViewMode = 'clean' }) => {
+class TopErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: 'red', backgroundColor: '#fff' }}>
+          <h1>React Crashed!</h1>
+          <pre>{this.state.error?.toString()}</pre>
+          <pre>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export const Test3DOdontogram: React.FC<Props> = (props) => {
+  return (
+    <TopErrorBoundary>
+      <Test3DOdontogramInner {...props} />
+    </TopErrorBoundary>
+  );
+};
+
+const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialExam, initialRecords = {}, initialViewMode = 'clean' }) => {
   const [teethRecords, setTeethRecords] = useState<Record<string, ToothRecord>>(initialRecords);
   const [selectedTooth, setSelectedTooth] = useState<string | null>('11');
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');

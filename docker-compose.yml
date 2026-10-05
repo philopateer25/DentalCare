@@ -1,5 +1,4 @@
 services:
-  # The Web Server (Exposed to Clinic LAN)
   nginx:
     build:
       context: .
@@ -14,33 +13,17 @@ services:
     networks:
       - clinic_network
 
-  # The main Laravel PHP-FPM application
   app:
     build:
       context: .
       target: production
     container_name: clinic_app
     restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - APP_KEY=${APP_KEY}
-      - APP_DEBUG=false
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-clinic_db}
-      - DB_USERNAME=${DB_USERNAME:-clinic_user}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
-      - REDIS_HOST=redis
-      - CACHE_STORE=redis
-      - QUEUE_CONNECTION=redis
-      - SESSION_DRIVER=redis
     volumes:
-      - clinic_storage:/var/www/html/storage/app
+      - clinic_vendor:/var/www/html/vendor
     networks:
       - clinic_network
 
-  # Background worker for queues
   worker:
     build:
       context: .
@@ -48,24 +31,14 @@ services:
     container_name: clinic_worker
     restart: unless-stopped
     command: php artisan queue:work --sleep=3 --tries=3
-    environment:
-      # Inherits same environment as app
-      - APP_KEY=${APP_KEY}
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_DATABASE=${DB_DATABASE:-clinic_db}
-      - DB_USERNAME=${DB_USERNAME:-clinic_user}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
-      - REDIS_HOST=redis
     volumes:
-      - clinic_storage:/var/www/html/storage/app
+      - clinic_vendor:/var/www/html/vendor
     depends_on:
       - app
       - redis
     networks:
       - clinic_network
 
-  # Scheduler for cron jobs (including our License Heartbeat)
   scheduler:
     build:
       context: .
@@ -73,22 +46,13 @@ services:
     container_name: clinic_scheduler
     restart: unless-stopped
     command: php artisan schedule:work
-    environment:
-      - APP_KEY=${APP_KEY}
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_DATABASE=${DB_DATABASE:-clinic_db}
-      - DB_USERNAME=${DB_USERNAME:-clinic_user}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
-      - REDIS_HOST=redis
     volumes:
-      - clinic_storage:/var/www/html/storage/app
+      - clinic_vendor:/var/www/html/vendor
     depends_on:
       - app
     networks:
       - clinic_network
 
-  # Isolated Database (Not exposed to host or internet)
   db:
     image: mysql:8.0
     container_name: clinic_db
@@ -103,7 +67,6 @@ services:
     networks:
       - clinic_network
 
-  # Redis for cache and queues
   redis:
     image: redis:7-alpine
     container_name: clinic_redis
@@ -116,7 +79,7 @@ services:
 volumes:
   clinic_db_data:
   clinic_redis_data:
-  clinic_storage: # Critical: Mounts storage/app where patient files and license.json live
+  clinic_vendor:
 
 networks:
   clinic_network:

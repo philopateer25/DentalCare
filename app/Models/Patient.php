@@ -124,4 +124,9 @@ class Patient extends Model
     {
         return $this->hasMany(ExternalTreatment::class);
     }
+
+    public function voiceNotes(): HasMany
+    {
+        return $this->hasMany(VoiceNote::class);
+    }
 }

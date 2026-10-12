@@ -6,13 +6,13 @@ import { ToothRecord, CONDITION_COLORS } from './types';
 import { extractToothNumber, isSoftTissueNode, isIgnoredNode } from './Dental3DViewer';
 
 interface SingleToothViewerProps {
-  modelUrl: string;
+  modelUrl?: string;
   toothNumber: string;
   record?: ToothRecord;
 }
 
-const SingleToothMesh: React.FC<SingleToothViewerProps> = ({ modelUrl, toothNumber, record }) => {
-  const gltf = useGLTF(modelUrl) as any;
+const SingleToothMesh: React.FC<SingleToothViewerProps> = ({ modelUrl = '/models/teeth-seperated-optimized.glb', toothNumber, record }) => {
+  const gltf = useGLTF(modelUrl, true) as any;
   
   const isolatedMesh = useMemo(() => {
     if (!gltf || !gltf.scene) return null;
@@ -54,6 +54,7 @@ const SingleToothMesh: React.FC<SingleToothViewerProps> = ({ modelUrl, toothNumb
         opacity: isMissing ? 0.2 : 1.0,
         wireframe: isMissing,
       });
+      newMaterial.map = null;
       
       targetMesh.material = newMaterial;
     }

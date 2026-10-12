@@ -114,6 +114,13 @@ class PatientResource extends Resource
                                     ])->columns(2),
                             ]),
 
+                        \Filament\Infolists\Components\Tabs\Tab::make('360° Medical History')
+                            ->icon('heroicon-o-shield-check')
+                            ->visible(fn () => auth()->user()->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']))
+                            ->schema([
+                                \Filament\Infolists\Components\View::make('filament.resources.patient-resource.tabs.history-360')
+                            ]),
+
                         \Filament\Infolists\Components\Tabs\Tab::make('3D Mouth Chart')
                             ->icon('heroicon-o-sparkles')
                             ->visible(fn () => auth()->user()->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']) && \Filament\Facades\Filament::getTenant()->hasFeature('3d_model'))

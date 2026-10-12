@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import Dental3DViewer from '../../Components/Dental3D/Dental3DViewer';
+import Dental3DViewer, { ArchMode, CameraPreset } from '../../Components/Dental3D/Dental3DViewer';
 import { SingleToothViewer } from '../../Components/Dental3D/SingleToothViewer';
+import VoiceNoteModal from '../../Components/Dental3D/VoiceNoteModal';
+import { Mic, Eye, EyeOff, Crosshair, Camera } from 'lucide-react';
 import {
   CONDITION_COLORS,
   CONDITION_LABELS,
@@ -14,6 +16,7 @@ interface Props {
   patient: PatientInfo;
   examination: { id: number; type: string; examined_at: string; notes: string | null };
   initialRecords?: Record<string, ToothRecord>;
+  initialProcedures?: Record<string, any[]>;
   initialViewMode?: 'clean' | 'detailed';
 }
 
@@ -60,7 +63,13 @@ export const Test3DOdontogram: React.FC<Props> = (props) => {
   );
 };
 
-const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialExam, initialRecords = {}, initialViewMode = 'clean' }) => {
+const Test3DOdontogramInner: React.FC<Props> = ({
+  patient,
+  examination: initialExam,
+  initialRecords = {},
+  initialProcedures = {},
+  initialViewMode = 'clean',
+}) => {
   const [teethRecords, setTeethRecords] = useState<Record<string, ToothRecord>>(initialRecords);
   const [selectedTooth, setSelectedTooth] = useState<string | null>('11');
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -72,9 +81,26 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
   const [mode, setMode] = useState<'findings' | 'treatment'>('findings');
   const [activePlan, setActivePlan] = useState<any>(null);
   const [allPlans, setAllPlans] = useState<any[]>([]);
-  const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>({});
+  const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>(initialProcedures);
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [newPlanTitle, setNewPlanTitle] = useState('');
+
+  // Clinical Control States
+  const [showGums, setShowGums] = useState(true);
+  const [isolateTooth, setIsolateTooth] = useState(false);
+  const [archMode, setArchMode] = useState<ArchMode>('both');
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>('default');
+
+  // Post-Op Voice Note Modal State
+  const [voiceNoteModalOpen, setVoiceNoteModalOpen] = useState(false);
+  const [voiceNoteTooth, setVoiceNoteTooth] = useState<string | null>(null);
+  const [voiceNoteProcedure, setVoiceNoteProcedure] = useState<any | null>(null);
+
+  const handleOpenVoiceNote = (toothNum: string, proc?: any) => {
+    setVoiceNoteTooth(toothNum);
+    setVoiceNoteProcedure(proc || (plannedProcedures[toothNum] ? plannedProcedures[toothNum][0] : null));
+    setVoiceNoteModalOpen(true);
+  };
 
   React.useEffect(() => {
     // Fetch historical examinations
@@ -323,9 +349,19 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
       <div className="w-full h-screen bg-transparent relative flex items-center justify-center">
         <Dental3DViewer
           teethRecords={teethRecords}
+          plannedProcedures={plannedProcedures}
           selectedTooth={selectedTooth}
           onSelectTooth={(num) => setSelectedTooth(num)}
           onDoubleClickTooth={(num) => setModalTooth(num)}
+          showGums={showGums}
+          onShowGumsChange={setShowGums}
+          isolateTooth={isolateTooth}
+          onIsolateToothChange={setIsolateTooth}
+          archMode={archMode}
+          onArchModeChange={setArchMode}
+          cameraPreset={cameraPreset}
+          onCameraPresetChange={setCameraPreset}
+          onOpenVoiceNote={(num, proc) => handleOpenVoiceNote(num, proc)}
           cleanMode={true}
         />
         
@@ -359,7 +395,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
               <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-slate-800">
                 <div className="bg-slate-950/40 p-4 border-b md:border-b-0 md:border-r border-slate-800">
                   <SingleToothViewer 
-                    modelUrl="/models/teeth-seperated.glb" 
+                    modelUrl="/models/teeth-seperated-optimized.glb" 
                     toothNumber={modalTooth} 
                     record={teethRecords[modalTooth]} 
                   />
@@ -395,6 +431,43 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
                       })}
                     </div>
                   </div>
+
+                  {/* Procedures and Anesthesia Details */}
+                  {plannedProcedures[modalTooth] && plannedProcedures[modalTooth].length > 0 && (
+                    <div className="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 flex flex-col gap-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                        Procedures ({plannedProcedures[modalTooth].length})
+                      </label>
+                      {plannedProcedures[modalTooth].map((proc: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800/80 flex flex-col gap-1 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-100">{proc.procedure_code?.title || 'Procedure'}</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${proc.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                              {proc.status}
+                            </span>
+                          </div>
+                          {proc.anesthetic_agent && (
+                            <div className="text-emerald-400 font-medium text-[11px]">
+                              💉 Anesthesia: {proc.anesthetic_agent} ({proc.anesthetic_dosage || '1 carpule'}) - {proc.anesthetic_technique || 'Infiltration'}
+                            </div>
+                          )}
+                          {proc.materials_used_json && (
+                            <div className="text-slate-300 text-[11px]">
+                              <span className="text-slate-400">Materials: </span>
+                              {Array.isArray(proc.materials_used_json) ? proc.materials_used_json.join(', ') : proc.materials_used_json}
+                            </div>
+                          )}
+                          {proc.tools_used_json && (
+                            <div className="text-slate-300 text-[11px]">
+                              <span className="text-slate-400">Tools: </span>
+                              {Array.isArray(proc.tools_used_json) ? proc.tools_used_json.join(', ') : proc.tools_used_json}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {teethRecords[modalTooth]?.notes && (
                     <div>
                       <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Clinical Notes</label>
@@ -405,26 +478,49 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
                   )}
                 </div>
               </div>
-              <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-end gap-3">
-                <button 
+              <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center gap-3">
+                <button
+                  type="button"
                   onClick={() => {
-                    setModalTooth(null);
-                    window.top?.open(`/patients/${patient.id}/odontogram-details`, '_blank');
+                    const proc = plannedProcedures[modalTooth] ? plannedProcedures[modalTooth][0] : null;
+                    handleOpenVoiceNote(modalTooth, proc);
                   }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-colors"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg flex items-center gap-1.5 active:scale-95"
                 >
-                  Edit Tooth
+                  <Mic className="w-3.5 h-3.5" />
+                  Send WhatsApp Voice Note
                 </button>
-                <button 
-                  onClick={() => setModalTooth(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition-colors"
-                >
-                  Close
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => {
+                      setModalTooth(null);
+                      window.top?.open(`/patients/${patient.id}/odontogram-details`, '_blank');
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
+                  >
+                    Edit Tooth
+                  </button>
+                  <button 
+                    onClick={() => setModalTooth(null)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Global Post-Op Voice Note Modal */}
+        <VoiceNoteModal
+          isOpen={voiceNoteModalOpen}
+          onClose={() => setVoiceNoteModalOpen(false)}
+          patient={patient}
+          toothNumber={voiceNoteTooth}
+          procedure={voiceNoteProcedure}
+        />
       </div>
     );
   }
@@ -529,6 +625,15 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
               selectedTooth={selectedTooth}
               onSelectTooth={(num) => setSelectedTooth(num)}
               onDoubleClickTooth={(num) => setModalTooth(num)}
+              showGums={showGums}
+              onShowGumsChange={setShowGums}
+              isolateTooth={isolateTooth}
+              onIsolateToothChange={setIsolateTooth}
+              archMode={archMode}
+              onArchModeChange={setArchMode}
+              cameraPreset={cameraPreset}
+              onCameraPresetChange={setCameraPreset}
+              onOpenVoiceNote={(num, proc) => handleOpenVoiceNote(num, proc)}
             />
           </div>
 
@@ -925,7 +1030,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
               {/* Left Column: Isolated 3D View */}
               <div className="bg-slate-950/40 p-4 border-b md:border-b-0 md:border-r border-slate-800">
                 <SingleToothViewer 
-                  modelUrl="/models/teeth-seperated.glb" 
+                  modelUrl="/models/teeth-seperated-optimized.glb" 
                   toothNumber={modalTooth} 
                   record={teethRecords[modalTooth]} 
                 />
@@ -970,6 +1075,42 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
                 </div>
               </div>
 
+              {/* Procedures & Clinical Execution Breakdown */}
+              {plannedProcedures[modalTooth] && plannedProcedures[modalTooth].length > 0 && (
+                <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 flex flex-col gap-2">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Clinical Procedures ({plannedProcedures[modalTooth].length})
+                  </label>
+                  {plannedProcedures[modalTooth].map((proc: any, idx: number) => (
+                    <div key={idx} className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 flex flex-col gap-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-100">{proc.procedure_code?.title || 'Procedure'}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${proc.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                          {proc.status}
+                        </span>
+                      </div>
+                      {proc.anesthetic_agent && (
+                        <div className="text-emerald-400 font-medium text-[11px]">
+                          💉 Anesthesia: {proc.anesthetic_agent} ({proc.anesthetic_dosage || '1 carpule'}) - {proc.anesthetic_technique || 'Infiltration'}
+                        </div>
+                      )}
+                      {proc.materials_used_json && (
+                        <div className="text-slate-300 text-[11px]">
+                          <span className="text-slate-400">Materials: </span>
+                          {Array.isArray(proc.materials_used_json) ? proc.materials_used_json.join(', ') : proc.materials_used_json}
+                        </div>
+                      )}
+                      {proc.tools_used_json && (
+                        <div className="text-slate-300 text-[11px]">
+                          <span className="text-slate-400">Tools: </span>
+                          {Array.isArray(proc.tools_used_json) ? proc.tools_used_json.join(', ') : proc.tools_used_json}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Clinical Notes */}
               {teethRecords[modalTooth]?.notes && (
                 <div>
@@ -982,10 +1123,22 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
             </div>
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+            <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const proc = plannedProcedures[modalTooth] ? plannedProcedures[modalTooth][0] : null;
+                  handleOpenVoiceNote(modalTooth, proc);
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg flex items-center gap-1.5 active:scale-95"
+              >
+                <Mic className="w-3.5 h-3.5" />
+                Send WhatsApp Voice Note
+              </button>
+
               <button 
                 onClick={() => setModalTooth(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
               >
                 Close
               </button>
@@ -993,6 +1146,15 @@ const Test3DOdontogramInner: React.FC<Props> = ({ patient, examination: initialE
           </div>
         </div>
       )}
+
+      {/* Global Post-Op Voice Note Modal */}
+      <VoiceNoteModal
+        isOpen={voiceNoteModalOpen}
+        onClose={() => setVoiceNoteModalOpen(false)}
+        patient={patient}
+        toothNumber={voiceNoteTooth}
+        procedure={voiceNoteProcedure}
+      />
     </div>
   );
 };

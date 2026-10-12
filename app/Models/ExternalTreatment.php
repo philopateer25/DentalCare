@@ -18,6 +18,7 @@ class ExternalTreatment extends Model
         'clinic_or_doctor_name',
         'notes',
         'attachments_json',
+        'created_by',
     ];
 
     protected $casts = [
@@ -28,5 +29,10 @@ class ExternalTreatment extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

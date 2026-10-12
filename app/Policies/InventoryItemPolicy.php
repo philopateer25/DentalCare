@@ -28,7 +28,7 @@ class InventoryItemPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']);
+        return $user->hasAnyRole(['doctor', 'secretary', 'clinic_admin', 'super_admin', 'developer']);
     }
 
     public function update(User $user, InventoryItem $item): bool

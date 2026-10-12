@@ -15,7 +15,8 @@ class DoctorEarningsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasRole('doctor') || auth()->user()->isDoctor();
+        $user = auth()->user();
+        return $user ? ($user->hasRole('doctor') || $user->isDoctor()) : false;
     }
 
     protected function getStats(): array
@@ -23,9 +24,11 @@ class DoctorEarningsWidget extends BaseWidget
         $today = Carbon::today();
         $thisMonth = Carbon::now()->startOfMonth();
         $userId = auth()->id();
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
 
         // 1. Today's Appointments (Doctor specific)
-        $todaysAppointments = Appointment::whereDate('start_time', $today)
+        $todaysAppointments = Appointment::where('practice_id', $practiceId)
+            ->whereDate('start_time', $today)
             ->where('doctor_id', $userId)
             ->where('status', '!=', 'cancelled')
             ->count();

@@ -21,6 +21,13 @@ class TreatmentProcedure extends Model
         'discount',
         'net_amount',
         'status',
+        'anesthetic_agent',
+        'anesthetic_dosage',
+        'anesthetic_technique',
+        'tools_used_json',
+        'materials_used_json',
+        'hemostasis_achieved',
+        'chairside_notes',
         'notes',
         'completed_at',
     ];
@@ -30,6 +37,9 @@ class TreatmentProcedure extends Model
         'fee' => 'decimal:2',
         'discount' => 'decimal:2',
         'net_amount' => 'decimal:2',
+        'tools_used_json' => 'array',
+        'materials_used_json' => 'array',
+        'hemostasis_achieved' => 'boolean',
         'completed_at' => 'datetime',
     ];
 
@@ -56,5 +66,10 @@ class TreatmentProcedure extends Model
     public function consumptions(): HasMany
     {
         return $this->hasMany(ProcedureConsumption::class);
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->procedureCode?->title ?? $this->procedureCode?->code ?? ('Procedure #' . $this->id);
     }
 }

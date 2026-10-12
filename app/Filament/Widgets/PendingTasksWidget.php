@@ -13,26 +13,29 @@ class PendingTasksWidget extends BaseWidget
 {
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 1;
-    protected static ?string $heading = 'Pending Follow-ups (Tomorrow)';
+    protected static ?string $heading = "Tomorrow's Patient Confirmation Calls";
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['secretary', 'clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 Appointment::query()
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
-                    ->where('type', 'follow_up')
+                    ->where('practice_id', $practiceId)
                     ->whereDate('start_time', Carbon::tomorrow())
-                    ->where('status', 'scheduled')
+                    ->whereIn('status', ['scheduled', 'booked'])
+                    ->orderBy('start_time', 'asc')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('patient.full_name')
-                    ->label('Patient To Call'),
+                    ->label('Patient To Call')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('patient.phone')
                     ->label('Phone Number')
                     ->copyable()
@@ -40,14 +43,22 @@ class PendingTasksWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Scheduled Time')
                     ->time('h:i A'),
+                Tables\Columns\TextColumn::make('chief_complaint')
+                    ->label('Reason')
+                    ->limit(25)
+                    ->placeholder('General Visit'),
             ])
             ->actions([
                 Tables\Actions\Action::make('confirm')
-                    ->label('Confirm')
+                    ->label('Confirmed')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(function (Appointment $record) {
                         $record->update(['status' => 'booked']);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Appointment Confirmed')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->paginated(false);

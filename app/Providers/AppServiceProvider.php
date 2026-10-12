@@ -26,5 +26,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\TreatmentProcedure::observe(\App\Observers\TreatmentProcedureObserver::class);
         \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
         \App\Models\Practice::observe(\App\Observers\PracticeObserver::class);
+
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->hasAnyRole(['developer', 'super_admin']) ? true : null;
+        });
     }
 }

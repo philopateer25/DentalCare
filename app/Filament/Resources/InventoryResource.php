@@ -61,10 +61,12 @@ class InventoryResource extends Resource
                                     ->placeholder('e.g. Hu-Friedy, 3M Oral Care, Dentsply, Kerr'),
                                 Forms\Components\Select::make('supplier_id')
                                     ->label('Preferred Supplier')
-                                    ->options(Supplier::query()->where('is_active', true)->pluck('name', 'id'))
+                                    ->relationship('supplier', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)->where('is_active', true))
                                     ->searchable()
                                     ->preload()
                                     ->createOptionForm([
+                                        Forms\Components\Hidden::make('practice_id')
+                                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id),
                                         Forms\Components\TextInput::make('name')->required()->label('Supplier Name'),
                                         Forms\Components\TextInput::make('contact_person')->label('Contact Person'),
                                         Forms\Components\TextInput::make('phone')->tel(),
@@ -95,11 +97,8 @@ class InventoryResource extends Resource
                                 Forms\Components\TextInput::make('sub_category')
                                     ->label('Sub-Category / Type')
                                     ->placeholder('e.g. Rotary Files, Matrix Systems, Ultrasonic Inserts, Hemostats'),
-                                Forms\Components\Select::make('practice_id')->hidden()
-                                    ->label('Practice / Clinic')
-                                    ->relationship('practice', 'name')
-                                    ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
-                                    ->required(),
+                                Forms\Components\Hidden::make('practice_id')
+                                    ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id),
                             ])->columns(2),
 
                         Forms\Components\Tabs\Tab::make('Pricing & Identification')

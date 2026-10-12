@@ -3,7 +3,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: docker/nginx/Dockerfile
+      target: web-server
     container_name: clinic_nginx
     ports:
       - "80:80"

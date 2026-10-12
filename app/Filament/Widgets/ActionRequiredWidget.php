@@ -17,16 +17,17 @@ class ActionRequiredWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        $user = auth()->user();
-        return !($user->isDoctor() || $user->hasRole('doctor'));
+        return auth()->user()?->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 Invoice::query()
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                    ->where('practice_id', $practiceId)
                     ->whereIn('status', ['unpaid', 'partially_paid', 'overdue'])
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
@@ -37,7 +38,7 @@ class ActionRequiredWidget extends BaseWidget
                     ->searchable(),
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Patient'),
-                Tables\Columns\TextColumn::make('remaining_balance')
+                Tables\Columns\TextColumn::make('balance_due')
                     ->label('Amount Due')
                     ->money(fn () => CurrencyHelper::currentCurrency())
                     ->color('danger')

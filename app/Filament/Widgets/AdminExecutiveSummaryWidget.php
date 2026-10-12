@@ -16,13 +16,13 @@ class AdminExecutiveSummaryWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     protected function getStats(): array
     {
         $thisMonth = Carbon::now()->startOfMonth();
-        $practiceId = \Filament\Facades\Filament::getTenant()?->id;
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
 
         // 1. Gross Production (MTD)
         $grossProduction = Invoice::where('practice_id', $practiceId)->whereDate('issue_date', '>=', $thisMonth)->sum('total_amount');

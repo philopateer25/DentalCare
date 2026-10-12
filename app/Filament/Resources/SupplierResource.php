@@ -57,9 +57,7 @@ class SupplierResource extends Resource
                         Forms\Components\TextInput::make('tax_number')
                             ->label('Tax ID / VAT Number')
                             ->maxLength(100),
-                        Forms\Components\Select::make('practice_id')->hidden()
-                            ->label('Practice')
-                            ->relationship('practice', 'name')
+                        Forms\Components\Hidden::make('practice_id')
                             ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id),
                     ])->columns(2),
 

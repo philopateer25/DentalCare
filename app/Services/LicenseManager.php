@@ -82,7 +82,7 @@ class LicenseManager
      */
     public function isLockedOut(): bool
     {
-        if (app()->environment('local')) {
+        if (app()->environment('local', 'testing') || config('app.env') === 'local') {
             return false;
         }
 

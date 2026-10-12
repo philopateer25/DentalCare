@@ -31,6 +31,10 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $exceptions->respond(function ($response, \Throwable $exception, Request $request) {
+            if (! method_exists($response, 'getStatusCode')) {
+                return $response;
+            }
+
             $status = $response->getStatusCode();
 
             if (! app()->environment('local', 'testing') && in_array($status, [403, 404, 419, 500])) {

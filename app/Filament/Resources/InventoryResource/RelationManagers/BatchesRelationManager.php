@@ -17,6 +17,11 @@ class BatchesRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'batch_number';
 
+    public function isReadOnly(): bool
+    {
+        return false;
+    }
+
     public function form(Form $form): Form
     {
         return $form
@@ -29,7 +34,9 @@ class BatchesRelationManager extends RelationManager
                     ->placeholder('Auto-generated (e.g. BAT-20260901-0001)'),
                 Forms\Components\Select::make('supplier_id')
                     ->label('Supplier')
-                    ->options(Supplier::query()->pluck('name', 'id'))
+                    ->options(fn () => Supplier::query()
+                        ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
+                        ->pluck('name', 'id'))
                     ->searchable()
                     ->placeholder('Select Supplier'),
                 Forms\Components\DatePicker::make('received_date')

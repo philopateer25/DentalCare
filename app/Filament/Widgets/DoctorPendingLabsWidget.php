@@ -16,17 +16,20 @@ class DoctorPendingLabsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasRole('doctor') || auth()->user()->isDoctor();
+        $user = auth()->user();
+        return $user ? ($user->hasRole('doctor') || $user->isDoctor()) : false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 LabOrder::query()
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                    ->where('practice_id', $practiceId)
                     ->where('doctor_id', auth()->id())
-                    ->where('status', '!=', 'delivered')
+                    ->whereNotIn('status', ['received_at_clinic', 'seated_delivered', 'cancelled'])
                     ->orderBy('expected_delivery_at', 'asc')
             )
             ->columns([
@@ -41,8 +44,11 @@ class DoctorPendingLabsWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'sent' => 'warning',
-                        'in_fabrication' => 'primary',
+                        'impression_sent', 'sent' => 'info',
+                        'lab_acknowledged' => 'primary',
+                        'in_production', 'in_fabrication', 'try_in_stage' => 'warning',
+                        'shipped_by_lab' => 'success',
+                        'returned_for_redo' => 'danger',
                         default => 'secondary',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst(str_replace('_', ' ', $state))),

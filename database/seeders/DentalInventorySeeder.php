@@ -17,7 +17,7 @@ class DentalInventorySeeder extends Seeder
     public function run(): void
     {
         // 1. Ensure Practice exists
-        $practice = $this->targetPractice ?? Practice::firstOrCreate(
+        $practice = $this->targetPractice ?? Practice::where('type', 'dental')->first() ?? Practice::firstOrCreate(
             ['name' => 'Main Dental Clinic'],
             [
                 'currency' => 'USD',

@@ -118,12 +118,24 @@ Route::get('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api
 Route::post('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'store']);
 Route::get('/api/patients/{patient}/treatment-plans/active', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'getActivePlan']);
 Route::post('/api/treatment-plans/{plan}/procedures', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'addProcedure']);
-Route::patch('/api/procedures/{procedure}/complete', function (\App\Models\TreatmentProcedure $procedure) {
+Route::patch('/api/procedures/{procedure}/complete', function (\App\Models\TreatmentProcedure $procedure, \Illuminate\Http\Request $request) {
     if (auth()->check() && auth()->user()->practice_id) {
         abort_unless($procedure->phase?->plan?->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
     }
-    $procedure->update(['status' => 'completed']);
-    return response()->json(['message' => 'Completed', 'procedure' => $procedure]);
+    $updateData = [
+        'status' => 'completed',
+        'completed_at' => now(),
+    ];
+    if ($request->filled('anesthetic_agent')) $updateData['anesthetic_agent'] = $request->input('anesthetic_agent');
+    if ($request->filled('anesthetic_dosage')) $updateData['anesthetic_dosage'] = $request->input('anesthetic_dosage');
+    if ($request->filled('anesthetic_technique')) $updateData['anesthetic_technique'] = $request->input('anesthetic_technique');
+    if ($request->has('tools_used_json')) $updateData['tools_used_json'] = $request->input('tools_used_json');
+    if ($request->has('materials_used_json')) $updateData['materials_used_json'] = $request->input('materials_used_json');
+    if ($request->filled('chairside_notes')) $updateData['chairside_notes'] = $request->input('chairside_notes');
+    if ($request->has('hemostasis_achieved')) $updateData['hemostasis_achieved'] = $request->boolean('hemostasis_achieved');
+
+    $procedure->update($updateData);
+    return response()->json(['message' => 'Completed', 'procedure' => $procedure->fresh()]);
 });
 
 Route::get('/prescriptions/{prescription}/print', function (\App\Models\Prescription $prescription) {

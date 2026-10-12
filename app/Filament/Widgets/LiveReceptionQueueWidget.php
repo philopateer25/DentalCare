@@ -17,15 +17,17 @@ class LiveReceptionQueueWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['secretary', 'clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 Appointment::query()
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                    ->where('practice_id', $practiceId)
                     ->whereDate('start_time', Carbon::today())
                     ->whereIn('status', ['booked', 'arrived', 'in_chair', 'completed'])
                     ->orderBy('start_time', 'asc')

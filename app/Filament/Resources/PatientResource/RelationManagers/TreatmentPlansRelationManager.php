@@ -142,6 +142,55 @@ class TreatmentPlansRelationManager extends RelationManager
                                     ->numeric()
                                     ->required()
                                     ->readOnly(),
+                                Forms\Components\Section::make('Clinical Execution & Anesthesia')
+                                    ->schema([
+                                        Forms\Components\Select::make('anesthetic_agent')
+                                            ->label('Local Anesthetic')
+                                            ->options(\App\Services\ClinicalPresets::anestheticAgents())
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder('Select Anesthetic...'),
+
+                                        Forms\Components\Select::make('anesthetic_dosage')
+                                            ->label('Carpule Dosage')
+                                            ->options(\App\Services\ClinicalPresets::anestheticDosages())
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder('Select Dosage / Carpules...'),
+
+                                        Forms\Components\Select::make('anesthetic_technique')
+                                            ->label('Injection Technique')
+                                            ->options(\App\Services\ClinicalPresets::anestheticTechniques())
+                                            ->searchable()
+                                            ->preload()
+                                            ->placeholder('Select Technique...'),
+
+                                        Forms\Components\TagsInput::make('tools_used_json')
+                                            ->label('Equipment & Tools Used')
+                                            ->suggestions(\App\Services\ClinicalPresets::toolsAndEquipment())
+                                            ->placeholder('Add tool...')
+                                            ->columnSpan(2),
+
+                                        Forms\Components\TagsInput::make('materials_used_json')
+                                            ->label('Materials & Shade')
+                                            ->suggestions(\App\Services\ClinicalPresets::clinicalMaterials())
+                                            ->placeholder('Add material/shade...')
+                                            ->columnSpan(2),
+
+                                        Forms\Components\Toggle::make('hemostasis_achieved')
+                                            ->label('Hemostasis Achieved')
+                                            ->default(true),
+
+                                        Forms\Components\TextInput::make('chairside_notes')
+                                            ->label('Execution / Chairside Notes')
+                                            ->placeholder('e.g. Well tolerated, clean margin')
+                                            ->columnSpan(2),
+                                    ])
+                                    ->columns(3)
+                                    ->columnSpanFull()
+                                    ->collapsible()
+                                    ->collapsed(),
+
                                 Forms\Components\Textarea::make('notes')->columnSpanFull(),
                             ])
                             ->columns(4)

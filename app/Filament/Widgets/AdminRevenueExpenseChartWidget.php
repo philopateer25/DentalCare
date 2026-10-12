@@ -16,7 +16,7 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     protected function getData(): array
@@ -24,17 +24,18 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
         $revenueData = [];
         $expenseData = [];
         $labels = [];
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
 
         // Get the last 6 months
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             
-            $revenue = Invoice::where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+            $revenue = Invoice::where('practice_id', $practiceId)
                 ->whereYear('created_at', $month->year)
                 ->whereMonth('created_at', $month->month)
                 ->sum('paid_amount');
 
-            $expense = ClinicExpense::where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+            $expense = ClinicExpense::where('practice_id', $practiceId)
                 ->whereYear('expense_date', $month->year)
                 ->whereMonth('expense_date', $month->month)
                 ->sum('amount');

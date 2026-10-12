@@ -66,13 +66,37 @@ class PatientResource extends Resource
                             ->icon('heroicon-o-heart')
                             ->visible(fn () => auth()->user()->hasAnyRole(['doctor', 'clinic_admin', 'super_admin']))
                             ->schema([
-                                Section::make('Systemic Conditions')
+                                Section::make('Systemic Conditions & Vitals')
                                     ->schema([
                                         TextEntry::make('medicalHistory.blood_type')->label('Blood Type')->badge()->color('danger'),
-                                        \Filament\Infolists\Components\IconEntry::make('medicalHistory.diabetic_status')->label('Diabetic')->boolean(),
-                                        \Filament\Infolists\Components\IconEntry::make('medicalHistory.cardiac_history')->label('Cardiac History')->boolean(),
-                                        \Filament\Infolists\Components\IconEntry::make('medicalHistory.hypertension_status')->label('Hypertension')->boolean(),
-                                        \Filament\Infolists\Components\IconEntry::make('medicalHistory.bleeding_disorder')->label('Bleeding Disorder')->boolean(),
+                                        TextEntry::make('medicalHistory.diabetic_status')
+                                            ->label('Diabetic Status')
+                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->diabetic_status 
+                                                ? 'Yes (' . ($record?->medicalHistory?->hba1c_level ?: 'Type ' . $record?->medicalHistory?->diabetes_type) . ($record?->medicalHistory?->blood_sugar_reading ? ' - ' . $record?->medicalHistory?->blood_sugar_reading . ' mg/dL' : '') . ')' 
+                                                : 'No')
+                                            ->badge()
+                                            ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'danger' : 'success'),
+                                        TextEntry::make('medicalHistory.hypertension_status')
+                                            ->label('Hypertension')
+                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->hypertension_status 
+                                                ? 'Yes (' . ($record?->medicalHistory?->typical_blood_pressure ?: $record?->medicalHistory?->blood_pressure_stage) . ')' 
+                                                : 'No')
+                                            ->badge()
+                                            ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'warning' : 'success'),
+                                        TextEntry::make('medicalHistory.bleeding_disorder')
+                                            ->label('Blood Thinners / Bleeding')
+                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->bleeding_disorder 
+                                                ? 'Yes (' . ($record?->medicalHistory?->anticoagulant_type ?: 'Active') . ($record?->medicalHistory?->inr_level ? ' - INR ' . $record?->medicalHistory?->inr_level : '') . ')' 
+                                                : 'No')
+                                            ->badge()
+                                            ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'danger' : 'success'),
+                                        TextEntry::make('medicalHistory.bisphosphonate_therapy')
+                                            ->label('MRONJ Bone Risk')
+                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->bisphosphonate_therapy 
+                                                ? 'High Risk (' . ($record?->medicalHistory?->bisphosphonate_details ?: 'Bisphosphonates') . ')' 
+                                                : 'None')
+                                            ->badge()
+                                            ->color(fn ($state) => str_starts_with((string) $state, 'High') ? 'danger' : 'gray'),
                                     ])->columns(5),
 
                                 Section::make('Allergies')
@@ -134,6 +158,7 @@ class PatientResource extends Resource
         return [
             RelationManagers\AppointmentsRelationManager::class,
             RelationManagers\TreatmentPlansRelationManager::class,
+            RelationManagers\ExternalTreatmentsRelationManager::class,
             RelationManagers\CommunicationsRelationManager::class,
             RelationManagers\FilesRelationManager::class,
             RelationManagers\PrescriptionsRelationManager::class,

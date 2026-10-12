@@ -18,25 +18,35 @@ class AdminTopTreatmentsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 InvoiceItem::query()
-                    ->select('invoiceable_id', DB::raw('MAX(id) as id'), DB::raw('COUNT(id) as times_performed'), DB::raw('SUM(total_price) as generated_revenue'))
-                    ->whereHas('invoice', fn($q) => $q->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
-                    ->where('invoiceable_type', 'App\Models\TreatmentProcedure')
+                    ->select(
+                        'description',
+                        DB::raw('MAX(id) as id'),
+                        DB::raw('COUNT(id) as times_performed'),
+                        DB::raw('SUM(total_price) as generated_revenue')
+                    )
+                    ->whereHas('invoice', fn($q) => $q->where('practice_id', $practiceId))
+                    ->where('description', '!=', '')
+                    ->whereNotNull('description')
                     ->whereMonth('created_at', now()->month)
-                    ->groupBy('invoiceable_id')
+                    ->groupBy('description')
                     ->orderBy('generated_revenue', 'desc')
                     ->limit(5)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('invoiceable.name')
-                    ->label('Treatment Procedure'),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Treatment Procedure')
+                    ->wrap()
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('times_performed')
                     ->label('Performed')
                     ->badge()

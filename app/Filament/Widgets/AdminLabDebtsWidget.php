@@ -18,17 +18,19 @@ class AdminLabDebtsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 LabOrder::query()
                     ->select('dental_lab_id', DB::raw('MAX(id) as id'), DB::raw('SUM(cost) as total_debt'), DB::raw('COUNT(id) as pending_orders'))
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
-                    ->where('status', '!=', 'delivered')
+                    ->where('practice_id', $practiceId)
+                    ->whereNotIn('status', ['received_at_clinic', 'seated_delivered', 'cancelled'])
                     ->groupBy('dental_lab_id')
             )
             ->columns([

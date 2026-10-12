@@ -17,15 +17,18 @@ class DoctorScheduleWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasRole('doctor') || auth()->user()->isDoctor();
+        $user = auth()->user();
+        return $user ? ($user->hasRole('doctor') || $user->isDoctor()) : false;
     }
 
     public function table(Table $table): Table
     {
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
         return $table
             ->query(
                 Appointment::query()
-                    ->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                    ->where('practice_id', $practiceId)
                     ->whereDate('start_time', Carbon::today())
                     ->where('doctor_id', auth()->id())
                     ->orderBy('start_time', 'asc')

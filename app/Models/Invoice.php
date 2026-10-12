@@ -110,4 +110,9 @@ class Invoice extends Model
             'status' => $status,
         ]);
     }
+
+    public function getRemainingBalanceAttribute(): float
+    {
+        return (float) ($this->balance_due ?? 0);
+    }
 }

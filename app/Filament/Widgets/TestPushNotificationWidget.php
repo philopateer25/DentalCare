@@ -19,6 +19,11 @@ class TestPushNotificationWidget extends Widget implements HasActions, HasForms
     protected static string $view = 'filament.widgets.test-push-notification-widget';
     protected int | string | array $columnSpan = 'full';
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole(['developer', 'super_admin']) ?? false;
+    }
+
     public function testPushAction(): Action
     {
         return Action::make('testPushAction')

@@ -141,4 +141,59 @@ class Practice extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function clinicExpenses(): HasMany
+    {
+        return $this->hasMany(ClinicExpense::class);
+    }
+
+    public function insuranceClaims(): HasMany
+    {
+        return $this->hasMany(InsuranceClaim::class);
+    }
+
+    public function insuranceProviders(): HasMany
+    {
+        return $this->hasMany(InsuranceProvider::class);
+    }
+
+    public function labOrders(): HasMany
+    {
+        return $this->hasMany(LabOrder::class);
+    }
+
+    public function patientInsurancePolicies(): HasMany
+    {
+        return $this->hasMany(PatientInsurancePolicy::class);
+    }
+
+    public function payrollSlips(): HasMany
+    {
+        return $this->hasMany(PayrollSlip::class);
+    }
+
+    public function staffMembers(): HasMany
+    {
+        return $this->hasMany(StaffMember::class);
+    }
+
+    public function suppliers(): HasMany
+    {
+        return $this->hasMany(Supplier::class);
+    }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    public function communicationLogs(): HasMany
+    {
+        return $this->hasMany(CommunicationLog::class);
+    }
+
+    public function whatsAppAppointmentRequests(): HasMany
+    {
+        return $this->hasMany(WhatsAppAppointmentRequest::class);
+    }
 }

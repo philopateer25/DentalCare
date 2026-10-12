@@ -10,7 +10,12 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DoctorCommissionsOverviewWidget extends BaseWidget
 {
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 6;
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
+    }
 
     protected function getStats(): array
     {

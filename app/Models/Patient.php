@@ -119,4 +119,9 @@ class Patient extends Model
     {
         return $this->hasMany(CommunicationLog::class);
     }
+
+    public function externalTreatments(): HasMany
+    {
+        return $this->hasMany(ExternalTreatment::class);
+    }
 }

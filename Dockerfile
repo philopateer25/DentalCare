@@ -58,8 +58,8 @@ COPY --from=frontend-builder /app/public/build /var/www/html/public/build
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set directory permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
 # Copy entrypoint script
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -72,3 +72,11 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 9000
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# ==========================================
+# Nginx Stage
+# ==========================================
+FROM nginx:alpine as web-server
+
+COPY --from=production /var/www/html/public /var/www/html/public
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf

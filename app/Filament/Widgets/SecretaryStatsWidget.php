@@ -15,13 +15,13 @@ class SecretaryStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->hasAnyRole(['secretary', 'clinic_admin', 'super_admin']);
+        return auth()->user()?->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']) ?? false;
     }
 
     protected function getStats(): array
     {
         $today = Carbon::today();
-        $practiceId = \Filament\Facades\Filament::getTenant()?->id;
+        $practiceId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
 
         // 1. Today's Cash Safe
         $cashCollected = Payment::where('practice_id', $practiceId)
@@ -32,7 +32,7 @@ class SecretaryStatsWidget extends BaseWidget
         // 2. Arriving Lab Orders
         $arrivingLabs = LabOrder::where('practice_id', $practiceId)
             ->whereDate('expected_delivery_at', $today)
-            ->where('status', '!=', 'delivered')
+            ->whereNotIn('status', ['received_at_clinic', 'seated_delivered', 'cancelled'])
             ->count();
 
         return [

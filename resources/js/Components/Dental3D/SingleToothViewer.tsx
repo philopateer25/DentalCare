@@ -12,54 +12,40 @@ interface SingleToothViewerProps {
 }
 
 const SingleToothMesh: React.FC<SingleToothViewerProps> = ({ modelUrl = '/models/teeth-seperated-optimized.glb', toothNumber, record }) => {
-  const gltf = useGLTF(modelUrl, true) as any;
+  const gltf = useGLTF(modelUrl, '/draco/') as any;
   
   const isolatedMesh = useMemo(() => {
     if (!gltf || !gltf.scene) return null;
     
-    let targetMesh: THREE.Mesh | null = null;
-    let autoIndex = 1;
-    const fdiList = [
-      '18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28',
-      '48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38',
-    ];
+    const toothGroup = new THREE.Group();
 
-    // Traverse the original scene
+    // Traverse the original scene and find all parts (crown + roots) for this tooth
     gltf.scene.traverse((child: any) => {
       if (child.isMesh && !isIgnoredNode(child.name) && !isSoftTissueNode(child.name)) {
-        let num = extractToothNumber(child.name);
-        if (!num) {
-          num = fdiList[autoIndex - 1] || String(10 + autoIndex);
-          autoIndex++;
-        }
+        const num = extractToothNumber(child.name);
         
-        // RULE ENFORCEMENT: Only extract the matching tooth and MUST use clone(true)
-        if (num === toothNumber && !targetMesh) {
-          targetMesh = child.clone(true) as THREE.Mesh;
+        if (num === toothNumber) {
+          const clonedMesh = child.clone(true) as THREE.Mesh;
+          const condition = record?.condition || 'healthy';
+          const isMissing = condition === 'missing';
+          const isImplant = condition === 'implant';
+          
+          clonedMesh.material = new THREE.MeshStandardMaterial({
+            color: CONDITION_COLORS[condition] || CONDITION_COLORS.healthy,
+            roughness: isImplant ? 0.2 : 0.3,
+            metalness: isImplant ? 0.85 : 0.05,
+            transparent: isMissing,
+            opacity: isMissing ? 0.2 : 1.0,
+            wireframe: isMissing,
+          });
+          clonedMesh.material.map = null;
+          toothGroup.add(clonedMesh);
         }
       }
     });
 
-    if (targetMesh) {
-      // RULE ENFORCEMENT: Apply main condition styling only. No surface-level shaders.
-      const condition = record?.condition || 'healthy';
-      const isMissing = condition === 'missing';
-      const isImplant = condition === 'implant';
-      
-      const newMaterial = new THREE.MeshStandardMaterial({
-        color: CONDITION_COLORS[condition] || CONDITION_COLORS.healthy,
-        roughness: isImplant ? 0.2 : 0.3,
-        metalness: isImplant ? 0.85 : 0.05,
-        transparent: isMissing,
-        opacity: isMissing ? 0.2 : 1.0,
-        wireframe: isMissing,
-      });
-      newMaterial.map = null;
-      
-      targetMesh.material = newMaterial;
-    }
-    
-    return targetMesh;
+    if (toothGroup.children.length === 0) return null;
+    return toothGroup;
   }, [gltf, toothNumber, record?.condition]);
 
   if (!isolatedMesh) return null;

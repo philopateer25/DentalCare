@@ -212,6 +212,35 @@ class PatientOdontogramController extends Controller
             ]
         );
 
+        $latestExam = $patient->examinations()->latest('examined_at')->first();
+        if (!$latestExam) {
+            $latestExam = $patient->examinations()->create([
+                'doctor_id' => auth()->id() ?? 1,
+                'type' => 'periodic',
+                'examined_at' => now(),
+            ]);
+        } elseif (!$latestExam->examined_at) {
+            $latestExam->update(['examined_at' => now()]);
+        }
+
+        $toothFinding = $latestExam->toothFindings()->updateOrCreate(
+            ['tooth_number_fdi' => $validated['tooth_number']],
+            [
+                'finding_type' => $validated['condition'],
+                'notes' => $validated['notes'] ?? null,
+            ]
+        );
+        if (isset($validated['surfaces']) && is_array($validated['surfaces'])) {
+            foreach ($validated['surfaces'] as $surface => $cond) {
+                $toothFinding->surfaceFindings()->updateOrCreate(
+                    ['surface' => $surface],
+                    ['finding_type' => $cond]
+                );
+            }
+        }
+
+        $patient->touch();
+
         return response()->json($tooth);
     }
 }

@@ -54,7 +54,7 @@ class PatientVoiceNoteController extends Controller
         }
 
         $validated = $request->validate([
-            'audio' => 'nullable|file|mimes:webm,ogg,wav,mp3,mp4,audio/webm,audio/wav,audio/mpeg,audio/ogg|max:10240',
+            'audio' => 'nullable|file|max:10240',
             'template' => 'nullable|string|in:extraction_care,implant_care,root_canal_care,composite_care',
             'title' => 'nullable|string|max:255',
             'tooth_number_fdi' => 'nullable|integer',
@@ -108,8 +108,9 @@ class PatientVoiceNoteController extends Controller
             'composite_care' => 'Composite Filling Aftercare',
         ];
 
+        $template = $validated['template'] ?? null;
         $title = $validated['title'] 
-            ?? ($validated['template'] ? ($defaultTitles[$validated['template']] ?? 'Post-Op Instructions') : 'Post-Op Care Audio');
+            ?? ($template ? ($defaultTitles[$template] ?? 'Post-Op Instructions') : 'Post-Op Care Audio');
 
         if (!empty($validated['tooth_number_fdi'])) {
             $title .= " (Tooth #{$validated['tooth_number_fdi']})";

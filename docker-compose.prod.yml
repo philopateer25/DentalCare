@@ -116,7 +116,8 @@ services:
 volumes:
   clinic_db_data:
   clinic_redis_data:
-  clinic_storage: # Critical: Mounts storage/app where patient files and license.json live
+  clinic_storage:
+    # Critical: Mounts storage/app where patient files and license.json live
 
 networks:
   clinic_network:

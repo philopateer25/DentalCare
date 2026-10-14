@@ -1,11 +1,12 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
+const fs = require('fs');
 
 (async () => {
   console.log('Launching browser...');
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 800 });
+  await page.setViewport({ width: 1400, height: 900 });
 
   page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
   page.on('pageerror', err => console.log('BROWSER ERROR:', err.toString()));
@@ -23,21 +24,47 @@ const path = require('path');
   console.log('Navigating to odontogram...');
   await page.goto('http://localhost/patients/1/odontogram?dark=1');
 
-  // Wait for 10 seconds for everything to load (including 3D model)
+  // Wait 7 seconds for 3D model to load
   console.log('Waiting for 3D model to load...');
-  await new Promise(r => setTimeout(r, 10000));
+  await new Promise(r => setTimeout(r, 7000));
 
-  const screenshotPath = path.join('C:\\Users\\ATG\\.gemini\\antigravity-ide\\brain\\c1969f06-0806-4daa-b1c5-cfd1fc34f830', 'scratch', 'screenshot.png');
-  await page.screenshot({ path: screenshotPath });
-  console.log('Screenshot saved to ' + screenshotPath);
+  const outDir = 'C:\\Users\\ATG\\.gemini\\antigravity-ide\\brain\\6924b39c-6c40-47eb-abb1-1fe19e58c5b3\\scratch';
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
 
-  // Print out the HTML of the app div
-  const html = await page.evaluate(() => {
-    return document.body.innerHTML;
-  });
-  const fs = require('fs');
-  fs.writeFileSync(path.join('C:\\Users\\ATG\\.gemini\\antigravity-ide\\brain\\c1969f06-0806-4daa-b1c5-cfd1fc34f830', 'scratch', 'body.html'), html);
-  console.log('HTML saved.');
+  await page.screenshot({ path: path.join(outDir, 'odontogram_initial.png') });
+  console.log('Initial screenshot saved.');
+
+  // Click Upper (Maxilla)
+  const buttons = await page.$$('button');
+  for (const btn of buttons) {
+    const text = await page.evaluate(el => el.textContent, btn);
+    if (text && text.includes('Upper (Maxilla)')) {
+      console.log('Clicking Upper Arch button...');
+      await btn.click();
+      break;
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 2000));
+  await page.screenshot({ path: path.join(outDir, 'odontogram_upper.png') });
+  console.log('Upper screenshot saved.');
+
+  // Click Lower (Mandible)
+  for (const btn of buttons) {
+    const text = await page.evaluate(el => el.textContent, btn);
+    if (text && text.includes('Lower (Mandible)')) {
+      console.log('Clicking Lower Arch button...');
+      await btn.click();
+      break;
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 2000));
+  await page.screenshot({ path: path.join(outDir, 'odontogram_lower.png') });
+  console.log('Lower screenshot saved.');
 
   await browser.close();
+  console.log('Test completed successfully!');
 })();

@@ -113,6 +113,23 @@ class DentalExaminationController extends Controller
             }
         }
 
+        if (!$examination->examined_at) {
+            $examination->update(['examined_at' => now()]);
+        }
+
+        // Dual-sync to patient_teeth so both models and 360 profile are updated
+        if ($examination->patient) {
+            $examination->patient->teeth()->updateOrCreate(
+                ['tooth_number' => (string) $validated['tooth_number']],
+                [
+                    'condition' => $validated['condition'],
+                    'notes' => $validated['notes'] ?? null,
+                    'surfaces' => $validated['surfaces'] ?? null,
+                ]
+            );
+            $examination->patient->touch();
+        }
+
         return response()->json($toothFinding->load('surfaceFindings'));
     }
 }

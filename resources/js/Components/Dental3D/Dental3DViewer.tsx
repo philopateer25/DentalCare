@@ -1,4 +1,4 @@
-﻿import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Center, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -30,9 +30,103 @@ export interface Dental3DViewerProps {
   onOpenVoiceNote?: (toothNumber: string, procedure?: any) => void;
 }
 
+// Raw mapping of GLB mesh names to standard FDI tooth numbers
+const RAW_TOOTH_MESH_MAP: Record<string, string> = {
+  'Object_6': '31',
+  'Object_6.001': '31',
+  'Object_6.002': '11',
+  'Object_6.003': '11',
+  'Object_6.004': '14',
+  'Object_6.005': '14',
+  'Object_6.006': '14',
+  'Object_6.007': '14',
+  'Object_6.008': '22',
+  'Object_6.009': '22',
+  'Object_6.010': '42',
+  'Object_6.011': '42',
+  'Object_6.012': '26',
+  'Object_6.013': '26',
+  'Object_6.014': '26',
+  'Object_6.015': '27',
+  'Object_6.016': '16',
+  'Object_6.017': '17',
+  'Object_6.018': '16',
+  'Object_6.019': '16',
+  'Object_6.020': '46',
+  'Object_6.021': '46',
+  'Object_6.022': '46',
+  'Object_6.023': '36',
+  'Object_6.024': '36',
+  'Object_6.025': '36',
+  'Object_6.026': '24',
+  'Object_6.027': '24',
+  'Object_6.028': '24',
+  'Object_6.029': '24',
+  'Object_6.030': '34',
+  'Object_6.031': '34',
+  'Object_6.032': '44',
+  'Object_6.033': '44',
+  'Object_6.034': '32',
+  'Object_6.035': '32',
+  'Object_6.036': '12',
+  'Object_6.037': '12',
+  'Object_6.038': '18',
+  'Object_6.039': '18',
+  'Object_6.040': '17',
+  'Object_6.041': '17',
+  'Object_6.042': '15',
+  'Object_6.043': '15',
+  'Object_6.044': '15',
+  'Object_6.045': '25',
+  'Object_6.046': '25',
+  'Object_6.047': '25',
+  'Object_6.048': '23',
+  'Object_6.049': '23',
+  'Object_6.050': '28',
+  'Object_6.051': '28',
+  'Object_6.052': '28',
+  'Object_6.053': '28',
+  'Object_6.054': '47',
+  'Object_6.055': '48',
+  'Object_6.056': '47',
+  'Object_6.057': '45',
+  'Object_6.058': '45',
+  'Object_6.059': '43',
+  'Object_6.060': '43',
+  'Object_6.061': '41',
+  'Object_6.062': '41',
+  'Object_6.063': '33',
+  'Object_6.064': '33',
+  'Object_6.065': '35',
+  'Object_6.066': '37',
+  'Object_6.067': '37',
+  'Object_6.068': '38',
+  'Object_6.069': '21',
+  'Object_6.070': '21',
+  'Object_6.071': '13',
+  'Object_6.072': '13',
+};
+
+// Complete mapping containing both original names and Three.js sanitized names (without dots)
+export const TOOTH_MESH_MAP: Record<string, string> = (() => {
+  const map: Record<string, string> = {};
+  for (const [k, v] of Object.entries(RAW_TOOTH_MESH_MAP)) {
+    map[k] = v;
+    map[k.replace(/\./g, '')] = v;
+  }
+  return map;
+})();
+
 // Extract FDI tooth number (11-48) from node name
 export function extractToothNumber(nodeName: string): string | null {
-  const match = nodeName.match(/\b([1-4][1-8])\b/) || nodeName.match(/(\d{2})/);
+  if (TOOTH_MESH_MAP[nodeName]) {
+    return TOOTH_MESH_MAP[nodeName];
+  }
+  const cleanName = nodeName.replace(/\./g, '');
+  if (TOOTH_MESH_MAP[cleanName]) {
+    return TOOTH_MESH_MAP[cleanName];
+  }
+  const match = nodeName.match(/\b([1-4][1-8])\b/);
   if (match) {
     const num = parseInt(match[1], 10);
     if (
@@ -63,9 +157,15 @@ export function isSoftTissueNode(nodeName: string): boolean {
   const lower = nodeName.toLowerCase();
   return (
     /gum|gingiva|jaw|tongue|mouth|base|soft|wet/.test(lower) ||
-    /\bobject_4\b/.test(lower) ||
-    /\bobject_8\b/.test(lower)
+    lower === 'object_4' ||
+    lower === 'object_8'
   );
+}
+
+// Check if soft tissue belongs to upper (Maxilla) or lower (Mandible) arch
+export function isUpperSoftTissue(nodeName: string): boolean {
+  const lower = nodeName.toLowerCase();
+  return lower === 'object_8' || /upper|maxil/.test(lower);
 }
 
 // Check if node is a structural/bounding box artifact
@@ -77,8 +177,8 @@ export function isIgnoredNode(nodeName: string): boolean {
 const CAMERA_PRESET_CONFIGS: Record<CameraPreset, { pos: [number, number, number]; target: [number, number, number] }> = {
   default: { pos: [0, 1.5, 7.5], target: [0, 0, 0] },
   frontal: { pos: [0, 0, 7.5], target: [0, 0, 0] },
-  upper_occlusal: { pos: [0, -6.5, 1.2], target: [0, 0.8, 0] },
-  lower_occlusal: { pos: [0, 6.5, 1.2], target: [0, -0.8, 0] },
+  upper_occlusal: { pos: [0, -5.5, 1.5], target: [0, 2.0, 1.5] },
+  lower_occlusal: { pos: [0, 5.5, 1.2], target: [0, -0.8, 0.5] },
   right_bite: { pos: [7.5, 0, 0], target: [0, 0, 0] },
   left_bite: { pos: [-7.5, 0, 0], target: [0, 0, 0] },
 };
@@ -164,9 +264,21 @@ const GLTFDentalArch: React.FC<{
   onOpenVoiceNote,
   onToothCentersCalculated,
 }) => {
-  const gltf = useGLTF(modelUrl, true) as any;
+  const gltf = useGLTF(modelUrl, '/draco/') as any;
   const [hoveredTooth, setHoveredTooth] = useState<string | null>(null);
   const [hoveredPos, setHoveredPos] = useState<THREE.Vector3 | null>(null);
+
+  const hoverLeaveTimeoutRef = useRef<any>(null);
+  const lastClickTimeRef = useRef<number>(0);
+  const lastClickToothRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverLeaveTimeoutRef.current) {
+        clearTimeout(hoverLeaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Clone scene to preserve transforms and build tooth metadata
   const { scene, nodeMap, softTissueMap, toothCenters } = useMemo(() => {
@@ -179,12 +291,6 @@ const GLTFDentalArch: React.FC<{
     const tissueMap = new Map<string, boolean>(); // uuid -> isUpper
     const centers = new Map<string, THREE.Vector3>();
     const nodesToRemove: THREE.Object3D[] = [];
-
-    let autoIndex = 1;
-    const fdiList = [
-      '18', '17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27', '28',
-      '48', '47', '46', '45', '44', '43', '42', '41', '31', '32', '33', '34', '35', '36', '37', '38',
-    ];
 
     cloned.traverse((child: any) => {
       if (child.isMesh) {
@@ -201,13 +307,12 @@ const GLTFDentalArch: React.FC<{
 
         if (isSoftTissueNode(child.name)) {
           child.raycast = () => null;
+          tissueMap.set(child.uuid, isUpperSoftTissue(child.name));
         } else {
-          let num = extractToothNumber(child.name);
-          if (!num) {
-            num = fdiList[autoIndex - 1] || String(10 + autoIndex);
-            autoIndex++;
+          const num = extractToothNumber(child.name);
+          if (num) {
+            map.set(child.uuid, num);
           }
-          map.set(child.uuid, num);
           child.castShadow = true;
           child.receiveShadow = true;
         }
@@ -229,7 +334,8 @@ const GLTFDentalArch: React.FC<{
       cloned.position.set(-center.x * scaleFactor, -center.y * scaleFactor, -center.z * scaleFactor);
     }
 
-    // Now calculate scaled bounding centers for teeth and soft tissue
+    // Now calculate scaled bounding centers for teeth (averaging parts per tooth)
+    const toothMeshAccumulators = new Map<string, { count: number; sum: THREE.Vector3 }>();
     cloned.traverse((child: any) => {
       if (child.isMesh) {
         const childBox = new THREE.Box3().setFromObject(child);
@@ -237,14 +343,21 @@ const GLTFDentalArch: React.FC<{
         childBox.getCenter(childCenter);
 
         if (isSoftTissueNode(child.name)) {
-          tissueMap.set(child.uuid, childCenter.y >= 0);
+          tissueMap.set(child.uuid, isUpperSoftTissue(child.name));
         } else {
           const num = map.get(child.uuid);
-          if (num && !centers.has(num)) {
-            centers.set(num, childCenter);
+          if (num) {
+            const acc = toothMeshAccumulators.get(num) || { count: 0, sum: new THREE.Vector3() };
+            acc.count++;
+            acc.sum.add(childCenter);
+            toothMeshAccumulators.set(num, acc);
           }
         }
       }
+    });
+
+    toothMeshAccumulators.forEach((acc, num) => {
+      centers.set(num, acc.sum.multiplyScalar(1 / acc.count));
     });
 
     return { scene: cloned, nodeMap: map, softTissueMap: tissueMap, toothCenters: centers };
@@ -352,34 +465,66 @@ const GLTFDentalArch: React.FC<{
           const toothNum = nodeMap.get(e.object.uuid);
           if (toothNum) {
             onSelectTooth(toothNum);
+
+            // Double click handler
+            const now = performance.now();
+            if (lastClickToothRef.current === toothNum && now - lastClickTimeRef.current < 450) {
+              onDoubleClickTooth?.(toothNum);
+              lastClickTimeRef.current = 0;
+              lastClickToothRef.current = null;
+            } else {
+              lastClickTimeRef.current = now;
+              lastClickToothRef.current = toothNum;
+            }
           }
         }}
         onPointerOver={(e: any) => {
           e.stopPropagation();
+          if (hoverLeaveTimeoutRef.current) {
+            clearTimeout(hoverLeaveTimeoutRef.current);
+            hoverLeaveTimeoutRef.current = null;
+          }
           const toothNum = nodeMap.get(e.object.uuid);
           if (toothNum) {
             setHoveredTooth(toothNum);
-            setHoveredPos(e.point);
+            const center = toothCenters.get(toothNum);
+            setHoveredPos(center ? center.clone() : e.point.clone());
           }
         }}
         onPointerOut={(e: any) => {
           e.stopPropagation();
-          setHoveredTooth(null);
-          setHoveredPos(null);
-        }}
-        onDoubleClick={(e: any) => {
-          e.stopPropagation();
-          const toothNum = nodeMap.get(e.object.uuid);
-          if (toothNum && onDoubleClickTooth) {
-            onDoubleClickTooth(toothNum);
+          if (hoverLeaveTimeoutRef.current) {
+            clearTimeout(hoverLeaveTimeoutRef.current);
           }
+          hoverLeaveTimeoutRef.current = setTimeout(() => {
+            setHoveredTooth(null);
+            setHoveredPos(null);
+          }, 140);
         }}
       />
 
       {/* Clinical Tooltip with Full Procedure & Anesthetic Badges */}
       {hoveredTooth && hoveredPos && (
-        <Html position={hoveredPos} center style={{ pointerEvents: 'auto', zIndex: 30 }}>
-          <div className="bg-slate-900/95 text-slate-100 p-3 rounded-xl shadow-2xl min-w-[220px] max-w-[280px] border border-slate-700/80 backdrop-blur-md flex flex-col gap-2 text-xs">
+        <Html
+          position={[hoveredPos.x, hoveredPos.y + 0.65, hoveredPos.z]}
+          center
+          style={{ pointerEvents: 'none', zIndex: 40 }}
+        >
+          <div
+            className="pointer-events-auto bg-slate-900/95 text-slate-100 p-3 rounded-xl shadow-2xl min-w-[220px] max-w-[280px] border border-slate-700/80 backdrop-blur-md flex flex-col gap-2 text-xs transition-opacity duration-150"
+            onMouseEnter={() => {
+              if (hoverLeaveTimeoutRef.current) {
+                clearTimeout(hoverLeaveTimeoutRef.current);
+                hoverLeaveTimeoutRef.current = null;
+              }
+            }}
+            onMouseLeave={() => {
+              hoverLeaveTimeoutRef.current = setTimeout(() => {
+                setHoveredTooth(null);
+                setHoveredPos(null);
+              }, 120);
+            }}
+          >
             <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
               <span className="font-bold text-sm text-white">Tooth #{hoveredTooth}</span>
               <span
@@ -657,15 +802,13 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full min-h-[450px] overflow-hidden ${
-        cleanMode ? 'bg-transparent' : 'bg-gradient-to-b from-slate-950 via-slate-900 to-zinc-950 rounded-2xl shadow-2xl border border-slate-800/80'
-      }`}
+      className="relative w-full h-full min-h-[450px] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-zinc-950 rounded-2xl shadow-2xl border border-slate-800/80"
     >
       <Canvas camera={{ position: [0, 1.5, 7.5], fov: 45 }} shadows className="w-full h-full">
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[5, 10, 7]} intensity={1.5} castShadow />
-        <directionalLight position={[-5, -5, -5]} intensity={0.4} />
-        <pointLight position={[0, 3, 2]} intensity={0.6} color="#ffffff" />
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[5, 10, 7]} intensity={1.6} castShadow />
+        <directionalLight position={[-5, -5, -5]} intensity={0.5} />
+        <pointLight position={[0, 3, 2]} intensity={0.7} color="#ffffff" />
 
         <group>
           <GLTFBoundary
@@ -682,14 +825,13 @@ export const Dental3DViewer: React.FC<Dental3DViewerProps> = ({
           >
             <Suspense
               fallback={
-                <ProceduralDentalArch
-                  teethRecords={teethRecords}
-                  selectedTooth={selectedTooth}
-                  onSelectTooth={onSelectTooth}
-                  showGums={showGums}
-                  isolateTooth={isolateTooth}
-                  archMode={archMode}
-                />
+                <Html center>
+                  <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md shadow-2xl text-slate-100 min-w-[200px]">
+                    <div className="w-7 h-7 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs font-bold tracking-wide text-emerald-400">Loading 3D Odontogram...</span>
+                    <span className="text-[10px] text-slate-400">Anatomical Tooth Mapping</span>
+                  </div>
+                </Html>
               }
             >
               <GLTFDentalArch

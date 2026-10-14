@@ -71,7 +71,13 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   initialViewMode = 'clean',
 }) => {
   const [teethRecords, setTeethRecords] = useState<Record<string, ToothRecord>>(initialRecords);
-  const [selectedTooth, setSelectedTooth] = useState<string | null>('11');
+  const [selectedTooth, setSelectedTooth] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tooth');
+      if (p) return p;
+    }
+    return '11';
+  });
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [viewMode, setViewMode] = useState<'clean' | 'detailed'>(initialViewMode);
   
@@ -87,7 +93,12 @@ const Test3DOdontogramInner: React.FC<Props> = ({
 
   // Clinical Control States
   const [showGums, setShowGums] = useState(true);
-  const [isolateTooth, setIsolateTooth] = useState(false);
+  const [isolateTooth, setIsolateTooth] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('isolate') === '1';
+    }
+    return false;
+  });
   const [archMode, setArchMode] = useState<ArchMode>('both');
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('default');
 
@@ -124,6 +135,18 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       }
     });
   }, [patient.id]);
+
+  const notifyParentWindow = (tooth?: string, cond?: string) => {
+    if (typeof window !== 'undefined') {
+      const msg = { type: 'DENTAL_ODONTOGRAM_UPDATED', tooth, condition: cond };
+      try {
+        window.parent?.postMessage(msg, '*');
+      } catch (e) {}
+      try {
+        window.opener?.postMessage(msg, '*');
+      } catch (e) {}
+    }
+  };
 
   const loadProceduresFromPlan = (plan: any) => {
     const procs: Record<string, any[]> = {};
@@ -182,6 +205,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         [selectedTooth]: [...(prev[selectedTooth] || []), res.data.procedure]
       }));
       setSavingStatus('saved');
+      notifyParentWindow(selectedTooth);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to add treatment', err);
@@ -206,6 +230,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         };
       });
       setSavingStatus('saved');
+      notifyParentWindow(toothNumber);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to complete treatment', err);
@@ -268,6 +293,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         surfaces: currentSurfaces,
       });
       setSavingStatus('saved');
+      notifyParentWindow(selectedTooth, condition);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to update tooth condition:', err);
@@ -295,6 +321,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         surfaces: currentSurfaces,
       });
       setSavingStatus('saved');
+      notifyParentWindow(selectedTooth, currentCondition);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to update tooth note:', err);
@@ -327,6 +354,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         surfaces: newSurfaces,
       });
       setSavingStatus('saved');
+      notifyParentWindow(selectedTooth, currentCondition);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to update tooth surface:', err);
@@ -346,7 +374,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
 
   if (viewMode === 'clean') {
     return (
-      <div className="w-full h-screen bg-transparent relative flex items-center justify-center">
+      <div className="w-full h-screen bg-slate-950 relative flex items-center justify-center overflow-hidden">
         <Dental3DViewer
           teethRecords={teethRecords}
           plannedProcedures={plannedProcedures}

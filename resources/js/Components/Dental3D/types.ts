@@ -9,14 +9,14 @@ export type ToothCondition =
   | 'custom';
 
 export const CONDITION_COLORS: Record<ToothCondition, string> = {
-  healthy: '#E8E8E8',
-  active_caries: '#DC2626',
+  healthy: '#F4F1EA',
+  active_caries: '#E11D48',
   composite_filled: '#3B82F6',
-  crown: '#EAB308',
-  root_canal: '#9333EA',
-  missing: '#4B5563',
+  crown: '#F59E0B',
+  root_canal: '#8B5CF6',
+  missing: '#475569',
   implant: '#06B6D4',
-  custom: '#F43F5E', // Rose
+  custom: '#EC4899',
 };
 
 export const CONDITION_LABELS: Record<ToothCondition, { label: string; description: string; badgeBg: string }> = {

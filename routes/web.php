@@ -150,6 +150,59 @@ Route::patch('/api/procedures/{procedure}/complete', function (\App\Models\Treat
     if ($request->has('hemostasis_achieved')) $updateData['hemostasis_achieved'] = $request->boolean('hemostasis_achieved');
 
     $procedure->update($updateData);
+
+    // If this procedure has a tooth number, automatically sync condition to patient_teeth and tooth_findings
+    if ($procedure->tooth_number_fdi) {
+        $patient = $procedure->phase?->plan?->patient;
+        if ($patient) {
+            $procTitle = strtolower($procedure->procedureCode?->title ?: '');
+            $procCode = strtoupper($procedure->procedureCode?->code ?: '');
+            $condition = null;
+            if (str_contains($procTitle, 'crown') || str_contains($procCode, 'D2740') || str_contains($procTitle, 'cap') || str_contains($procTitle, 'bridge')) {
+                $condition = 'crown';
+            } elseif (str_contains($procTitle, 'implant') || str_contains($procCode, 'D6010')) {
+                $condition = 'implant';
+            } elseif (str_contains($procTitle, 'root canal') || str_contains($procTitle, 'endo') || str_contains($procCode, 'D3310') || str_contains($procCode, 'D3320') || str_contains($procCode, 'D3330')) {
+                $condition = 'root_canal';
+            } elseif (str_contains($procTitle, 'extract') || str_contains($procCode, 'D7140') || str_contains($procCode, 'D7210')) {
+                $condition = 'missing';
+            } elseif (str_contains($procTitle, 'composite') || str_contains($procTitle, 'fill') || str_contains($procCode, 'D2330') || str_contains($procCode, 'D2140')) {
+                $condition = 'composite_filled';
+            }
+
+            if ($condition) {
+                \App\Models\PatientTooth::updateOrCreate(
+                    ['patient_id' => $patient->id, 'tooth_number' => (string) $procedure->tooth_number_fdi],
+                    [
+                        'condition' => $condition,
+                        'notes' => "Completed inside procedure: " . ($procedure->procedureCode?->title ?: 'Clinical Treatment'),
+                    ]
+                );
+
+                $exam = $patient->examinations()->latest('examined_at')->first();
+                if (!$exam) {
+                    $exam = $patient->examinations()->create([
+                        'doctor_id' => auth()->id() ?? $procedure->doctor_id ?? 1,
+                        'type' => 'treatment',
+                        'examined_at' => now(),
+                    ]);
+                } else if (!$exam->examined_at) {
+                    $exam->update(['examined_at' => now()]);
+                }
+
+                $exam->toothFindings()->updateOrCreate(
+                    ['tooth_number_fdi' => (string) $procedure->tooth_number_fdi],
+                    [
+                        'finding_type' => $condition,
+                        'notes' => "Completed: " . ($procedure->procedureCode?->title ?: 'Clinical Treatment'),
+                    ]
+                );
+
+                $patient->touch();
+            }
+        }
+    }
+
     return response()->json(['message' => 'Completed', 'procedure' => $procedure->fresh()]);
 });
 

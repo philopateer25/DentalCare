@@ -7,6 +7,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./public:/var/www/html/public:ro
     depends_on:
       - app
     restart: unless-stopped
@@ -22,6 +24,7 @@ services:
     env_file:
       - .env
     volumes:
+      - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
     networks:
       - clinic_network
@@ -36,6 +39,7 @@ services:
     env_file:
       - .env
     volumes:
+      - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
     depends_on:
       - app
@@ -53,6 +57,7 @@ services:
     env_file:
       - .env
     volumes:
+      - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
     depends_on:
       - app

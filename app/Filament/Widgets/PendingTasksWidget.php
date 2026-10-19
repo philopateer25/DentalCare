@@ -61,6 +61,15 @@ class PendingTasksWidget extends BaseWidget
                             ->send();
                     }),
             ])
+            ->recordUrl(
+                fn (Appointment $record): string => \App\Filament\Resources\AppointmentResource::getUrl('edit', ['record' => $record])
+            )
+            ->headerActions([
+                Tables\Actions\Action::make('view_all')
+                    ->label('All Appointments')
+                    ->icon('heroicon-m-arrow-top-right-on-square')
+                    ->url(\App\Filament\Resources\AppointmentResource::getUrl('index')),
+            ])
             ->paginated(false);
     }
 }

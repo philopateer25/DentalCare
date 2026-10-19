@@ -2,12 +2,18 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\LicenseManager;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckLicenseStatus
 {
+    public function __construct(
+        private readonly LicenseManager $licenseManager,
+    ) {}
+
     /**
      * Handle an incoming request.
      *
@@ -15,16 +21,12 @@ class CheckLicenseStatus
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $licenseManager = app(\App\Services\LicenseManager::class);
+        if ($this->licenseManager->isLockedOut()) {
+            Log::warning('License is locked out!', ['state' => $this->licenseManager->getLicenseState()]);
 
-        if ($licenseManager->isLockedOut()) {
-            \Illuminate\Support\Facades\Log::warning("License is locked out!", ['state' => $licenseManager->getLicenseState()]);
-            // In a real application, you'd redirect to a specific Filament page or standard view.
-            // For now, we return a 403 with a specific message.
             abort(403, 'Your clinic\'s license is currently inactive or suspended. Please contact system support.');
         }
 
-        \Illuminate\Support\Facades\Log::info("License is active, allowing request.");
         return $next($request);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InventoryResource\RelationManagers;
 use App\Models\InventoryBatch;
 use App\Models\Supplier;
 use App\Services\CurrencyHelper;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -13,6 +14,9 @@ use Filament\Tables\Table;
 
 class BatchesRelationManager extends RelationManager
 {
+    /** Number of days before expiry to flag as "Expiring Soon". */
+    private const EXPIRY_WARNING_DAYS = 60;
+
     protected static string $relationship = 'batches';
 
     protected static ?string $recordTitleAttribute = 'batch_number';
@@ -28,7 +32,7 @@ class BatchesRelationManager extends RelationManager
             ->schema([
                 Forms\Components\TextInput::make('batch_number')
                     ->label('Batch / Lot Number')
-                    ->default(fn () => 'BAT-' . date('Ymd') . '-' . str_pad((string) (InventoryBatch::max('id') + 1), 4, '0', STR_PAD_LEFT))
+                    ->default(fn () => self::generateBatchNumber())
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Auto-generated (e.g. BAT-20260901-0001)'),
@@ -92,19 +96,7 @@ class BatchesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('expiry_status')
                     ->label('Expiry Alert')
                     ->badge()
-                    ->state(function ($record) {
-                        if (! $record->expiry_date) {
-                            return 'No Expiry';
-                        }
-                        if ($record->expiry_date->isPast()) {
-                            return 'Expired';
-                        }
-                        if ($record->expiry_date->diffInDays(now()) <= 60) {
-                            return 'Expiring Soon';
-                        }
-
-                        return 'Active';
-                    })
+                    ->state(fn ($record): string => self::resolveExpiryStatus($record->expiry_date))
                     ->color(fn (string $state): string => match ($state) {
                         'Expired' => 'danger',
                         'Expiring Soon' => 'warning',
@@ -135,5 +127,39 @@ class BatchesRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    // ──────────────────────────────────────────────
+    //  Private helpers
+    // ──────────────────────────────────────────────
+
+    /**
+     * Generate a default batch number (BAT-YYYYMMDD-XXXX).
+     */
+    private static function generateBatchNumber(): string
+    {
+        $nextId = (InventoryBatch::max('id') ?? 0) + 1;
+
+        return sprintf('BAT-%s-%s', date('Ymd'), str_pad((string) $nextId, 4, '0', STR_PAD_LEFT));
+    }
+
+    /**
+     * Resolve human-readable expiry status from an optional expiry date.
+     */
+    private static function resolveExpiryStatus(?Carbon $expiryDate): string
+    {
+        if (!$expiryDate) {
+            return 'No Expiry';
+        }
+
+        if ($expiryDate->isPast()) {
+            return 'Expired';
+        }
+
+        if ($expiryDate->diffInDays(now()) <= self::EXPIRY_WARNING_DAYS) {
+            return 'Expiring Soon';
+        }
+
+        return 'Active';
     }
 }

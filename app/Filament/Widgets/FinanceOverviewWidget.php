@@ -30,17 +30,20 @@ class FinanceOverviewWidget extends BaseWidget
             Stat::make('Gross Production', CurrencyHelper::format($grossProduction))
                 ->description('Sum of all issued procedure invoices')
                 ->icon('heroicon-o-document-chart-bar')
-                ->color('primary'),
+                ->color('primary')
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')),
 
             Stat::make('Collections This Month', CurrencyHelper::format($collections))
                 ->description('Collected revenue in current month')
                 ->icon('heroicon-o-banknotes')
-                ->color('success'),
+                ->color('success')
+                ->url(\App\Filament\Resources\PaymentResource::getUrl('index', ['tableFilters[mtd][isActive]' => 1])),
 
             Stat::make('Outstanding AR Balance', CurrencyHelper::format($outstanding))
                 ->description('Unpaid balance due on active invoices')
                 ->icon('heroicon-o-exclamation-circle')
-                ->color($outstanding > 0 ? 'warning' : 'success'),
+                ->color($outstanding > 0 ? 'warning' : 'success')
+                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index', ['tableFilters[unsettled][isActive]' => 1])),
         ];
     }
 }

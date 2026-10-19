@@ -33,12 +33,14 @@ class DoctorCommissionsOverviewWidget extends BaseWidget
             Stat::make('Total Doctor Commissions', CurrencyHelper::format($totalCommissions))
                 ->description('Accrued & settled provider splits')
                 ->icon('heroicon-o-user-group')
-                ->color('info'),
+                ->color('info')
+                ->url(\App\Filament\Resources\DoctorCommissionResource::getUrl('index')),
 
             Stat::make('Top Commission Earner', $topDoctorName)
                 ->description("Earned {$topDoctorAmount}")
                 ->icon('heroicon-o-trophy')
-                ->color('success'),
+                ->color('success')
+                ->url(\App\Filament\Resources\DoctorCommissionResource::getUrl('index')),
         ];
     }
 }

@@ -59,6 +59,15 @@ class ActionRequiredWidget extends BaseWidget
                     ->url(fn (\App\Models\Invoice $record): string => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id]) . '?activeRelationManager=4')
                     ->openUrlInNewTab(),
             ])
+            ->recordUrl(
+                fn (\App\Models\Invoice $record): string => \App\Filament\Resources\InvoiceResource::getUrl('edit', ['record' => $record])
+            )
+            ->headerActions([
+                Tables\Actions\Action::make('view_all')
+                    ->label('View All Unpaid')
+                    ->icon('heroicon-m-arrow-top-right-on-square')
+                    ->url(\App\Filament\Resources\InvoiceResource::getUrl('index', ['tableFilters[unsettled][isActive]' => 1])),
+            ])
             ->paginated(false);
     }
 }

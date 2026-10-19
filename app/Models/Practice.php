@@ -18,6 +18,9 @@ class Practice extends Model
         'general' => 'General Medical',
     ];
 
+    /** Default onboarding step for auto-completed practices. */
+    private const DEFAULT_ONBOARDING_STEP = 6;
+
     protected $fillable = [
         'name',
         'type',
@@ -47,36 +50,67 @@ class Practice extends Model
         static::creating(function (Practice $practice) {
             if ($practice->onboarding_completed_at === null && $practice->onboarding_step === null) {
                 $practice->onboarding_completed_at = now();
-                $practice->onboarding_step = 6;
+                $practice->onboarding_step = self::DEFAULT_ONBOARDING_STEP;
             }
         });
     }
 
+    // ──────────────────────────────────────────────
+    //  Feature helpers
+    // ──────────────────────────────────────────────
+
+    /**
+     * Check whether a feature is enabled for this practice.
+     *
+     * Supports both the legacy associative format `['feature' => true]`
+     * and the current flat-array format `['feature']`.
+     */
     public function hasFeature(string $feature): bool
     {
         $features = $this->features;
 
         if (is_null($features)) {
-            return \App\Services\FeatureManager::FEATURES[$feature]['default'] ?? true;
+            return $this->featureDefault($feature);
         }
 
         if (!is_array($features)) {
             return false;
         }
 
-        // Handle legacy associative array format: ['feature' => true]
-        if (array_is_list($features) === false) {
-            return isset($features[$feature]) && $features[$feature];
+        // Legacy associative format: ['feature_key' => true/false]
+        if (!array_is_list($features)) {
+            return !empty($features[$feature]);
         }
 
-        // Handle flat array format: ['feature']
+        // Current flat-array format: ['feature_key', ...]
         return in_array($feature, $features, true);
     }
+
+    /**
+     * Resolve the global default for a feature flag.
+     */
+    private function featureDefault(string $feature): bool
+    {
+        return \App\Services\FeatureManager::FEATURES[$feature]['default'] ?? true;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Status helpers
+    // ──────────────────────────────────────────────
 
     public function isOnboarded(): bool
     {
         return $this->onboarding_completed_at !== null;
     }
+
+    public function isLicenseActive(): bool
+    {
+        return $this->license_status === 'active';
+    }
+
+    // ──────────────────────────────────────────────
+    //  Relationships
+    // ──────────────────────────────────────────────
 
     public function branches(): HasMany
     {

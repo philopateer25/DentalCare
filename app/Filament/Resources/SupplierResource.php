@@ -4,8 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Filament\Resources\SupplierResource\RelationManagers\InventoryItemsRelationManager;
-use App\Models\Practice;
 use App\Models\Supplier;
+use App\Services\FeatureManager;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -30,8 +31,9 @@ class SupplierResource extends Resource
 
     public static function canAccess(): bool
     {
-        $tenant = \Filament\Facades\Filament::getTenant();
-        if ($tenant && !\App\Services\FeatureManager::isEnabled('inventory', $tenant)) {
+        $tenant = Filament::getTenant();
+
+        if ($tenant && !FeatureManager::isEnabled('inventory', $tenant)) {
             return false;
         }
 

@@ -53,6 +53,15 @@ class DoctorPendingLabsWidget extends BaseWidget
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst(str_replace('_', ' ', $state))),
             ])
+            ->recordUrl(
+                fn (LabOrder $record): string => \App\Filament\Resources\LabOrderResource::getUrl('edit', ['record' => $record])
+            )
+            ->headerActions([
+                Tables\Actions\Action::make('view_all')
+                    ->label('View All')
+                    ->icon('heroicon-m-arrow-top-right-on-square')
+                    ->url(\App\Filament\Resources\LabOrderResource::getUrl('index')),
+            ])
             ->paginated(false);
     }
 }

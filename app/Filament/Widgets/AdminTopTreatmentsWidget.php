@@ -57,6 +57,12 @@ class AdminTopTreatmentsWidget extends BaseWidget
                     ->color('success')
                     ->weight('bold'),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('view_operations')
+                    ->label('Operations Log')
+                    ->icon('heroicon-m-arrow-top-right-on-square')
+                    ->url(\App\Filament\Resources\OperationResource::getUrl('index')),
+            ])
             ->paginated(false);
     }
 }

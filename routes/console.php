@@ -8,4 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('license:heartbeat')->twiceDaily();
+Schedule::command('license:tick')->everyTenMinutes();
+Schedule::command('license:heartbeat')->everyFourHours();
+

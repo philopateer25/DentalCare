@@ -4,6 +4,9 @@ namespace App\Filament\System\Resources;
 
 use App\Filament\System\Resources\PracticeResource\Pages;
 use App\Models\Practice;
+use App\Services\CurrencyHelper;
+use App\Services\FeatureManager;
+use App\Services\LanguageHelper;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -48,13 +51,13 @@ class PracticeResource extends Resource
                         Forms\Components\TextInput::make('tax_id')
                             ->maxLength(255),
                         Forms\Components\Select::make('currency')
-                            ->options(\App\Services\CurrencyHelper::getOptions())
+                            ->options(CurrencyHelper::getOptions())
                             ->searchable()
                             ->default('EGP')
                             ->required(),
                         Forms\Components\Select::make('locale')
                             ->label('Default Language')
-                            ->options(\App\Services\LanguageHelper::getOptions())
+                            ->options(LanguageHelper::getOptions())
                             ->default('en')
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
@@ -79,7 +82,7 @@ class PracticeResource extends Resource
                             ->maxLength(255),
                         Forms\Components\CheckboxList::make('features')
                             ->label('Enabled Features')
-                            ->options(\App\Services\FeatureManager::getOptions())
+                            ->options(FeatureManager::getOptions())
                             ->columns(3)
                             ->columnSpanFull(),
                     ])->columns(2),

@@ -67,6 +67,15 @@ class DoctorScheduleWidget extends BaseWidget
                     ->openUrlInNewTab()
                     ->visible(fn (Appointment $record) => in_array($record->status, ['arrived', 'in_chair'])),
             ])
+            ->recordUrl(
+                fn (Appointment $record): string => \App\Filament\Resources\AppointmentResource::getUrl('edit', ['record' => $record])
+            )
+            ->headerActions([
+                Tables\Actions\Action::make('view_all')
+                    ->label('View All Appointments')
+                    ->icon('heroicon-m-arrow-top-right-on-square')
+                    ->url(\App\Filament\Resources\AppointmentResource::getUrl('index')),
+            ])
             ->paginated(false);
     }
 }

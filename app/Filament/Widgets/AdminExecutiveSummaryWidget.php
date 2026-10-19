@@ -61,7 +61,8 @@ class AdminExecutiveSummaryWidget extends BaseWidget
             Stat::make('Net Profit (MTD)', CurrencyHelper::format($netProfit))
                 ->description('Collections minus Expenses')
                 ->descriptionIcon('heroicon-m-scale')
-                ->color($netProfit >= 0 ? 'success' : 'danger'),
+                ->color($netProfit >= 0 ? 'success' : 'danger')
+                ->url(\App\Filament\Resources\PaymentResource::getUrl('index')),
 
             Stat::make('Outstanding AR Balance', CurrencyHelper::format($outstandingDebt))
                 ->description('Total unpaid patient invoices')

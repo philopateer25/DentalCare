@@ -54,13 +54,13 @@ class DoctorEarningsWidget extends BaseWidget
                 ->description('Total commission earned this month')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
-                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')), // If commissions have a separate page, we can link it later
+                ->url(\App\Filament\Resources\DoctorCommissionResource::getUrl('index', ['tableFilters[doctor_id][value]' => $userId])),
 
             Stat::make('Unsettled Balance', CurrencyHelper::format($unsettledCommission))
                 ->description('Earnings pending settlement from clinic')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning')
-                ->url(\App\Filament\Resources\InvoiceResource::getUrl('index')),
+                ->url(\App\Filament\Resources\DoctorCommissionResource::getUrl('index', ['tableFilters[doctor_id][value]' => $userId, 'tableFilters[status][value]' => 'pending'])),
         ];
     }
 }

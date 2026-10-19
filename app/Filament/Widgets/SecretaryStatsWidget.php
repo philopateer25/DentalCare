@@ -40,7 +40,7 @@ class SecretaryStatsWidget extends BaseWidget
                 ->description('Total cash collected today')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
-                ->url(\App\Filament\Resources\PatientResource::getUrl('index')), // Optional: link to a payments resource if available
+                ->url(\App\Filament\Resources\PaymentResource::getUrl('index', ['tableFilters[payment_method][value]' => 'cash'])),
 
             Stat::make('Arriving Lab Orders', $arrivingLabs)
                 ->description('Prosthetics expected today')

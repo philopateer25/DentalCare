@@ -11,7 +11,7 @@ class PracticeObserver
      */
     public function created(Practice $practice): void
     {
-        if (app()->runningUnitTests()) {
+        if (app()->runningUnitTests() || app()->environment('testing') || config('app.env') === 'testing' || (defined('PHPUNIT_COMPOSER_INSTALL') && !defined('RUN_SEEDERS_IN_TESTS'))) {
             return;
         }
 

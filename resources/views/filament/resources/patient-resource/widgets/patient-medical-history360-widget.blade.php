@@ -32,44 +32,48 @@
          x-on:refresh-patient-360.window="$wire.$refresh()">
 
         {{-- 1. EXECUTIVE HEADER & CLINICAL STATS BAR --}}
-        <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-teal-950 to-slate-900 text-white border border-teal-800/40 shadow-xl relative overflow-hidden">
+        <div style="background: linear-gradient(135deg, #022c22 0%, #064e3b 45%, #0f172a 100%); color: #ffffff;"
+             class="p-5 rounded-2xl border border-teal-700/50 shadow-xl relative overflow-hidden">
             <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -left-10 -top-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white ring-1 ring-white/20">
-                        <x-heroicon-o-shield-check class="w-7 h-7" />
+                    <div style="background: linear-gradient(135deg, #0d9488 0%, #059669 100%); color: #ffffff;"
+                         class="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-teal-900/40 ring-1 ring-white/30 shrink-0">
+                        <x-heroicon-o-shield-check class="w-7 h-7 text-white" />
                     </div>
                     <div>
-                        <div class="flex items-center gap-2">
-                            <h2 class="text-lg font-black tracking-tight text-white">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 style="color: #ffffff;" class="text-lg font-black tracking-tight">
                                 360° Comprehensive Medical & Dental Profile
                             </h2>
-                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <span style="background: rgba(16, 185, 129, 0.25); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4);"
+                                  class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full shrink-0">
                                 Unified Clinical View
                             </span>
                         </div>
-                        <p class="text-xs text-teal-200/80 mt-0.5">
+                        <p style="color: rgba(204, 251, 241, 0.9);" class="text-xs mt-0.5">
                             Synchronized medical risk screening, clinic procedures, outside treatments, and 3D dental mapping.
                         </p>
                     </div>
                 </div>
 
                 {{-- Action Buttons --}}
-                <div class="flex items-center gap-2.5 flex-wrap">
+                <div class="flex items-center gap-2.5 flex-wrap shrink-0">
                     <button 
                         type="button"
                         wire:click="openAddExternalModal"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-500 active:scale-95 rounded-xl shadow-md shadow-teal-900/30 transition-all border border-teal-400/30">
-                        <x-heroicon-m-plus class="w-4 h-4" />
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-500 active:scale-95 rounded-xl shadow-md transition-all border border-teal-400/40 cursor-pointer">
+                        <x-heroicon-m-plus class="w-4 h-4 text-white" />
                         <span>Log Outside Treatment</span>
                     </button>
 
                     <a 
                         href="{{ route('patient.odontogram', $record?->id ?? 1) }}" 
                         target="_blank"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-white/10 hover:bg-white/20 active:scale-95 rounded-xl backdrop-blur-md transition-all border border-white/15 hover:border-amber-400/40">
+                        style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff;"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold hover:bg-white/25 active:scale-95 rounded-xl backdrop-blur-md transition-all cursor-pointer">
                         <x-heroicon-m-sparkles class="w-4 h-4 text-amber-300" />
                         <span>Open 3D Odontogram</span>
                     </a>
@@ -77,36 +81,44 @@
             </div>
 
             {{-- Metric Chips --}}
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-teal-800/40 text-xs">
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
-                    <x-heroicon-o-check-circle class="w-5 h-5 text-emerald-400 shrink-0" />
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem;" class="mt-4 pt-4 border-t border-teal-700/40 text-xs relative z-10">
+                <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);">
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <x-heroicon-o-check-circle class="w-5 h-5 text-emerald-300" />
+                    </div>
                     <div>
-                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Completed Inside</span>
-                        <strong class="text-sm font-black text-white">{{ count(array_filter($timeline, fn($i) => ($i['source'] ?? '') === 'inside' && $i['type'] === 'procedure')) }} Procedures</strong>
+                        <span style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: #5eead4; display: block; font-weight: 800;">Completed Inside</span>
+                        <strong style="font-size: 0.95rem; font-weight: 900; color: #ffffff; display: block;">{{ count(array_filter($timeline, fn($i) => ($i['source'] ?? '') === 'inside' && $i['type'] === 'procedure')) }} Procedures</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
-                    <x-heroicon-o-building-office-2 class="w-5 h-5 text-teal-400 shrink-0" />
+                <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);">
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: rgba(20, 184, 166, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <x-heroicon-o-building-office-2 class="w-5 h-5 text-teal-300" />
+                    </div>
                     <div>
-                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Outside / Prior Work</span>
-                        <strong class="text-sm font-black text-white">{{ count($externalTreatments) }} Logged</strong>
+                        <span style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: #5eead4; display: block; font-weight: 800;">Outside / Prior Work</span>
+                        <strong style="font-size: 0.95rem; font-weight: 900; color: #ffffff; display: block;">{{ count($externalTreatments) }} Logged</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
-                    <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-amber-400 shrink-0" />
+                <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);">
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-amber-300" />
+                    </div>
                     <div>
-                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Treatment Plans</span>
-                        <strong class="text-sm font-black text-white">{{ count($allPlans) }} Total</strong>
+                        <span style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: #5eead4; display: block; font-weight: 800;">Treatment Plans</span>
+                        <strong style="font-size: 0.95rem; font-weight: 900; color: #ffffff; display: block;">{{ count($allPlans) }} Total</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
-                    <x-heroicon-o-sparkles class="w-5 h-5 text-cyan-400 shrink-0" />
+                <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0.75rem; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);">
+                    <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: rgba(6, 182, 212, 0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <x-heroicon-o-sparkles class="w-5 h-5 text-cyan-300" />
+                    </div>
                     <div>
-                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Teeth Treated</span>
-                        <strong class="text-sm font-black text-white">{{ count($toothHistory) }} Teeth</strong>
+                        <span style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: #5eead4; display: block; font-weight: 800;">Teeth Treated</span>
+                        <strong style="font-size: 0.95rem; font-weight: 900; color: #ffffff; display: block;">{{ count($toothHistory) }} Teeth</strong>
                     </div>
                 </div>
             </div>
@@ -160,6 +172,10 @@
                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tight {{ $badgeBg }}">
                                     {{ $tData['condition'] }}
                                 </span>
+                            @else
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tight bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                                    Treated
+                                </span>
                             @endif
                             <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-white/80 dark:bg-gray-800 shadow-xs">
                                 {{ $totalEvents > 0 ? $totalEvents : 1 }}
@@ -185,34 +201,34 @@
                 </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.75rem;" class="mt-3">
                 @foreach($risks as $key => $risk)
                     @php
                         $color = $risk['color'] ?? 'slate';
                         $bgClass = match($color) {
-                            'rose' => 'bg-rose-50/80 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900/60',
-                            'amber' => 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900/60',
-                            'emerald' => 'bg-emerald-50/80 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/60',
-                            default => 'bg-gray-50 border-gray-200 dark:bg-gray-800/40 dark:border-gray-700',
+                            'rose' => 'bg-rose-50/90 border-rose-300 dark:bg-rose-950/30 dark:border-rose-900/60',
+                            'amber' => 'bg-amber-50/90 border-amber-300 dark:bg-amber-950/30 dark:border-amber-900/60',
+                            'emerald' => 'bg-emerald-50/90 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-900/60',
+                            default => 'bg-gray-50 border-gray-300 dark:bg-gray-800/40 dark:border-gray-700',
                         };
                         $badgeClass = match($color) {
-                            'rose' => 'bg-rose-100 text-rose-800 dark:bg-rose-900/80 dark:text-rose-200 border-rose-200',
-                            'amber' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-200 border-amber-200',
-                            'emerald' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-200 border-emerald-200',
-                            default => 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border-gray-300',
+                            'rose' => 'bg-rose-100 text-rose-900 dark:bg-rose-900/80 dark:text-rose-200 border-rose-300',
+                            'amber' => 'bg-amber-100 text-amber-900 dark:bg-amber-900/80 dark:text-amber-200 border-amber-300',
+                            'emerald' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/80 dark:text-emerald-200 border-emerald-300',
+                            default => 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-300 border-gray-300',
                         };
                     @endphp
-                    <div class="p-3 rounded-lg border {{ $bgClass }} flex flex-col justify-between">
+                    <div class="p-3.5 rounded-lg border {{ $bgClass }} flex flex-col justify-between shadow-xs">
                         <div>
-                            <div class="flex items-start justify-between gap-1.5">
-                                <span class="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
+                            <div class="flex items-start justify-between gap-2 mb-1.5">
+                                <span class="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider flex-1 min-w-0 pr-1 break-words">
                                     {{ $risk['title'] }}
                                 </span>
-                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold border {{ $badgeClass }} whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border {{ $badgeClass }} shrink-0 whitespace-nowrap shadow-2xs">
                                     {{ $risk['badge'] }}
                                 </span>
                             </div>
-                            <p class="mt-2 text-xs leading-relaxed text-gray-700 dark:text-gray-300">
+                            <p class="mt-1 text-xs leading-relaxed text-gray-700 dark:text-gray-300 break-words">
                                 {{ $risk['description'] }}
                             </p>
                         </div>
@@ -222,22 +238,23 @@
         </div>
 
         {{-- 4. THREE-COLUMN INTEGRATED CLINICAL GRID --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;" class="my-6">
 
             {{-- COLUMN 1: OUTSIDE CLINIC HISTORY LOG --}}
             <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col">
-                <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-heroicon-o-building-office-2 class="w-5 h-5 text-indigo-500" />
-                        <div>
-                            <h4 class="text-sm font-bold text-gray-900 dark:text-white">Outside Clinic History</h4>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">External dental treatments & prior work</p>
+                <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <x-heroicon-o-building-office-2 class="w-5 h-5 text-indigo-500 shrink-0" />
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">Outside Clinic History</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">External treatments & prior work</p>
                         </div>
                     </div>
                     <button 
                         type="button"
                         wire:click="openAddExternalModal"
-                        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition-colors">
+                        style="background-color: #4f46e5; color: #ffffff;"
+                        class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer hover:opacity-90">
                         <x-heroicon-m-plus class="w-3.5 h-3.5" />
                         <span>Log Record</span>
                     </button>
@@ -319,58 +336,59 @@
 
             {{-- COLUMN 2: UNIFIED CHRONOLOGICAL JOURNEY TIMELINE --}}
             <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col transition-all duration-200"
-                 :class="isTimelineMaximized ? 'lg:col-span-3 order-first ring-2 ring-emerald-500/30 shadow-lg' : ''">
+                 :class="isTimelineMaximized ? 'order-first ring-2 ring-emerald-500/30 shadow-lg' : ''"
+                 :style="isTimelineMaximized ? 'grid-column: 1 / -1;' : ''">
                 
                 {{-- HEADER (WITH OPEN/CLOSE & MAXIMIZE CONTROLS - 0MS INSTANT) --}}
-                <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/20">
-                    <div class="flex items-center justify-between gap-3 flex-wrap">
-                        <div class="flex items-center gap-2.5">
+                <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/20 space-y-2">
+                    {{-- Row 1: Title, count badge, and Open/Close Toggle --}}
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
                             <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                                 <x-heroicon-o-clock class="w-5 h-5" />
                             </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-sm font-bold text-gray-900 dark:text-white">Unified Clinical Logs</h4>
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $hasActiveFilters ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' }}">
-                                        {{ count($timeline) }} {{ $hasActiveFilters ? 'of ' . $filterCounts['all'] : '' }} Records
-                                    </span>
-                                </div>
-                                <p class="text-[11px] text-gray-500 dark:text-gray-400">Procedures, appointments, 3D odontogram findings & outside history</p>
+                            <div class="min-w-0 flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">Unified Clinical Logs</h4>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 whitespace-nowrap {{ $hasActiveFilters ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' }}">
+                                    {{ count($timeline) }} {{ $hasActiveFilters ? 'of ' . $filterCounts['all'] : '' }} Records
+                                </span>
                             </div>
                         </div>
 
-                        {{-- Action Controls: Expand/Collapse Details, Maximize, Open/Close --}}
-                        <div class="flex items-center gap-1.5">
-                            <div x-show="!isTimelineCollapsed" class="flex items-center gap-1.5">
-                                <button 
-                                    type="button" 
-                                    @click="expandAllEntries = !expandAllEntries"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95"
-                                    title="Expand or collapse detailed inline protocol information">
-                                    <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 transition-transform duration-200" ::class="expandAllEntries ? 'rotate-180 text-emerald-500' : ''" />
-                                    <span x-text="expandAllEntries ? 'Collapse Details' : 'Expand Details'">Expand Details</span>
-                                </button>
+                        {{-- Open / Close Toggle Button (Instant 0ms Client-Side Alpine Toggle) --}}
+                        <button 
+                            type="button" 
+                            @click="isTimelineCollapsed = !isTimelineCollapsed"
+                            class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all active:scale-95 cursor-pointer"
+                            :class="isTimelineCollapsed ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500 shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                            <x-heroicon-m-chevron-down class="w-3.5 h-3.5" x-show="isTimelineCollapsed" />
+                            <x-heroicon-m-chevron-up class="w-3.5 h-3.5" x-show="!isTimelineCollapsed" />
+                            <span x-text="isTimelineCollapsed ? 'Open Logs' : 'Close Logs'">Close Logs</span>
+                        </button>
+                    </div>
 
-                                <button 
-                                    type="button" 
-                                    @click="isTimelineMaximized = !isTimelineMaximized"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95"
-                                    :title="isTimelineMaximized ? 'Restore to column' : 'Expand to full width'">
-                                    <x-heroicon-m-arrows-pointing-in class="w-3.5 h-3.5 text-emerald-600" x-show="isTimelineMaximized" />
-                                    <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 text-emerald-600" x-show="!isTimelineMaximized" />
-                                    <span x-text="isTimelineMaximized ? 'Restore' : 'Maximize'">Maximize</span>
-                                </button>
-                            </div>
-
-                            {{-- Open / Close Toggle Button (Instant 0ms Client-Side Alpine Toggle) --}}
+                    {{-- Row 2 (When Open): Subtitle and Detail/Maximize Controls --}}
+                    <div x-show="!isTimelineCollapsed" class="flex items-center justify-between gap-2 pt-0.5">
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate min-w-0 flex-1">Procedures, appointments, 3D odontogram findings & outside history</p>
+                        
+                        <div class="flex items-center gap-1.5 shrink-0">
                             <button 
                                 type="button" 
-                                @click="isTimelineCollapsed = !isTimelineCollapsed"
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all active:scale-95"
-                                :class="isTimelineCollapsed ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500 shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'">
-                                <x-heroicon-m-chevron-down class="w-3.5 h-3.5" x-show="isTimelineCollapsed" />
-                                <x-heroicon-m-chevron-up class="w-3.5 h-3.5" x-show="!isTimelineCollapsed" />
-                                <span x-text="isTimelineCollapsed ? 'Open Logs' : 'Close Logs'">Close Logs</span>
+                                @click="expandAllEntries = !expandAllEntries"
+                                class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                                title="Expand or collapse detailed inline protocol information">
+                                <x-heroicon-m-arrows-pointing-out class="w-3 h-3 transition-transform duration-200" ::class="expandAllEntries ? 'rotate-180 text-emerald-500' : ''" />
+                                <span x-text="expandAllEntries ? 'Collapse' : 'Expand Details'">Expand Details</span>
+                            </button>
+
+                            <button 
+                                type="button" 
+                                @click="isTimelineMaximized = !isTimelineMaximized"
+                                class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                                :title="isTimelineMaximized ? 'Restore to column' : 'Expand to full width'">
+                                <x-heroicon-m-arrows-pointing-in class="w-3 h-3 text-emerald-600" x-show="isTimelineMaximized" />
+                                <x-heroicon-m-arrows-pointing-out class="w-3 h-3 text-emerald-600" x-show="!isTimelineMaximized" />
+                                <span x-text="isTimelineMaximized ? 'Restore' : 'Maximize'">Maximize</span>
                             </button>
                         </div>
                     </div>
@@ -621,20 +639,20 @@
                                         <div class="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 hover:border-primary-400 dark:hover:border-primary-600 transition-all shadow-xs">
                                             {{-- Item Header --}}
                                             <div class="flex items-start justify-between gap-2">
-                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                <div class="flex items-start gap-1.5 min-w-0 flex-1">
                                                     @if(!empty($item['tooth_number_fdi']))
                                                         <button 
                                                             type="button"
                                                             wire:click.stop="openTooth3DModal('{{ $item['tooth_number_fdi'] }}')"
-                                                            class="px-2 py-0.5 text-[10px] font-black rounded-md bg-primary-100 text-primary-900 dark:bg-primary-900/60 dark:text-primary-200 hover:bg-primary-200 flex items-center gap-0.5 shadow-2xs transition-transform active:scale-95"
+                                                            class="shrink-0 px-2 py-0.5 text-[10px] font-black rounded-md bg-primary-100 text-primary-900 dark:bg-primary-900/60 dark:text-primary-200 hover:bg-primary-200 flex items-center gap-0.5 shadow-2xs transition-transform active:scale-95 cursor-pointer"
                                                             title="Click to view Tooth in 3D">
                                                             <span>🦷 #{{ $item['tooth_number_fdi'] }}</span>
                                                         </button>
                                                     @endif
 
                                                     <h5 
-                                                        @if($clickHandler) wire:click="{{ $clickHandler }}" @endif
-                                                        class="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors {{ $clickHandler ? 'cursor-pointer' : '' }}">
+                                                        @click="itemExpanded = !itemExpanded"
+                                                        class="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors cursor-pointer min-w-0 flex-1 break-words leading-snug">
                                                         {{ $item['title'] }}
                                                     </h5>
                                                 </div>
@@ -648,24 +666,24 @@
                                                     <button 
                                                         type="button" 
                                                         @click="itemExpanded = !itemExpanded"
-                                                        class="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors active:scale-90"
+                                                        class="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors active:scale-90 cursor-pointer"
                                                         :title="(expandAllEntries || itemExpanded) ? 'Collapse inline details' : 'Expand inline details'">
                                                         <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform duration-200" ::class="(expandAllEntries || itemExpanded) ? 'rotate-180 text-primary-500' : ''" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between">
-                                                <span>Doctor/Source: <strong class="text-gray-700 dark:text-gray-300">{{ $item['doctor'] }}</strong></span>
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold {{ $isOutside ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' }}">
+                                            <div class="mt-1 text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2 flex-wrap">
+                                                <span class="min-w-0 flex-1 truncate">Doctor/Source: <strong class="text-gray-700 dark:text-gray-300">{{ $item['doctor'] }}</strong></span>
+                                                <div class="flex items-center gap-1.5 shrink-0">
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap {{ $isOutside ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' }}">
                                                         {{ $item['status'] }}
                                                     </span>
                                                     @if($clickHandler)
                                                         <button 
                                                             type="button" 
                                                             wire:click="{{ $clickHandler }}"
-                                                            class="text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline">
+                                                            class="text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:underline shrink-0 cursor-pointer">
                                                             Detail &rarr;
                                                         </button>
                                                     @endif
@@ -817,15 +835,15 @@
 
             {{-- COLUMN 3: FUTURE ROADMAP & ALL TREATMENT PLANS --}}
             <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col">
-                <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-heroicon-o-map class="w-5 h-5 text-sky-500" />
-                        <div>
-                            <h4 class="text-sm font-bold text-gray-900 dark:text-white">Roadmap & Plans</h4>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Next visit & all clinical treatment plans</p>
+                <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                        <x-heroicon-o-map class="w-5 h-5 text-sky-500 shrink-0" />
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-gray-900 dark:text-white truncate">Roadmap & Plans</h4>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">Next visit & all clinical treatment plans</p>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-400">
+                    <span class="text-[10px] font-bold text-gray-500 dark:text-gray-400 shrink-0 whitespace-nowrap px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700">
                         {{ count($allPlans) }} Plans
                     </span>
                 </div>
@@ -889,17 +907,17 @@
                             @endphp
                             <div class="p-3.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 hover:border-primary-400 dark:hover:border-primary-600 transition-all cursor-pointer group"
                                  wire:click="openTreatmentPlanModal({{ $plan->id }})">
-                                <div class="flex items-center justify-between">
-                                    <h5 class="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                <div class="flex items-center justify-between gap-2">
+                                    <h5 class="text-xs font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex-1 min-w-0 truncate">
                                         {{ $plan->title }}
                                     </h5>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $statusColor }}">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 whitespace-nowrap {{ $statusColor }}">
                                         {{ $plan->status }}
                                     </span>
                                 </div>
-                                <div class="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-                                    <span>Doctor: <strong class="text-gray-700 dark:text-gray-300">{{ $plan->doctor?->name ?: 'Doctor' }}</strong></span>
-                                    <span>{{ $plan->phases->count() }} Phases &bull; {{ $totalProcs }} Procedures</span>
+                                <div class="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                    <span class="min-w-0 truncate">Doctor: <strong class="text-gray-700 dark:text-gray-300">{{ $plan->doctor?->name ?: 'Doctor' }}</strong></span>
+                                    <span class="shrink-0 whitespace-nowrap">{{ $plan->phases->count() }} Phases &bull; {{ $totalProcs }} Procs</span>
                                 </div>
                                 @if($plan->total_cost)
                                     <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-[11px]">
@@ -922,23 +940,25 @@
 
         {{-- A. TREATMENT PLAN MODAL --}}
         @if($activeModal === 'plan' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[85vh]">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
-                        <div>
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[85vh]">
+                    {{-- Premium Modal Header --}}
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #0f172a 100%); color: #ffffff;" 
+                         class="p-5 border-b border-slate-700/60 flex items-center justify-between text-white relative">
+                        <div class="min-w-0 flex-1 mr-3">
                             <div class="flex items-center gap-2">
-                                <h3 class="text-base font-bold text-gray-900 dark:text-white">
+                                <h3 style="color: #ffffff;" class="text-base font-black tracking-tight truncate">
                                     {{ $modalData['title'] }}
                                 </h3>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-200">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0 bg-teal-500/30 text-teal-200 border border-teal-500/50">
                                     {{ $modalData['status'] }}
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                Supervising Doctor: <strong>{{ $modalData['doctor'] }}</strong> &bull; Created: {{ $modalData['created_at'] }}
+                            <p style="color: rgba(203, 213, 225, 0.9);" class="text-xs mt-0.5 truncate">
+                                Supervising Doctor: <strong style="color: #ffffff;">{{ $modalData['doctor'] }}</strong> &bull; Created: {{ $modalData['created_at'] }}
                             </p>
                         </div>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                        <button type="button" wire:click="closeModal" class="shrink-0 text-gray-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
                             <x-heroicon-m-x-mark class="w-6 h-6" />
                         </button>
                     </div>
@@ -1017,80 +1037,143 @@
 
         {{-- B. PROCEDURE DETAILS MODAL --}}
         @if($activeModal === 'procedure' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
-                        <div class="flex items-center gap-2">
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[90vh]">
+                    {{-- Premium Modal Header --}}
+                    <div style="background: linear-gradient(135deg, #022c22 0%, #064e3b 45%, #0f172a 100%); color: #ffffff;" 
+                         class="p-5 border-b border-teal-700/50 flex items-center justify-between text-white relative">
+                        <div class="flex items-center gap-3 min-w-0 flex-1 mr-3">
                             @if(!empty($modalData['tooth_number_fdi']))
                                 <button 
                                     type="button" 
                                     wire:click="openTooth3DModal('{{ $modalData['tooth_number_fdi'] }}')"
-                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-200 hover:bg-primary-200 flex items-center gap-1"
-                                    title="Focus in 3D Odontogram">
+                                    style="background: rgba(16, 185, 129, 0.25); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7;"
+                                    class="shrink-0 px-3 py-1.5 text-xs font-black font-mono rounded-xl hover:bg-emerald-500/40 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                    title="Inspect in 3D Odontogram">
                                     <span>🦷 Tooth #{{ $modalData['tooth_number_fdi'] }}</span>
-                                    <x-heroicon-m-sparkles class="w-3.5 h-3.5 text-primary-600" />
+                                    <x-heroicon-m-sparkles class="w-3.5 h-3.5 text-amber-300" />
                                 </button>
+                            @else
+                                <div class="shrink-0 w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300">
+                                    <x-heroicon-o-shield-check class="w-5 h-5" />
+                                </div>
                             @endif
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
-                                {{ $modalData['title'] }}
-                            </h3>
+
+                            <div class="min-w-0 flex-1">
+                                <h3 style="color: #ffffff;" class="text-base font-black tracking-tight truncate">
+                                    {{ $modalData['title'] }}
+                                </h3>
+                                <p style="color: rgba(204, 251, 241, 0.85);" class="text-[11px] mt-0.5 truncate">
+                                    Procedure Record &bull; Code: <strong>{{ $modalData['code'] ?? 'Clinical' }}</strong> &bull; {{ is_object($modalData['category']) ? ($modalData['category']->name ?? 'Operative Procedure') : (is_array($modalData['category']) ? ($modalData['category']['name'] ?? 'Operative Procedure') : ($modalData['category'] ?? 'Operative Procedure')) }}
+                                </p>
+                            </div>
                         </div>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                            <x-heroicon-m-x-mark class="w-5 h-5" />
+
+                        <button 
+                            type="button" 
+                            wire:click="closeModal" 
+                            class="shrink-0 text-gray-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
+                            <x-heroicon-m-x-mark class="w-6 h-6" />
                         </button>
                     </div>
 
-                    <div class="p-5 space-y-3.5 text-xs text-gray-700 dark:text-gray-300">
-                        <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-gray-50/70 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800">
-                            <div>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold block">Status</span>
-                                <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase">{{ $modalData['status'] }}</span>
+                    {{-- Modal Body --}}
+                    <div class="p-5 overflow-y-auto space-y-4 text-xs text-gray-800 dark:text-gray-200 flex-1">
+                        {{-- Executive Status & Doctor Grid --}}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.625rem;">
+                            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/80">
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black block">Status</span>
+                                @php
+                                    $st = strtolower($modalData['status'] ?? 'completed');
+                                    $stClass = match($st) {
+                                        'completed', 'executed' => 'text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300',
+                                        'planned', 'scheduled' => 'text-sky-700 bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 border-sky-300',
+                                        'in_progress' => 'text-amber-700 bg-amber-100 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300',
+                                        default => 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-300 border-gray-300',
+                                    };
+                                @endphp
+                                <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-md text-[10px] font-black uppercase border {{ $stClass }}">
+                                    {{ $modalData['status'] }}
+                                </span>
                             </div>
-                            <div>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold block">Doctor</span>
-                                <strong class="text-gray-900 dark:text-white">{{ $modalData['doctor'] }}</strong>
+
+                            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/80">
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black block">Attending Doctor</span>
+                                <strong class="text-xs font-bold text-gray-900 dark:text-white mt-1 block truncate">
+                                    👨‍⚕️ {{ $modalData['doctor'] }}
+                                </strong>
                             </div>
-                            @if(!empty($modalData['completed_at']))
-                                <div class="col-span-2">
-                                    <span class="text-[10px] text-gray-400 uppercase font-bold block">Executed Date</span>
-                                    <span>{{ $modalData['completed_at'] }}</span>
-                                </div>
-                            @endif
+
+                            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/80">
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black block">Completed / Date</span>
+                                <span class="text-xs font-semibold text-gray-900 dark:text-gray-100 mt-1 block">
+                                    📅 {{ $modalData['completed_at'] ?: 'Scheduled' }}
+                                </span>
+                            </div>
+
+                            <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/80">
+                                <span class="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-black block">Treatment Plan</span>
+                                <span class="text-xs font-semibold text-gray-900 dark:text-gray-100 mt-1 block truncate" title="{{ $modalData['plan_title'] ?? 'Direct Procedure' }}">
+                                    📋 {{ $modalData['plan_title'] ?: 'Direct Procedure' }}
+                                </span>
+                            </div>
                         </div>
 
-                        {{-- Clinical Details --}}
-                        <div class="space-y-2">
+                        {{-- Surgical & Clinical Protocol Cards --}}
+                        <div class="space-y-2.5">
                             @if(!empty($modalData['anesthetic_agent']))
-                                <div class="p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50">
-                                    <strong class="text-emerald-800 dark:text-emerald-300 block mb-0.5">💉 Anesthesia Protocol</strong>
-                                    <span>{{ $modalData['anesthetic_agent'] }} @if(!empty($modalData['anesthetic_dosage'])) ({{ $modalData['anesthetic_dosage'] }}) @endif @if(!empty($modalData['anesthetic_technique'])) &bull; {{ $modalData['anesthetic_technique'] }} @endif</span>
+                                <div class="p-3.5 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-900/60">
+                                    <div class="flex items-center gap-1.5 mb-1 text-emerald-800 dark:text-emerald-300 font-bold">
+                                        <span>💉</span>
+                                        <span class="uppercase tracking-wider text-[11px]">Local Anesthesia Protocol</span>
+                                    </div>
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                        {{ $modalData['anesthetic_agent'] }}
+                                        @if(!empty($modalData['anesthetic_dosage']))
+                                            <span class="text-emerald-700 dark:text-emerald-400 font-bold">({{ $modalData['anesthetic_dosage'] }})</span>
+                                        @endif
+                                        @if(!empty($modalData['anesthetic_technique']))
+                                            <span class="text-gray-600 dark:text-gray-400">&bull; {{ $modalData['anesthetic_technique'] }}</span>
+                                        @endif
+                                    </p>
                                 </div>
                             @endif
 
                             @if(!empty($modalData['materials_used']))
-                                <div class="p-2.5 rounded-lg bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/50">
-                                    <strong class="text-sky-800 dark:text-sky-300 block mb-0.5">🧪 Materials Applied</strong>
-                                    <span>{{ $modalData['materials_used'] }}</span>
+                                <div class="p-3.5 rounded-xl bg-sky-50/90 dark:bg-sky-950/20 border border-sky-300 dark:border-sky-900/60">
+                                    <div class="flex items-center gap-1.5 mb-1 text-sky-800 dark:text-sky-300 font-bold">
+                                        <span>🧪</span>
+                                        <span class="uppercase tracking-wider text-[11px]">Clinical Materials & Biomaterials Applied</span>
+                                    </div>
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                        {{ $modalData['materials_used'] }}
+                                    </p>
                                 </div>
                             @endif
 
                             @if(!empty($modalData['tools_used']))
-                                <div class="p-2.5 rounded-lg bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/50">
-                                    <strong class="text-purple-800 dark:text-purple-300 block mb-0.5">🛠️ Instruments & Handpieces</strong>
-                                    <span>{{ $modalData['tools_used'] }}</span>
+                                <div class="p-3.5 rounded-xl bg-purple-50/90 dark:bg-purple-950/20 border border-purple-300 dark:border-purple-900/60">
+                                    <div class="flex items-center gap-1.5 mb-1 text-purple-800 dark:text-purple-300 font-bold">
+                                        <span>🛠️</span>
+                                        <span class="uppercase tracking-wider text-[11px]">Instruments & Handpieces</span>
+                                    </div>
+                                    <p class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                                        {{ $modalData['tools_used'] }}
+                                    </p>
                                 </div>
                             @endif
 
                             @if(!empty($modalData['hemostasis']))
-                                <div class="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300 font-bold">
-                                    ✨ {{ $modalData['hemostasis'] }}
+                                <div class="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/20 border border-teal-300 dark:border-teal-900/60 flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold">
+                                    <span class="text-base">✨</span>
+                                    <span>{{ $modalData['hemostasis'] }}</span>
                                 </div>
                             @endif
 
                             @if(!empty($modalData['notes']))
-                                <div>
-                                    <strong class="text-gray-500 block mb-1">Chairside Observations & Notes</strong>
-                                    <p class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 italic">
+                                <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-300 dark:border-gray-700">
+                                    <strong class="text-[11px] text-gray-600 dark:text-gray-400 uppercase tracking-wider block mb-1">Chairside Observations & Operative Notes</strong>
+                                    <p class="text-xs text-gray-800 dark:text-gray-200 italic leading-relaxed">
                                         &ldquo;{{ $modalData['notes'] }}&rdquo;
                                     </p>
                                 </div>
@@ -1098,19 +1181,26 @@
                         </div>
                     </div>
 
-                    <div class="p-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
+                    {{-- Modal Footer --}}
+                    <div class="p-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
                         @if(!empty($modalData['tooth_number_fdi']))
                             <button 
                                 type="button" 
                                 wire:click="openTooth3DModal('{{ $modalData['tooth_number_fdi'] }}')"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-500 rounded-xl transition-colors">
-                                <x-heroicon-m-sparkles class="w-4 h-4" />
-                                <span>Inspect in 3D Model</span>
+                                style="background-color: #0d9488; color: #ffffff;"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold active:scale-95 rounded-xl shadow-md transition-all cursor-pointer hover:opacity-90">
+                                <x-heroicon-m-sparkles class="w-4 h-4 text-amber-300" />
+                                <span>Inspect Tooth #{{ $modalData['tooth_number_fdi'] }} in 3D</span>
                             </button>
                         @else
                             <div></div>
                         @endif
-                        <button type="button" wire:click="closeModal" class="px-4 py-1.5 text-xs font-bold text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 rounded-xl transition-colors">
+
+                        <button 
+                            type="button" 
+                            wire:click="closeModal" 
+                            style="background-color: #475569; color: #ffffff;"
+                            class="px-5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer hover:opacity-90">
                             Close
                         </button>
                     </div>
@@ -1120,17 +1210,26 @@
 
         {{-- C. PRESCRIPTION DETAILS MODAL --}}
         @if($activeModal === 'prescription' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
-                        <div class="flex items-center gap-2">
-                            <x-heroicon-o-document-text class="w-5 h-5 text-amber-500" />
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
-                                Prescription Record &bull; {{ $modalData['issue_date'] }}
-                            </h3>
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                    {{-- Premium Modal Header --}}
+                    <div style="background: linear-gradient(135deg, #451a03 0%, #78350f 45%, #0f172a 100%); color: #ffffff;" 
+                         class="p-5 border-b border-amber-900/60 flex items-center justify-between text-white relative">
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0">
+                                <x-heroicon-o-document-text class="w-5 h-5" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 style="color: #ffffff;" class="text-base font-black tracking-tight truncate">
+                                    Prescription Record &bull; {{ $modalData['issue_date'] }}
+                                </h3>
+                                <p style="color: rgba(254, 243, 199, 0.85);" class="text-xs truncate">
+                                    Prescribing Doctor: <strong>{{ $modalData['doctor'] }}</strong>
+                                </p>
+                            </div>
                         </div>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                            <x-heroicon-m-x-mark class="w-5 h-5" />
+                        <button type="button" wire:click="closeModal" class="shrink-0 text-gray-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
+                            <x-heroicon-m-x-mark class="w-6 h-6" />
                         </button>
                     </div>
 
@@ -1185,26 +1284,38 @@
 
         {{-- D. EXTERNAL TREATMENT DETAILS MODAL --}}
         @if($activeModal === 'external' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
-                        <div class="flex items-center gap-2">
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                    {{-- Premium Modal Header --}}
+                    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 45%, #0f172a 100%); color: #ffffff;" 
+                         class="p-5 border-b border-indigo-900/60 flex items-center justify-between text-white relative">
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-3">
                             @if(!empty($modalData['tooth_number_fdi']))
                                 <button 
                                     type="button" 
                                     wire:click="openTooth3DModal('{{ $modalData['tooth_number_fdi'] }}')"
-                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200 hover:bg-indigo-200 flex items-center gap-1"
+                                    style="background: rgba(99, 102, 241, 0.25); border: 1px solid rgba(99, 102, 241, 0.4); color: #c7d2fe;"
+                                    class="shrink-0 px-2.5 py-1 text-xs font-bold rounded-lg hover:bg-indigo-500/40 flex items-center gap-1 transition-all cursor-pointer"
                                     title="Focus in 3D Odontogram">
                                     <span>🦷 #{{ $modalData['tooth_number_fdi'] }}</span>
-                                    <x-heroicon-m-sparkles class="w-3.5 h-3.5 text-indigo-600" />
+                                    <x-heroicon-m-sparkles class="w-3.5 h-3.5 text-amber-300" />
                                 </button>
+                            @else
+                                <div class="shrink-0 w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300">
+                                    <x-heroicon-o-building-office-2 class="w-5 h-5" />
+                                </div>
                             @endif
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
-                                {{ $modalData['procedure_title'] }}
-                            </h3>
+                            <div class="min-w-0 flex-1">
+                                <h3 style="color: #ffffff;" class="text-base font-black tracking-tight truncate">
+                                    {{ $modalData['procedure_title'] }}
+                                </h3>
+                                <p style="color: rgba(224, 231, 255, 0.85);" class="text-xs truncate">
+                                    External Dental Procedure &bull; Year: {{ $modalData['performed_year'] ?: 'Historical' }}
+                                </p>
+                            </div>
                         </div>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                            <x-heroicon-m-x-mark class="w-5 h-5" />
+                        <button type="button" wire:click="closeModal" class="shrink-0 text-gray-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
+                            <x-heroicon-m-x-mark class="w-6 h-6" />
                         </button>
                     </div>
 
@@ -1256,17 +1367,26 @@
 
         {{-- E. CLINIC VISIT DETAILS MODAL --}}
         @if($activeModal === 'visit' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
-                    <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
-                        <div class="flex items-center gap-2">
-                            <x-heroicon-o-calendar-days class="w-5 h-5 text-sky-500" />
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
-                                Clinic Visit Details &bull; {{ $modalData['type'] }}
-                            </h3>
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+                    {{-- Premium Modal Header --}}
+                    <div style="background: linear-gradient(135deg, #082f49 0%, #0369a1 45%, #0f172a 100%); color: #ffffff;" 
+                         class="p-5 border-b border-sky-900/60 flex items-center justify-between text-white relative">
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-3">
+                            <div class="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-300 shrink-0">
+                                <x-heroicon-o-calendar-days class="w-5 h-5" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 style="color: #ffffff;" class="text-base font-black tracking-tight truncate">
+                                    Clinic Visit &bull; {{ $modalData['type'] }}
+                                </h3>
+                                <p style="color: rgba(224, 242, 254, 0.85);" class="text-xs truncate">
+                                    {{ $modalData['starts_at'] }} &bull; Dr. {{ $modalData['doctor'] }}
+                                </p>
+                            </div>
                         </div>
-                        <button type="button" wire:click="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
-                            <x-heroicon-m-x-mark class="w-5 h-5" />
+                        <button type="button" wire:click="closeModal" class="shrink-0 text-gray-300 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
+                            <x-heroicon-m-x-mark class="w-6 h-6" />
                         </button>
                     </div>
 
@@ -1322,7 +1442,7 @@
 
         {{-- F. 3D TOOTH FOCUS MODAL --}}
         @if($activeModal === 'tooth_3d' && !empty($modalData))
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md flex items-center justify-center p-4" wire:click.self="closeModal">
                 <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[90vh]">
                     <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gradient-to-r from-slate-900 to-indigo-950 text-white">
                         <div class="flex items-center gap-3">
@@ -1353,13 +1473,38 @@
                     </div>
 
                     <div class="p-5 overflow-y-auto space-y-4 flex-1">
-                        {{-- 3D Odontogram Frame Focused on this Tooth --}}
-                        <div class="w-full h-72 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-slate-950 relative shadow-inner">
-                            <iframe 
-                                src="{{ route('patient.odontogram', $record?->id ?? 1) }}?tooth={{ $modalData['tooth'] }}&isolate=1&dark=1"
-                                class="w-full h-full border-none"
-                                allowfullscreen>
-                            </iframe>
+                        {{-- 3D Odontogram Viewport Focused on this Tooth (On-Demand Loading to Prevent Lag) --}}
+                        <div x-data="{ show3D: false }" class="w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-slate-950 relative shadow-inner">
+                            <div x-show="!show3D" class="h-44 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white">
+                                <span class="text-3xl mb-1.5">🦷</span>
+                                <h4 class="text-sm font-bold text-white mb-0.5">Tooth #{{ $modalData['tooth'] }} 3D Anatomical Inspection</h4>
+                                <p class="text-xs text-indigo-200/80 mb-3 max-w-md">Load the real-time WebGL 3D Odontogram to isolate and inspect tooth surfaces.</p>
+                                <div class="flex items-center gap-2">
+                                    <button 
+                                        type="button" 
+                                        @click="show3D = true"
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer">
+                                        <x-heroicon-m-sparkles class="w-4 h-4 text-amber-300" />
+                                        <span>Load 3D Interactive Viewport</span>
+                                    </button>
+                                    <a 
+                                        href="{{ route('patient.odontogram', $record?->id ?? 1) }}?tooth={{ $modalData['tooth'] }}&isolate=1" 
+                                        target="_blank"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                                        <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5" />
+                                        <span>Fullscreen</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div x-show="show3D" x-cloak class="h-80 w-full relative">
+                                <template x-if="show3D">
+                                    <iframe 
+                                        src="{{ route('patient.odontogram', $record?->id ?? 1) }}?tooth={{ $modalData['tooth'] }}&isolate=1&dark=1"
+                                        class="w-full h-full border-none"
+                                        allowfullscreen>
+                                    </iframe>
+                                </template>
+                            </div>
                         </div>
 
                         {{-- Quick 1-Click Tooth Condition Marker (Crown, Implant, RCT, Caries, etc.) --}}
@@ -1552,7 +1697,7 @@
 
         {{-- G. QUICK-ADD EXTERNAL TREATMENT MODAL --}}
         @if($activeModal === 'external_add')
-            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" wire:click.self="closeAddExternalModal">
                 <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
                     <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/40">
                         <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">

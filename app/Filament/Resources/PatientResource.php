@@ -71,28 +71,28 @@ class PatientResource extends Resource
                                         TextEntry::make('medicalHistory.blood_type')->label('Blood Type')->badge()->color('danger'),
                                         TextEntry::make('medicalHistory.diabetic_status')
                                             ->label('Diabetic Status')
-                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->diabetic_status 
-                                                ? 'Yes (' . ($record?->medicalHistory?->hba1c_level ?: 'Type ' . $record?->medicalHistory?->diabetes_type) . ($record?->medicalHistory?->blood_sugar_reading ? ' - ' . $record?->medicalHistory?->blood_sugar_reading . ' mg/dL' : '') . ')' 
+                                            ->formatStateUsing(fn ($state, $record) => $record?->medicalHistory?->diabetic_status 
+                                                ? 'Yes (' . ($record?->medicalHistory?->hba1c_level ?: ($record?->medicalHistory?->diabetes_type ? 'Type ' . $record?->medicalHistory?->diabetes_type : 'Active')) . ($record?->medicalHistory?->blood_sugar_reading ? ' - ' . $record?->medicalHistory?->blood_sugar_reading . ' mg/dL' : '') . ')' 
                                                 : 'No')
                                             ->badge()
                                             ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'danger' : 'success'),
                                         TextEntry::make('medicalHistory.hypertension_status')
                                             ->label('Hypertension')
-                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->hypertension_status 
-                                                ? 'Yes (' . ($record?->medicalHistory?->typical_blood_pressure ?: $record?->medicalHistory?->blood_pressure_stage) . ')' 
+                                            ->formatStateUsing(fn ($state, $record) => $record?->medicalHistory?->hypertension_status 
+                                                ? 'Yes (' . ($record?->medicalHistory?->typical_blood_pressure ?: ($record?->medicalHistory?->blood_pressure_stage ?: 'Diagnosed')) . ')' 
                                                 : 'No')
                                             ->badge()
                                             ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'warning' : 'success'),
                                         TextEntry::make('medicalHistory.bleeding_disorder')
                                             ->label('Blood Thinners / Bleeding')
-                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->bleeding_disorder 
+                                            ->formatStateUsing(fn ($state, $record) => $record?->medicalHistory?->bleeding_disorder 
                                                 ? 'Yes (' . ($record?->medicalHistory?->anticoagulant_type ?: 'Active') . ($record?->medicalHistory?->inr_level ? ' - INR ' . $record?->medicalHistory?->inr_level : '') . ')' 
                                                 : 'No')
                                             ->badge()
                                             ->color(fn ($state) => str_starts_with((string) $state, 'Yes') ? 'danger' : 'success'),
                                         TextEntry::make('medicalHistory.bisphosphonate_therapy')
                                             ->label('MRONJ Bone Risk')
-                                            ->formatStateUsing(fn ($record) => $record?->medicalHistory?->bisphosphonate_therapy 
+                                            ->formatStateUsing(fn ($state, $record) => $record?->medicalHistory?->bisphosphonate_therapy 
                                                 ? 'High Risk (' . ($record?->medicalHistory?->bisphosphonate_details ?: 'Bisphosphonates') . ')' 
                                                 : 'None')
                                             ->badge()

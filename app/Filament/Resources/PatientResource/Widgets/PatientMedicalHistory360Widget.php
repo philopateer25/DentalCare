@@ -15,6 +15,7 @@ use App\Services\ClinicalPresets;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class PatientMedicalHistory360Widget extends Widget
 {
@@ -51,22 +52,57 @@ class PatientMedicalHistory360Widget extends Widget
     public string $extNotes = '';
 
     // Request-level memory caches to eliminate duplicate SQL queries during render
+    protected static array $staticTimelineCache = [];
+    protected static array $staticToothHistoryCache = [];
+    protected static array $staticRiskCache = [];
+    protected static array $staticRoadmapCache = [];
+    protected static array $staticPlansCache = [];
+    protected static array $staticExternalCache = [];
+
     protected ?array $rawTimelineItemsCache = null;
     protected ?array $toothHistoryMapCache = null;
     protected ?array $medicalRiskAssessmentCache = null;
 
     public function invalidateCaches(): void
     {
+        $id = $this->record?->id;
+        if ($id) {
+            unset(
+                self::$staticTimelineCache[$id],
+                self::$staticToothHistoryCache[$id],
+                self::$staticRiskCache[$id],
+                self::$staticRoadmapCache[$id],
+                self::$staticPlansCache[$id],
+                self::$staticExternalCache[$id]
+            );
+            Cache::forget("p360_raw_{$id}");
+            Cache::forget("p360_teeth_{$id}");
+            Cache::forget("p360_risk_{$id}");
+            Cache::forget("p360_roadmap_{$id}");
+            Cache::forget("p360_plans_{$id}");
+            Cache::forget("p360_external_{$id}");
+        } else {
+            self::$staticTimelineCache = [];
+            self::$staticToothHistoryCache = [];
+            self::$staticRiskCache = [];
+            self::$staticRoadmapCache = [];
+            self::$staticPlansCache = [];
+            self::$staticExternalCache = [];
+        }
         $this->rawTimelineItemsCache = null;
         $this->toothHistoryMapCache = null;
         $this->medicalRiskAssessmentCache = null;
     }
 
-    protected $listeners = ['refreshPatient360' => '$refresh'];
+    protected $listeners = ['refreshPatient360' => 'refreshData'];
+
+    public function refreshData(): void
+    {
+        $this->invalidateCaches();
+    }
 
     public function mount(?Patient $record = null): void
     {
-        $this->invalidateCaches();
         if ($record) {
             $this->record = $record;
         }
@@ -371,17 +407,20 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function openProcedureModal(int $procedureId): void
     {
-        $proc = TreatmentProcedure::with(['procedureCode', 'doctor:id,name', 'phase.plan'])
+        $proc = TreatmentProcedure::with(['procedureCode.category', 'doctor:id,name', 'phase.plan'])
             ->find($procedureId);
 
         if (!$proc || $proc->phase?->plan?->patient_id !== $this->record?->id) return;
+
+        $cat = $proc->procedureCode?->category;
+        $categoryName = is_object($cat) ? ($cat->name ?? null) : (is_string($cat) ? $cat : null);
 
         $this->modalData = [
             'id' => $proc->id,
             'tooth_number_fdi' => $proc->tooth_number_fdi,
             'title' => $proc->procedureCode?->title ?: 'Clinical Treatment',
             'code' => $proc->procedureCode?->code,
-            'category' => $proc->procedureCode?->category,
+            'category' => $categoryName ?: 'Operative Procedure',
             'plan_title' => $proc->phase?->plan?->title,
             'doctor' => $proc->doctor?->name ?: 'Treating Doctor',
             'status' => $proc->status,
@@ -604,11 +643,7 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getMedicalRiskAssessment(): array
     {
-        if ($this->medicalRiskAssessmentCache !== null) {
-            return $this->medicalRiskAssessmentCache;
-        }
-
-        $med = $this->record?->medicalHistory;
+        $med = $this->record?->medicalHistory()->first();
         $risks = [];
 
         // 1. DIABETES
@@ -832,7 +867,6 @@ class PatientMedicalHistory360Widget extends Widget
             ];
         }
 
-        $this->medicalRiskAssessmentCache = $risks;
         return $risks;
     }
 
@@ -841,6 +875,18 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getToothHistoryMap(): array
     {
+        $patientId = $this->record?->id;
+        if ($patientId && isset(self::$staticToothHistoryCache[$patientId])) {
+            return self::$staticToothHistoryCache[$patientId];
+        }
+
+        if ($patientId && Cache::has("p360_teeth_{$patientId}")) {
+            $teeth = Cache::get("p360_teeth_{$patientId}");
+            self::$staticToothHistoryCache[$patientId] = $teeth;
+            $this->toothHistoryMapCache = $teeth;
+            return $teeth;
+        }
+
         if ($this->toothHistoryMapCache !== null) {
             return $this->toothHistoryMapCache;
         }
@@ -1067,6 +1113,10 @@ class PatientMedicalHistory360Widget extends Widget
         // Sort by tooth number numerically
         ksort($teeth, SORT_NUMERIC);
 
+        if ($patientId) {
+            self::$staticToothHistoryCache[$patientId] = $teeth;
+            Cache::put("p360_teeth_{$patientId}", $teeth, 300);
+        }
         $this->toothHistoryMapCache = $teeth;
         return $teeth;
     }
@@ -1076,10 +1126,20 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getExternalTreatments(): \Illuminate\Database\Eloquent\Collection
     {
-        return ExternalTreatment::with('creator:id,name')
+        $patientId = $this->record?->id;
+        if ($patientId && isset(self::$staticExternalCache[$patientId])) {
+            return self::$staticExternalCache[$patientId];
+        }
+
+        $res = ExternalTreatment::with('creator:id,name')
             ->where('patient_id', $this->record?->id)
             ->latest()
             ->get();
+
+        if ($patientId) {
+            self::$staticExternalCache[$patientId] = $res;
+        }
+        return $res;
     }
 
     /**
@@ -1087,12 +1147,30 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getRawTimelineItems(): array
     {
+        $patientId = $this->record?->id;
+        if (!$patientId) return [];
+
+        if (isset(self::$staticTimelineCache[$patientId])) {
+            return self::$staticTimelineCache[$patientId];
+        }
+
+        if (Cache::has("p360_raw_{$patientId}")) {
+            $cached = Cache::get("p360_raw_{$patientId}");
+            if (is_array($cached)) {
+                foreach ($cached as &$it) {
+                    if (isset($it['date']) && is_string($it['date'])) {
+                        $it['date'] = Carbon::parse($it['date']);
+                    }
+                }
+                self::$staticTimelineCache[$patientId] = $cached;
+                $this->rawTimelineItemsCache = $cached;
+                return $cached;
+            }
+        }
+
         if ($this->rawTimelineItemsCache !== null) {
             return $this->rawTimelineItemsCache;
         }
-
-        $patientId = $this->record?->id;
-        if (!$patientId) return [];
 
         $timeline = [];
 
@@ -1317,6 +1395,10 @@ class PatientMedicalHistory360Widget extends Widget
             ];
         }
 
+        if ($patientId) {
+            self::$staticTimelineCache[$patientId] = $timeline;
+            Cache::put("p360_raw_{$patientId}", $timeline, 300);
+        }
         $this->rawTimelineItemsCache = $timeline;
         return $timeline;
     }
@@ -1434,10 +1516,20 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getAllTreatmentPlans(): \Illuminate\Database\Eloquent\Collection
     {
-        return TreatmentPlan::with(['phases.procedures.procedureCode', 'doctor:id,name'])
+        $patientId = $this->record?->id;
+        if ($patientId && isset(self::$staticPlansCache[$patientId])) {
+            return self::$staticPlansCache[$patientId];
+        }
+
+        $plans = TreatmentPlan::with(['phases.procedures.procedureCode', 'doctor:id,name'])
             ->where('patient_id', $this->record?->id)
             ->latest()
             ->get();
+
+        if ($patientId) {
+            self::$staticPlansCache[$patientId] = $plans;
+        }
+        return $plans;
     }
 
     /**
@@ -1446,6 +1538,9 @@ class PatientMedicalHistory360Widget extends Widget
     public function getFutureRoadmap(): array
     {
         $patientId = $this->record?->id;
+        if ($patientId && isset(self::$staticRoadmapCache[$patientId])) {
+            return self::$staticRoadmapCache[$patientId];
+        }
 
         // Next upcoming appointment
         $nextAppointment = Appointment::with(['doctor:id,name', 'operatory:id,name'])
@@ -1462,9 +1557,15 @@ class PatientMedicalHistory360Widget extends Widget
             ->latest()
             ->first();
 
-        return [
+        $roadmap = [
             'next_appointment' => $nextAppointment,
             'active_plan' => $activePlan,
         ];
+
+        if ($patientId) {
+            self::$staticRoadmapCache[$patientId] = $roadmap;
+        }
+
+        return $roadmap;
     }
 }

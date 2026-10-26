@@ -1,0 +1,996 @@
+{
+  "document_id": "DENT-3D-SPEC-2026-V2.1",
+  "asset_file": "Dentition_Permanent_Full_V2.1.glb",
+  "scope": "Teeth-Only Permanent Human Dentition (32 Discrete Teeth, Zero Oral Cavity Soft Tissue)",
+  "coordinate_system": {
+    "up": "+Y",
+    "forward": "+Z",
+    "right": "+X",
+    "pivot_anchor": "Cementoenamel Junction (CEJ)"
+  },
+  "total_teeth": 32,
+  "total_submeshes": 308,
+  "total_triangles": 45520,
+  "teeth_registry": [
+    {
+      "universal_number": "#01",
+      "fdi_number": 18,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Molar3",
+      "clinical_name": "Maxillary Right 3rd Molar (Wisdom)",
+      "scene_node_name": "Tooth_UN01_FDI18_UR_Molar3",
+      "cej_pivot_world_mm": [
+        -29.213,
+        8.2,
+        -17.01
+      ],
+      "crown_surfaces": [
+        "T01_Srf_CRV",
+        "T01_Srf_BUC",
+        "T01_Srf_PAL",
+        "T01_Srf_MES",
+        "T01_Srf_DIS",
+        "T01_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T01_Root_Mesiobuccal",
+        "T01_Root_Distobuccal",
+        "T01_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T01_Core_Dentin",
+        "T01_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#02",
+      "fdi_number": 17,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Molar2",
+      "clinical_name": "Maxillary Right 2nd Molar (12-Yr)",
+      "scene_node_name": "Tooth_UN02_FDI17_UR_Molar2",
+      "cej_pivot_world_mm": [
+        -29.409,
+        8.2,
+        -9.175
+      ],
+      "crown_surfaces": [
+        "T02_Srf_CRV",
+        "T02_Srf_BUC",
+        "T02_Srf_PAL",
+        "T02_Srf_MES",
+        "T02_Srf_DIS",
+        "T02_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T02_Root_Mesiobuccal",
+        "T02_Root_Distobuccal",
+        "T02_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T02_Core_Dentin",
+        "T02_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#03",
+      "fdi_number": 16,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Molar1",
+      "clinical_name": "Maxillary Right 1st Molar (6-Yr)",
+      "scene_node_name": "Tooth_UN03_FDI16_UR_Molar1",
+      "cej_pivot_world_mm": [
+        -27.976,
+        8.2,
+        -0.577
+      ],
+      "crown_surfaces": [
+        "T03_Srf_CRV",
+        "T03_Srf_BUC",
+        "T03_Srf_PAL",
+        "T03_Srf_MES",
+        "T03_Srf_DIS",
+        "T03_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T03_Root_Mesiobuccal",
+        "T03_Root_Distobuccal",
+        "T03_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T03_Core_Dentin",
+        "T03_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#04",
+      "fdi_number": 15,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Premolar2",
+      "clinical_name": "Maxillary Right 2nd Premolar",
+      "scene_node_name": "Tooth_UN04_FDI15_UR_Premolar2",
+      "cej_pivot_world_mm": [
+        -24.88,
+        8.2,
+        7.343
+      ],
+      "crown_surfaces": [
+        "T04_Srf_CRV",
+        "T04_Srf_BUC",
+        "T04_Srf_PAL",
+        "T04_Srf_MES",
+        "T04_Srf_DIS",
+        "T04_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T04_Root_Single"
+      ],
+      "internal_layers": [
+        "T04_Core_Dentin",
+        "T04_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#05",
+      "fdi_number": 14,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Premolar1",
+      "clinical_name": "Maxillary Right 1st Premolar",
+      "scene_node_name": "Tooth_UN05_FDI14_UR_Premolar1",
+      "cej_pivot_world_mm": [
+        -20.677,
+        8.2,
+        13.677
+      ],
+      "crown_surfaces": [
+        "T05_Srf_CRV",
+        "T05_Srf_BUC",
+        "T05_Srf_PAL",
+        "T05_Srf_MES",
+        "T05_Srf_DIS",
+        "T05_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T05_Root_Buccal",
+        "T05_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T05_Core_Dentin",
+        "T05_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#06",
+      "fdi_number": 13,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "Canine",
+      "clinical_name": "Maxillary Right Canine (Cuspid)",
+      "scene_node_name": "Tooth_UN06_FDI13_UR_Canine",
+      "cej_pivot_world_mm": [
+        -15.194,
+        8.2,
+        18.858
+      ],
+      "crown_surfaces": [
+        "T06_Srf_CRV",
+        "T06_Srf_LAB",
+        "T06_Srf_PAL",
+        "T06_Srf_MES",
+        "T06_Srf_DIS",
+        "T06_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T06_Root_Single"
+      ],
+      "internal_layers": [
+        "T06_Core_Dentin",
+        "T06_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#07",
+      "fdi_number": 12,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "LateralIncisor",
+      "clinical_name": "Maxillary Right Lateral Incisor",
+      "scene_node_name": "Tooth_UN07_FDI12_UR_LateralIncisor",
+      "cej_pivot_world_mm": [
+        -9.36,
+        8.2,
+        22.14
+      ],
+      "crown_surfaces": [
+        "T07_Srf_CRV",
+        "T07_Srf_LAB",
+        "T07_Srf_PAL",
+        "T07_Srf_MES",
+        "T07_Srf_DIS",
+        "T07_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T07_Root_Single"
+      ],
+      "internal_layers": [
+        "T07_Core_Dentin",
+        "T07_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#08",
+      "fdi_number": 11,
+      "arch": "Maxillary",
+      "quadrant": "UR",
+      "anatomical_type": "CentralIncisor",
+      "clinical_name": "Maxillary Right Central Incisor",
+      "scene_node_name": "Tooth_UN08_FDI11_UR_CentralIncisor",
+      "cej_pivot_world_mm": [
+        -3.339,
+        8.2,
+        23.769
+      ],
+      "crown_surfaces": [
+        "T08_Srf_CRV",
+        "T08_Srf_LAB",
+        "T08_Srf_PAL",
+        "T08_Srf_MES",
+        "T08_Srf_DIS",
+        "T08_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T08_Root_Single"
+      ],
+      "internal_layers": [
+        "T08_Core_Dentin",
+        "T08_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#09",
+      "fdi_number": 21,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "CentralIncisor",
+      "clinical_name": "Maxillary Left Central Incisor",
+      "scene_node_name": "Tooth_UN09_FDI21_UL_CentralIncisor",
+      "cej_pivot_world_mm": [
+        3.339,
+        8.2,
+        23.769
+      ],
+      "crown_surfaces": [
+        "T09_Srf_CRV",
+        "T09_Srf_LAB",
+        "T09_Srf_PAL",
+        "T09_Srf_MES",
+        "T09_Srf_DIS",
+        "T09_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T09_Root_Single"
+      ],
+      "internal_layers": [
+        "T09_Core_Dentin",
+        "T09_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#10",
+      "fdi_number": 22,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "LateralIncisor",
+      "clinical_name": "Maxillary Left Lateral Incisor",
+      "scene_node_name": "Tooth_UN10_FDI22_UL_LateralIncisor",
+      "cej_pivot_world_mm": [
+        9.36,
+        8.2,
+        22.14
+      ],
+      "crown_surfaces": [
+        "T10_Srf_CRV",
+        "T10_Srf_LAB",
+        "T10_Srf_PAL",
+        "T10_Srf_MES",
+        "T10_Srf_DIS",
+        "T10_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T10_Root_Single"
+      ],
+      "internal_layers": [
+        "T10_Core_Dentin",
+        "T10_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#11",
+      "fdi_number": 23,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Canine",
+      "clinical_name": "Maxillary Left Canine (Cuspid)",
+      "scene_node_name": "Tooth_UN11_FDI23_UL_Canine",
+      "cej_pivot_world_mm": [
+        15.194,
+        8.2,
+        18.858
+      ],
+      "crown_surfaces": [
+        "T11_Srf_CRV",
+        "T11_Srf_LAB",
+        "T11_Srf_PAL",
+        "T11_Srf_MES",
+        "T11_Srf_DIS",
+        "T11_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T11_Root_Single"
+      ],
+      "internal_layers": [
+        "T11_Core_Dentin",
+        "T11_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#12",
+      "fdi_number": 24,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Premolar1",
+      "clinical_name": "Maxillary Left 1st Premolar",
+      "scene_node_name": "Tooth_UN12_FDI24_UL_Premolar1",
+      "cej_pivot_world_mm": [
+        20.677,
+        8.2,
+        13.677
+      ],
+      "crown_surfaces": [
+        "T12_Srf_CRV",
+        "T12_Srf_BUC",
+        "T12_Srf_PAL",
+        "T12_Srf_MES",
+        "T12_Srf_DIS",
+        "T12_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T12_Root_Buccal",
+        "T12_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T12_Core_Dentin",
+        "T12_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#13",
+      "fdi_number": 25,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Premolar2",
+      "clinical_name": "Maxillary Left 2nd Premolar",
+      "scene_node_name": "Tooth_UN13_FDI25_UL_Premolar2",
+      "cej_pivot_world_mm": [
+        24.88,
+        8.2,
+        7.343
+      ],
+      "crown_surfaces": [
+        "T13_Srf_CRV",
+        "T13_Srf_BUC",
+        "T13_Srf_PAL",
+        "T13_Srf_MES",
+        "T13_Srf_DIS",
+        "T13_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T13_Root_Single"
+      ],
+      "internal_layers": [
+        "T13_Core_Dentin",
+        "T13_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#14",
+      "fdi_number": 26,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Molar1",
+      "clinical_name": "Maxillary Left 1st Molar (6-Yr)",
+      "scene_node_name": "Tooth_UN14_FDI26_UL_Molar1",
+      "cej_pivot_world_mm": [
+        27.976,
+        8.2,
+        -0.577
+      ],
+      "crown_surfaces": [
+        "T14_Srf_CRV",
+        "T14_Srf_BUC",
+        "T14_Srf_PAL",
+        "T14_Srf_MES",
+        "T14_Srf_DIS",
+        "T14_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T14_Root_Mesiobuccal",
+        "T14_Root_Distobuccal",
+        "T14_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T14_Core_Dentin",
+        "T14_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#15",
+      "fdi_number": 27,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Molar2",
+      "clinical_name": "Maxillary Left 2nd Molar (12-Yr)",
+      "scene_node_name": "Tooth_UN15_FDI27_UL_Molar2",
+      "cej_pivot_world_mm": [
+        29.409,
+        8.2,
+        -9.175
+      ],
+      "crown_surfaces": [
+        "T15_Srf_CRV",
+        "T15_Srf_BUC",
+        "T15_Srf_PAL",
+        "T15_Srf_MES",
+        "T15_Srf_DIS",
+        "T15_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T15_Root_Mesiobuccal",
+        "T15_Root_Distobuccal",
+        "T15_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T15_Core_Dentin",
+        "T15_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#16",
+      "fdi_number": 28,
+      "arch": "Maxillary",
+      "quadrant": "UL",
+      "anatomical_type": "Molar3",
+      "clinical_name": "Maxillary Left 3rd Molar (Wisdom)",
+      "scene_node_name": "Tooth_UN16_FDI28_UL_Molar3",
+      "cej_pivot_world_mm": [
+        29.213,
+        8.2,
+        -17.01
+      ],
+      "crown_surfaces": [
+        "T16_Srf_CRV",
+        "T16_Srf_BUC",
+        "T16_Srf_PAL",
+        "T16_Srf_MES",
+        "T16_Srf_DIS",
+        "T16_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T16_Root_Mesiobuccal",
+        "T16_Root_Distobuccal",
+        "T16_Root_Palatal"
+      ],
+      "internal_layers": [
+        "T16_Core_Dentin",
+        "T16_Cavity_Pulp"
+      ],
+      "triangle_count": 1692
+    },
+    {
+      "universal_number": "#17",
+      "fdi_number": 38,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Molar3",
+      "clinical_name": "Mandibular Left 3rd Molar (Wisdom)",
+      "scene_node_name": "Tooth_UN17_FDI38_LL_Molar3",
+      "cej_pivot_world_mm": [
+        26.737,
+        -8.2,
+        -16.662
+      ],
+      "crown_surfaces": [
+        "T17_Srf_CRV",
+        "T17_Srf_BUC",
+        "T17_Srf_LIN",
+        "T17_Srf_MES",
+        "T17_Srf_DIS",
+        "T17_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T17_Root_Mesial",
+        "T17_Root_Distal"
+      ],
+      "internal_layers": [
+        "T17_Core_Dentin",
+        "T17_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#18",
+      "fdi_number": 37,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Molar2",
+      "clinical_name": "Mandibular Left 2nd Molar (12-Yr)",
+      "scene_node_name": "Tooth_UN18_FDI37_LL_Molar2",
+      "cej_pivot_world_mm": [
+        26.917,
+        -8.2,
+        -9.372
+      ],
+      "crown_surfaces": [
+        "T18_Srf_CRV",
+        "T18_Srf_BUC",
+        "T18_Srf_LIN",
+        "T18_Srf_MES",
+        "T18_Srf_DIS",
+        "T18_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T18_Root_Mesial",
+        "T18_Root_Distal"
+      ],
+      "internal_layers": [
+        "T18_Core_Dentin",
+        "T18_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#19",
+      "fdi_number": 36,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Molar1",
+      "clinical_name": "Mandibular Left 1st Molar (6-Yr)",
+      "scene_node_name": "Tooth_UN19_FDI36_LL_Molar1",
+      "cej_pivot_world_mm": [
+        25.605,
+        -8.2,
+        -1.37
+      ],
+      "crown_surfaces": [
+        "T19_Srf_CRV",
+        "T19_Srf_BUC",
+        "T19_Srf_LIN",
+        "T19_Srf_MES",
+        "T19_Srf_DIS",
+        "T19_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T19_Root_Mesial",
+        "T19_Root_Distal"
+      ],
+      "internal_layers": [
+        "T19_Core_Dentin",
+        "T19_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#20",
+      "fdi_number": 35,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Premolar2",
+      "clinical_name": "Mandibular Left 2nd Premolar",
+      "scene_node_name": "Tooth_UN20_FDI35_LL_Premolar2",
+      "cej_pivot_world_mm": [
+        22.772,
+        -8.2,
+        6.0
+      ],
+      "crown_surfaces": [
+        "T20_Srf_CRV",
+        "T20_Srf_BUC",
+        "T20_Srf_LIN",
+        "T20_Srf_MES",
+        "T20_Srf_DIS",
+        "T20_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T20_Root_Single"
+      ],
+      "internal_layers": [
+        "T20_Core_Dentin",
+        "T20_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#21",
+      "fdi_number": 34,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Premolar1",
+      "clinical_name": "Mandibular Left 1st Premolar",
+      "scene_node_name": "Tooth_UN21_FDI34_LL_Premolar1",
+      "cej_pivot_world_mm": [
+        18.925,
+        -8.2,
+        11.894
+      ],
+      "crown_surfaces": [
+        "T21_Srf_CRV",
+        "T21_Srf_BUC",
+        "T21_Srf_LIN",
+        "T21_Srf_MES",
+        "T21_Srf_DIS",
+        "T21_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T21_Root_Single"
+      ],
+      "internal_layers": [
+        "T21_Core_Dentin",
+        "T21_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#22",
+      "fdi_number": 33,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "Canine",
+      "clinical_name": "Mandibular Left Canine (Cuspid)",
+      "scene_node_name": "Tooth_UN22_FDI33_LL_Canine",
+      "cej_pivot_world_mm": [
+        13.906,
+        -8.2,
+        16.715
+      ],
+      "crown_surfaces": [
+        "T22_Srf_CRV",
+        "T22_Srf_LAB",
+        "T22_Srf_LIN",
+        "T22_Srf_MES",
+        "T22_Srf_DIS",
+        "T22_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T22_Root_Single"
+      ],
+      "internal_layers": [
+        "T22_Core_Dentin",
+        "T22_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#23",
+      "fdi_number": 32,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "LateralIncisor",
+      "clinical_name": "Mandibular Left Lateral Incisor",
+      "scene_node_name": "Tooth_UN23_FDI32_LL_LateralIncisor",
+      "cej_pivot_world_mm": [
+        8.567,
+        -8.2,
+        19.769
+      ],
+      "crown_surfaces": [
+        "T23_Srf_CRV",
+        "T23_Srf_LAB",
+        "T23_Srf_LIN",
+        "T23_Srf_MES",
+        "T23_Srf_DIS",
+        "T23_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T23_Root_Single"
+      ],
+      "internal_layers": [
+        "T23_Core_Dentin",
+        "T23_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#24",
+      "fdi_number": 31,
+      "arch": "Mandibular",
+      "quadrant": "LL",
+      "anatomical_type": "CentralIncisor",
+      "clinical_name": "Mandibular Left Central Incisor",
+      "scene_node_name": "Tooth_UN24_FDI31_LL_CentralIncisor",
+      "cej_pivot_world_mm": [
+        3.056,
+        -8.2,
+        21.285
+      ],
+      "crown_surfaces": [
+        "T24_Srf_CRV",
+        "T24_Srf_LAB",
+        "T24_Srf_LIN",
+        "T24_Srf_MES",
+        "T24_Srf_DIS",
+        "T24_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T24_Root_Single"
+      ],
+      "internal_layers": [
+        "T24_Core_Dentin",
+        "T24_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#25",
+      "fdi_number": 41,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "CentralIncisor",
+      "clinical_name": "Mandibular Right Central Incisor",
+      "scene_node_name": "Tooth_UN25_FDI41_LR_CentralIncisor",
+      "cej_pivot_world_mm": [
+        -3.056,
+        -8.2,
+        21.285
+      ],
+      "crown_surfaces": [
+        "T25_Srf_CRV",
+        "T25_Srf_LAB",
+        "T25_Srf_LIN",
+        "T25_Srf_MES",
+        "T25_Srf_DIS",
+        "T25_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T25_Root_Single"
+      ],
+      "internal_layers": [
+        "T25_Core_Dentin",
+        "T25_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#26",
+      "fdi_number": 42,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "LateralIncisor",
+      "clinical_name": "Mandibular Right Lateral Incisor",
+      "scene_node_name": "Tooth_UN26_FDI42_LR_LateralIncisor",
+      "cej_pivot_world_mm": [
+        -8.567,
+        -8.2,
+        19.769
+      ],
+      "crown_surfaces": [
+        "T26_Srf_CRV",
+        "T26_Srf_LAB",
+        "T26_Srf_LIN",
+        "T26_Srf_MES",
+        "T26_Srf_DIS",
+        "T26_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T26_Root_Single"
+      ],
+      "internal_layers": [
+        "T26_Core_Dentin",
+        "T26_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#27",
+      "fdi_number": 43,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Canine",
+      "clinical_name": "Mandibular Right Canine (Cuspid)",
+      "scene_node_name": "Tooth_UN27_FDI43_LR_Canine",
+      "cej_pivot_world_mm": [
+        -13.906,
+        -8.2,
+        16.715
+      ],
+      "crown_surfaces": [
+        "T27_Srf_CRV",
+        "T27_Srf_LAB",
+        "T27_Srf_LIN",
+        "T27_Srf_MES",
+        "T27_Srf_DIS",
+        "T27_Srf_INC"
+      ],
+      "root_submeshes": [
+        "T27_Root_Single"
+      ],
+      "internal_layers": [
+        "T27_Core_Dentin",
+        "T27_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#28",
+      "fdi_number": 44,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Premolar1",
+      "clinical_name": "Mandibular Right 1st Premolar",
+      "scene_node_name": "Tooth_UN28_FDI44_LR_Premolar1",
+      "cej_pivot_world_mm": [
+        -18.925,
+        -8.2,
+        11.894
+      ],
+      "crown_surfaces": [
+        "T28_Srf_CRV",
+        "T28_Srf_BUC",
+        "T28_Srf_LIN",
+        "T28_Srf_MES",
+        "T28_Srf_DIS",
+        "T28_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T28_Root_Single"
+      ],
+      "internal_layers": [
+        "T28_Core_Dentin",
+        "T28_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#29",
+      "fdi_number": 45,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Premolar2",
+      "clinical_name": "Mandibular Right 2nd Premolar",
+      "scene_node_name": "Tooth_UN29_FDI45_LR_Premolar2",
+      "cej_pivot_world_mm": [
+        -22.772,
+        -8.2,
+        6.0
+      ],
+      "crown_surfaces": [
+        "T29_Srf_CRV",
+        "T29_Srf_BUC",
+        "T29_Srf_LIN",
+        "T29_Srf_MES",
+        "T29_Srf_DIS",
+        "T29_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T29_Root_Single"
+      ],
+      "internal_layers": [
+        "T29_Core_Dentin",
+        "T29_Cavity_Pulp"
+      ],
+      "triangle_count": 1300
+    },
+    {
+      "universal_number": "#30",
+      "fdi_number": 46,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Molar1",
+      "clinical_name": "Mandibular Right 1st Molar (6-Yr)",
+      "scene_node_name": "Tooth_UN30_FDI46_LR_Molar1",
+      "cej_pivot_world_mm": [
+        -25.605,
+        -8.2,
+        -1.37
+      ],
+      "crown_surfaces": [
+        "T30_Srf_CRV",
+        "T30_Srf_BUC",
+        "T30_Srf_LIN",
+        "T30_Srf_MES",
+        "T30_Srf_DIS",
+        "T30_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T30_Root_Mesial",
+        "T30_Root_Distal"
+      ],
+      "internal_layers": [
+        "T30_Core_Dentin",
+        "T30_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#31",
+      "fdi_number": 47,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Molar2",
+      "clinical_name": "Mandibular Right 2nd Molar (12-Yr)",
+      "scene_node_name": "Tooth_UN31_FDI47_LR_Molar2",
+      "cej_pivot_world_mm": [
+        -26.917,
+        -8.2,
+        -9.372
+      ],
+      "crown_surfaces": [
+        "T31_Srf_CRV",
+        "T31_Srf_BUC",
+        "T31_Srf_LIN",
+        "T31_Srf_MES",
+        "T31_Srf_DIS",
+        "T31_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T31_Root_Mesial",
+        "T31_Root_Distal"
+      ],
+      "internal_layers": [
+        "T31_Core_Dentin",
+        "T31_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    },
+    {
+      "universal_number": "#32",
+      "fdi_number": 48,
+      "arch": "Mandibular",
+      "quadrant": "LR",
+      "anatomical_type": "Molar3",
+      "clinical_name": "Mandibular Right 3rd Molar (Wisdom)",
+      "scene_node_name": "Tooth_UN32_FDI48_LR_Molar3",
+      "cej_pivot_world_mm": [
+        -26.737,
+        -8.2,
+        -16.662
+      ],
+      "crown_surfaces": [
+        "T32_Srf_CRV",
+        "T32_Srf_BUC",
+        "T32_Srf_LIN",
+        "T32_Srf_MES",
+        "T32_Srf_DIS",
+        "T32_Srf_OCC"
+      ],
+      "root_submeshes": [
+        "T32_Root_Mesial",
+        "T32_Root_Distal"
+      ],
+      "internal_layers": [
+        "T32_Core_Dentin",
+        "T32_Cavity_Pulp"
+      ],
+      "triangle_count": 1496
+    }
+  ]
+}

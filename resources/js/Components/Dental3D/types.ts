@@ -68,7 +68,43 @@ export interface ToothData {
   notes?: string;
 }
 
-export type SurfaceCondition = 'healthy' | 'active_caries' | 'composite_filled';
+export type SurfaceCondition = 
+  | 'healthy' 
+  | 'active_caries' 
+  | 'composite_filled'
+  | 'amalgam'
+  | 'sealant';
+
+export const SURFACE_CONDITION_COLORS: Record<SurfaceCondition, string> = {
+  healthy: '#F4F1EA',
+  active_caries: '#E11D48',
+  composite_filled: '#3B82F6',
+  amalgam: '#64748B',
+  sealant: '#10B981',
+};
+
+export const SURFACE_CONDITION_LABELS: Record<SurfaceCondition, { label: string; badgeBg: string }> = {
+  healthy: {
+    label: 'Healthy Enamel',
+    badgeBg: 'bg-stone-200 text-stone-800 border-stone-300',
+  },
+  active_caries: {
+    label: 'Caries (Decay)',
+    badgeBg: 'bg-red-500/15 text-red-600 border-red-500/30',
+  },
+  composite_filled: {
+    label: 'Composite Resin',
+    badgeBg: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
+  },
+  amalgam: {
+    label: 'Amalgam Filling',
+    badgeBg: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  },
+  sealant: {
+    label: 'Pit & Fissure Sealant',
+    badgeBg: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  },
+};
 
 export interface ToothSurfaces {
   mesial?: SurfaceCondition;
@@ -76,6 +112,7 @@ export interface ToothSurfaces {
   distal?: SurfaceCondition;
   buccal?: SurfaceCondition;
   lingual?: SurfaceCondition;
+  cervical?: SurfaceCondition;
 }
 
 export interface ToothRecord {
@@ -91,3 +128,12 @@ export interface PatientInfo {
   gender?: string;
   dob?: string;
 }
+
+export interface LayerVisibility {
+  crowns: boolean;
+  roots: boolean;
+  dentin: boolean;
+  pulp: boolean;
+}
+
+export type NumberingSystem = 'fdi' | 'universal';

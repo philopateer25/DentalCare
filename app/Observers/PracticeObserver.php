@@ -11,6 +11,10 @@ class PracticeObserver
      */
     public function created(Practice $practice): void
     {
+        if (app()->runningUnitTests()) {
+            return;
+        }
+
         if ($practice->type === 'ophthalmology') {
             $this->runSeeder(\Database\Seeders\EyeInventorySeeder::class, $practice);
             $this->runSeeder(\Database\Seeders\EyeCatalogSeeder::class, $practice);

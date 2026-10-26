@@ -96,21 +96,28 @@ class TreatmentPlanInvoiceIntegrationTest extends TestCase
         ]);
         $this->adminB->assignRole('clinic_admin');
 
-        $category = ProcedureCategory::create(['name' => 'Restorative & Surgery', 'code' => 'REST_SURG']);
+        $category = ProcedureCategory::firstOrCreate(
+            ['code' => 'REST_SURG'],
+            ['name' => 'Restorative & Surgery']
+        );
 
-        $this->codeD2140 = ProcedureCode::create([
-            'category_id' => $category->id,
-            'code' => 'D2140',
-            'title' => 'Amalgam - One Surface, Primary or Permanent',
-            'standard_fee' => 150.00,
-        ]);
+        $this->codeD2140 = ProcedureCode::firstOrCreate(
+            ['code' => 'D2140'],
+            [
+                'category_id' => $category->id,
+                'title' => 'Amalgam - One Surface, Primary or Permanent',
+                'standard_fee' => 150.00,
+            ]
+        );
 
-        $this->codeD7140 = ProcedureCode::create([
-            'category_id' => $category->id,
-            'code' => 'D7140',
-            'title' => 'Extraction, Erupted Tooth or Exposed Root',
-            'standard_fee' => 200.00,
-        ]);
+        $this->codeD7140 = ProcedureCode::updateOrCreate(
+            ['code' => 'D7140'],
+            [
+                'category_id' => $category->id,
+                'title' => 'Extraction, Erupted Tooth or Exposed Root',
+                'standard_fee' => 200.00,
+            ]
+        );
 
         // Patient A & Plan A
         $this->patientA = Patient::create([

@@ -15,6 +15,9 @@
     <div class="space-y-6" 
          x-data="{ 
              currentFilter: @entangle('historyFilter'),
+             isTimelineCollapsed: false,
+             isTimelineMaximized: false,
+             expandAllEntries: false,
              init() {
                  window.addEventListener('message', (e) => {
                      if (e.data && (e.data.type === 'DENTAL_ODONTOGRAM_UPDATED' || e.data.type === 'TOOTH_FINDING_SAVED')) {
@@ -29,12 +32,13 @@
          x-on:refresh-patient-360.window="$wire.$refresh()">
 
         {{-- 1. EXECUTIVE HEADER & CLINICAL STATS BAR --}}
-        <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-900/40 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-950 via-teal-950 to-slate-900 text-white border border-teal-800/40 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-10 -top-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-primary-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white ring-1 ring-white/20">
                         <x-heroicon-o-shield-check class="w-7 h-7" />
                     </div>
                     <div>
@@ -46,8 +50,8 @@
                                 Unified Clinical View
                             </span>
                         </div>
-                        <p class="text-xs text-indigo-200/80 mt-0.5">
-                            Synchronized medical history, internal clinic procedures, outside treatments, and 3D dental mapping.
+                        <p class="text-xs text-teal-200/80 mt-0.5">
+                            Synchronized medical risk screening, clinic procedures, outside treatments, and 3D dental mapping.
                         </p>
                     </div>
                 </div>
@@ -57,7 +61,7 @@
                     <button 
                         type="button"
                         wire:click="openAddExternalModal"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 rounded-xl shadow-md shadow-indigo-600/30 transition-all border border-indigo-400/30">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-500 active:scale-95 rounded-xl shadow-md shadow-teal-900/30 transition-all border border-teal-400/30">
                         <x-heroicon-m-plus class="w-4 h-4" />
                         <span>Log Outside Treatment</span>
                     </button>
@@ -65,7 +69,7 @@
                     <a 
                         href="{{ route('patient.odontogram', $record?->id ?? 1) }}" 
                         target="_blank"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-100 bg-white/10 hover:bg-white/15 active:scale-95 rounded-xl backdrop-blur-md transition-all border border-white/10">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-white/10 hover:bg-white/20 active:scale-95 rounded-xl backdrop-blur-md transition-all border border-white/15 hover:border-amber-400/40">
                         <x-heroicon-m-sparkles class="w-4 h-4 text-amber-300" />
                         <span>Open 3D Odontogram</span>
                     </a>
@@ -73,35 +77,35 @@
             </div>
 
             {{-- Metric Chips --}}
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-indigo-800/40 text-xs">
-                <div class="flex items-center gap-2.5 p-2 rounded-lg bg-white/5 border border-white/5">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-teal-800/40 text-xs">
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
                     <x-heroicon-o-check-circle class="w-5 h-5 text-emerald-400 shrink-0" />
                     <div>
-                        <span class="text-[10px] uppercase text-indigo-200/70 block font-semibold">Completed Inside</span>
+                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Completed Inside</span>
                         <strong class="text-sm font-black text-white">{{ count(array_filter($timeline, fn($i) => ($i['source'] ?? '') === 'inside' && $i['type'] === 'procedure')) }} Procedures</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2 rounded-lg bg-white/5 border border-white/5">
-                    <x-heroicon-o-building-office-2 class="w-5 h-5 text-indigo-400 shrink-0" />
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
+                    <x-heroicon-o-building-office-2 class="w-5 h-5 text-teal-400 shrink-0" />
                     <div>
-                        <span class="text-[10px] uppercase text-indigo-200/70 block font-semibold">Outside / Prior Work</span>
+                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Outside / Prior Work</span>
                         <strong class="text-sm font-black text-white">{{ count($externalTreatments) }} Logged</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2 rounded-lg bg-white/5 border border-white/5">
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
                     <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-amber-400 shrink-0" />
                     <div>
-                        <span class="text-[10px] uppercase text-indigo-200/70 block font-semibold">Treatment Plans</span>
+                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Treatment Plans</span>
                         <strong class="text-sm font-black text-white">{{ count($allPlans) }} Total</strong>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 p-2 rounded-lg bg-white/5 border border-white/5">
+                <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-teal-400/30 transition-all">
                     <x-heroicon-o-sparkles class="w-5 h-5 text-cyan-400 shrink-0" />
                     <div>
-                        <span class="text-[10px] uppercase text-indigo-200/70 block font-semibold">Teeth Treated</span>
+                        <span class="text-[10px] uppercase text-teal-200/70 block font-semibold">Teeth Treated</span>
                         <strong class="text-sm font-black text-white">{{ count($toothHistory) }} Teeth</strong>
                     </div>
                 </div>
@@ -132,6 +136,7 @@
                                 'slate' => 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200',
                                 'purple' => 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200',
                                 'blue' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200',
+                                'cyan' => 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-200',
                                 'rose' => 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200',
                                 'amber' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200',
                                 'emerald' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200',
@@ -313,9 +318,10 @@
             </div>
 
             {{-- COLUMN 2: UNIFIED CHRONOLOGICAL JOURNEY TIMELINE --}}
-            <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col transition-all duration-200 {{ $isTimelineMaximized ? 'lg:col-span-3 order-first ring-2 ring-emerald-500/30 shadow-lg' : '' }}">
+            <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col transition-all duration-200"
+                 :class="isTimelineMaximized ? 'lg:col-span-3 order-first ring-2 ring-emerald-500/30 shadow-lg' : ''">
                 
-                {{-- HEADER (WITH OPEN/CLOSE & MAXIMIZE CONTROLS) --}}
+                {{-- HEADER (WITH OPEN/CLOSE & MAXIMIZE CONTROLS - 0MS INSTANT) --}}
                 <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-800/20">
                     <div class="flex items-center justify-between gap-3 flex-wrap">
                         <div class="flex items-center gap-2.5">
@@ -335,71 +341,65 @@
 
                         {{-- Action Controls: Expand/Collapse Details, Maximize, Open/Close --}}
                         <div class="flex items-center gap-1.5">
-                            @if(!$isTimelineCollapsed)
+                            <div x-show="!isTimelineCollapsed" class="flex items-center gap-1.5">
                                 <button 
                                     type="button" 
-                                    wire:click="toggleExpandAllEntries"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs"
+                                    @click="expandAllEntries = !expandAllEntries"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95"
                                     title="Expand or collapse detailed inline protocol information">
-                                    <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 {{ $expandAllEntries ? 'rotate-180' : '' }}" />
-                                    <span>{{ $expandAllEntries ? 'Collapse Details' : 'Expand Details' }}</span>
+                                    <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 transition-transform duration-200" ::class="expandAllEntries ? 'rotate-180 text-emerald-500' : ''" />
+                                    <span x-text="expandAllEntries ? 'Collapse Details' : 'Expand Details'">Expand Details</span>
                                 </button>
 
                                 <button 
                                     type="button" 
-                                    wire:click="toggleTimelineMaximized"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs"
-                                    title="{{ $isTimelineMaximized ? 'Restore to column' : 'Expand to full width' }}">
-                                    @if($isTimelineMaximized)
-                                        <x-heroicon-m-arrows-pointing-in class="w-3.5 h-3.5 text-emerald-600" />
-                                        <span>Restore</span>
-                                    @else
-                                        <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 text-emerald-600" />
-                                        <span>Maximize</span>
-                                    @endif
+                                    @click="isTimelineMaximized = !isTimelineMaximized"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-xs active:scale-95"
+                                    :title="isTimelineMaximized ? 'Restore to column' : 'Expand to full width'">
+                                    <x-heroicon-m-arrows-pointing-in class="w-3.5 h-3.5 text-emerald-600" x-show="isTimelineMaximized" />
+                                    <x-heroicon-m-arrows-pointing-out class="w-3.5 h-3.5 text-emerald-600" x-show="!isTimelineMaximized" />
+                                    <span x-text="isTimelineMaximized ? 'Restore' : 'Maximize'">Maximize</span>
                                 </button>
-                            @endif
+                            </div>
 
-                            {{-- Open / Close Toggle Button --}}
+                            {{-- Open / Close Toggle Button (Instant 0ms Client-Side Alpine Toggle) --}}
                             <button 
                                 type="button" 
-                                wire:click="toggleTimelineCollapse"
-                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg border {{ $isTimelineCollapsed ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500 shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700' }} transition-all">
-                                @if($isTimelineCollapsed)
-                                    <x-heroicon-m-chevron-down class="w-3.5 h-3.5" />
-                                    <span>Open Logs</span>
-                                @else
-                                    <x-heroicon-m-chevron-up class="w-3.5 h-3.5" />
-                                    <span>Close Logs</span>
-                                @endif
+                                @click="isTimelineCollapsed = !isTimelineCollapsed"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all active:scale-95"
+                                :class="isTimelineCollapsed ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-500 shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'">
+                                <x-heroicon-m-chevron-down class="w-3.5 h-3.5" x-show="isTimelineCollapsed" />
+                                <x-heroicon-m-chevron-up class="w-3.5 h-3.5" x-show="!isTimelineCollapsed" />
+                                <span x-text="isTimelineCollapsed ? 'Open Logs' : 'Close Logs'">Close Logs</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {{-- COLLAPSED STATE VIEW --}}
-                @if($isTimelineCollapsed)
-                    <div class="p-4 bg-gray-50/60 dark:bg-gray-800/30 text-center flex flex-col items-center justify-center py-6 space-y-2">
-                        <x-heroicon-o-bars-3-bottom-left class="w-7 h-7 text-gray-400 dark:text-gray-500" />
-                        <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                            Unified Clinical Logs are closed ({{ count($timeline) }} entries available)
-                        </p>
-                        <div class="flex items-center gap-1.5 flex-wrap justify-center text-[10px] text-gray-500">
-                            <span>💉 {{ $filterCounts['procedure'] }} Procedures</span> &bull;
-                            <span>📅 {{ $filterCounts['appointment'] }} Visits</span> &bull;
-                            <span>🦷 {{ $filterCounts['condition'] }} Findings</span> &bull;
-                            <span>💊 {{ $filterCounts['prescription'] }} Rx</span> &bull;
-                            <span>🏥 {{ $filterCounts['external'] }} Outside</span>
-                        </div>
-                        <button 
-                            type="button" 
-                            wire:click="toggleTimelineCollapse"
-                            class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition-all">
-                            <x-heroicon-m-chevron-down class="w-4 h-4" />
-                            <span>Expand Unified Logs</span>
-                        </button>
+                {{-- COLLAPSED STATE VIEW (Instant Alpine Toggle) --}}
+                <div x-show="isTimelineCollapsed" x-cloak class="p-4 bg-gray-50/60 dark:bg-gray-800/30 text-center flex flex-col items-center justify-center py-6 space-y-2">
+                    <x-heroicon-o-bars-3-bottom-left class="w-7 h-7 text-gray-400 dark:text-gray-500" />
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                        Unified Clinical Logs are closed ({{ count($timeline) }} entries available)
+                    </p>
+                    <div class="flex items-center gap-1.5 flex-wrap justify-center text-[10px] text-gray-500">
+                        <span>💉 {{ $filterCounts['procedure'] }} Procedures</span> &bull;
+                        <span>📅 {{ $filterCounts['appointment'] }} Visits</span> &bull;
+                        <span>🦷 {{ $filterCounts['condition'] }} Findings</span> &bull;
+                        <span>💊 {{ $filterCounts['prescription'] }} Rx</span> &bull;
+                        <span>🏥 {{ $filterCounts['external'] }} Outside</span>
                     </div>
-                @else
+                    <button 
+                        type="button" 
+                        @click="isTimelineCollapsed = false"
+                        class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition-all active:scale-95">
+                        <x-heroicon-m-chevron-down class="w-4 h-4" />
+                        <span>Expand Unified Logs</span>
+                    </button>
+                </div>
+
+                {{-- OPEN STATE: COMPREHENSIVE FILTER TOOLBAR & STREAM --}}
+                <div x-show="!isTimelineCollapsed" class="flex flex-col flex-1">
                     {{-- OPEN STATE: COMPREHENSIVE FILTER TOOLBAR --}}
                     <div class="p-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 space-y-2.5">
                         {{-- Row 1: Event Type Quick Pills with Live Counts --}}
@@ -594,7 +594,7 @@
                                 @foreach($timeline as $item)
                                     @php
                                         $itemKey = $item['key'] ?? "log-{$loop->index}";
-                                        $isItemExpanded = $expandAllEntries || in_array($itemKey, $expandedItemKeys, true);
+                                        // Expand state is handled client-side by Alpine (expandAllEntries || itemExpanded)
                                         $isOutside = ($item['source'] ?? '') === 'outside';
                                         $dotColor = match($item['type']) {
                                             'procedure' => 'bg-emerald-500 ring-emerald-100 dark:ring-emerald-950',
@@ -614,7 +614,7 @@
                                             default => null,
                                         };
                                     @endphp
-                                    <div class="relative group" wire:key="{{ $itemKey }}">
+                                    <div class="relative group" wire:key="{{ $itemKey }}" x-data="{ itemExpanded: false }">
                                         {{-- Timeline Dot --}}
                                         <div class="absolute -left-[23px] top-2.5 w-3 h-3 rounded-full {{ $dotColor }} ring-4"></div>
 
@@ -644,13 +644,13 @@
                                                         {{ $item['display_date'] ?? $item['date']->format('M d, Y') }}
                                                     </span>
 
-                                                    {{-- Expand/Collapse Inline Toggle --}}
+                                                    {{-- Expand/Collapse Inline Toggle (Instant 0ms Client-Side) --}}
                                                     <button 
                                                         type="button" 
-                                                        wire:click="toggleItemExpanded('{{ $itemKey }}')"
-                                                        class="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                                                        title="{{ $isItemExpanded ? 'Collapse inline details' : 'Expand inline details' }}">
-                                                        <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform duration-200 {{ $isItemExpanded ? 'rotate-180' : '' }}" />
+                                                        @click="itemExpanded = !itemExpanded"
+                                                        class="p-0.5 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors active:scale-90"
+                                                        :title="(expandAllEntries || itemExpanded) ? 'Collapse inline details' : 'Expand inline details'">
+                                                        <x-heroicon-m-chevron-down class="w-4 h-4 transition-transform duration-200" ::class="(expandAllEntries || itemExpanded) ? 'rotate-180 text-primary-500' : ''" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -672,9 +672,13 @@
                                                 </div>
                                             </div>
 
-                                            {{-- EXPANDABLE INLINE CLINICAL PROTOCOL DETAILS --}}
-                                            @if($isItemExpanded)
-                                                <div class="mt-2.5 pt-2.5 border-t border-gray-200/80 dark:border-gray-700/80 space-y-1.5 text-xs text-gray-700 dark:text-gray-300 animate-in fade-in duration-150">
+                                            {{-- EXPANDABLE INLINE CLINICAL PROTOCOL DETAILS (Instant Alpine Toggle) --}}
+                                            <div x-show="expandAllEntries || itemExpanded" 
+                                                 x-cloak
+                                                 x-transition:enter="transition ease-out duration-150"
+                                                 x-transition:enter-start="opacity-0 -translate-y-1"
+                                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                                 class="mt-2.5 pt-2.5 border-t border-gray-200/80 dark:border-gray-700/80 space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
                                                     @if($item['type'] === 'procedure')
                                                         @if(!empty($item['details']['anesthetic']))
                                                             <p>💉 <strong class="text-gray-800 dark:text-gray-200">Anesthetic:</strong> {{ $item['details']['anesthetic'] }}</p>
@@ -787,9 +791,8 @@
                                                         </div>
                                                     @endif
                                                 </div>
-                                            @endif
+                                            </div>
                                         </div>
-                                    </div>
                                 @endforeach
                             </div>
                         @else
@@ -809,7 +812,7 @@
                             </div>
                         @endif
                     </div>
-                @endif
+                </div>
             </div>
 
             {{-- COLUMN 3: FUTURE ROADMAP & ALL TREATMENT PLANS --}}
@@ -1374,13 +1377,13 @@
                                 @php
                                     $currCond = $modalData['condition_raw'] ?? 'healthy';
                                     $condOptions = [
-                                        ['key' => 'crown', 'label' => 'Crown', 'icon' => '👑', 'bg' => 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800', 'active' => 'ring-2 ring-purple-600 bg-purple-600 text-white dark:bg-purple-600 dark:text-white font-black shadow-md shadow-purple-600/30'],
-                                        ['key' => 'implant', 'label' => 'Implant', 'icon' => '🔩', 'bg' => 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800', 'active' => 'ring-2 ring-blue-600 bg-blue-600 text-white dark:bg-blue-600 dark:text-white font-black shadow-md shadow-blue-600/30'],
-                                        ['key' => 'root_canal', 'label' => 'Root Canal', 'icon' => '⚡', 'bg' => 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800', 'active' => 'ring-2 ring-rose-600 bg-rose-600 text-white dark:bg-rose-600 dark:text-white font-black shadow-md shadow-rose-600/30'],
-                                        ['key' => 'active_caries', 'label' => 'Caries', 'icon' => '🔴', 'bg' => 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800', 'active' => 'ring-2 ring-amber-600 bg-amber-600 text-white dark:bg-amber-600 dark:text-white font-black shadow-md shadow-amber-600/30'],
-                                        ['key' => 'composite_filled', 'label' => 'Composite', 'icon' => '🔵', 'bg' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800', 'active' => 'ring-2 ring-emerald-600 bg-emerald-600 text-white dark:bg-emerald-600 dark:text-white font-black shadow-md shadow-emerald-600/30'],
+                                        ['key' => 'crown', 'label' => 'Crown', 'icon' => '👑', 'bg' => 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800', 'active' => 'ring-2 ring-amber-600 bg-amber-600 text-white dark:bg-amber-600 dark:text-white font-black shadow-md shadow-amber-600/30'],
+                                        ['key' => 'root_canal', 'label' => 'Root Canal', 'icon' => '⚡', 'bg' => 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800', 'active' => 'ring-2 ring-purple-600 bg-purple-600 text-white dark:bg-purple-600 dark:text-white font-black shadow-md shadow-purple-600/30'],
+                                        ['key' => 'active_caries', 'label' => 'Caries', 'icon' => '🔴', 'bg' => 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800', 'active' => 'ring-2 ring-rose-600 bg-rose-600 text-white dark:bg-rose-600 dark:text-rose-300 font-black shadow-md shadow-rose-600/30'],
+                                        ['key' => 'implant', 'label' => 'Implant', 'icon' => '🔩', 'bg' => 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800', 'active' => 'ring-2 ring-cyan-600 bg-cyan-600 text-white dark:bg-cyan-600 dark:text-white font-black shadow-md shadow-cyan-600/30'],
+                                        ['key' => 'composite_filled', 'label' => 'Composite', 'icon' => '🔵', 'bg' => 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800', 'active' => 'ring-2 ring-blue-600 bg-blue-600 text-white dark:bg-blue-600 dark:text-white font-black shadow-md shadow-blue-600/30'],
                                         ['key' => 'missing', 'label' => 'Missing', 'icon' => '⚪', 'bg' => 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-800', 'active' => 'ring-2 ring-slate-600 bg-slate-600 text-white dark:bg-slate-600 dark:text-white font-black shadow-md shadow-slate-600/30'],
-                                        ['key' => 'healthy', 'label' => 'Sound / Intact', 'icon' => '🟢', 'bg' => 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-800', 'active' => 'ring-2 ring-teal-600 bg-teal-600 text-white dark:bg-teal-600 dark:text-white font-black shadow-md shadow-teal-600/30'],
+                                        ['key' => 'healthy', 'label' => 'Sound / Intact', 'icon' => '🟢', 'bg' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800', 'active' => 'ring-2 ring-emerald-600 bg-emerald-600 text-white dark:bg-emerald-600 dark:text-white font-black shadow-md shadow-emerald-600/30'],
                                         ['key' => 'custom', 'label' => 'Custom', 'icon' => '📝', 'bg' => 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800', 'active' => 'ring-2 ring-indigo-600 bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white font-black shadow-md shadow-indigo-600/30'],
                                     ];
                                 @endphp
@@ -1435,19 +1438,39 @@
                             </h5>
                             <div class="space-y-2">
                                 @forelse($modalData['inside_procedures'] as $proc)
-                                    <div class="p-3 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-start justify-between">
-                                        <div>
+                                    <div class="p-3 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-start justify-between gap-3">
+                                        <div class="space-y-1">
                                             <div class="font-bold text-xs text-gray-900 dark:text-white">
                                                 {{ $proc->procedureCode?->title ?: 'Clinical Procedure' }}
                                             </div>
-                                            <div class="text-[11px] text-gray-500 mt-0.5">
+                                            <div class="text-[11px] text-gray-500">
                                                 Doctor: {{ $proc->doctor?->name ?: 'Clinic Doctor' }} &bull; {{ $proc->completed_at ? \Illuminate\Support\Carbon::parse($proc->completed_at)->format('M d, Y') : 'In Plan' }}
                                             </div>
+                                            @if($proc->anesthetic_agent || $proc->anesthetic_dosage || $proc->anesthetic_technique)
+                                                <div class="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+                                                    💉 Anesthetic: {{ implode(' &bull; ', array_filter([$proc->anesthetic_agent, $proc->anesthetic_dosage, $proc->anesthetic_technique])) }}
+                                                </div>
+                                            @endif
+                                            @if(!empty($proc->materials_used_json))
+                                                <div class="text-[11px] text-blue-700 dark:text-blue-400">
+                                                    🧪 Materials: {{ is_array($proc->materials_used_json) ? implode(', ', $proc->materials_used_json) : $proc->materials_used_json }}
+                                                </div>
+                                            @endif
+                                            @if(!empty($proc->tools_used_json))
+                                                <div class="text-[11px] text-amber-700 dark:text-amber-400">
+                                                    🔧 Tools: {{ is_array($proc->tools_used_json) ? implode(', ', $proc->tools_used_json) : $proc->tools_used_json }}
+                                                </div>
+                                            @endif
+                                            @if($proc->hemostasis_achieved)
+                                                <div class="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">
+                                                    ✨ Hemostasis Achieved
+                                                </div>
+                                            @endif
                                             @if($proc->chairside_notes)
-                                                <p class="text-[11px] text-gray-600 dark:text-gray-300 italic mt-1">&ldquo;{{ $proc->chairside_notes }}&rdquo;</p>
+                                                <p class="text-[11px] text-gray-600 dark:text-gray-300 italic">&ldquo;{{ $proc->chairside_notes }}&rdquo;</p>
                                             @endif
                                         </div>
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200 shrink-0">
                                             {{ $proc->status }}
                                         </span>
                                     </div>

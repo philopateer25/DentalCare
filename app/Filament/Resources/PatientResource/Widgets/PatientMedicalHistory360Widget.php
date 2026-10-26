@@ -50,10 +50,23 @@ class PatientMedicalHistory360Widget extends Widget
     public string $extClinicOrDoctor = '';
     public string $extNotes = '';
 
+    // Request-level memory caches to eliminate duplicate SQL queries during render
+    protected ?array $rawTimelineItemsCache = null;
+    protected ?array $toothHistoryMapCache = null;
+    protected ?array $medicalRiskAssessmentCache = null;
+
+    public function invalidateCaches(): void
+    {
+        $this->rawTimelineItemsCache = null;
+        $this->toothHistoryMapCache = null;
+        $this->medicalRiskAssessmentCache = null;
+    }
+
     protected $listeners = ['refreshPatient360' => '$refresh'];
 
     public function mount(?Patient $record = null): void
     {
+        $this->invalidateCaches();
         if ($record) {
             $this->record = $record;
         }
@@ -166,6 +179,7 @@ class PatientMedicalHistory360Widget extends Widget
         );
 
         $this->record?->touch();
+        $this->invalidateCaches();
 
         if ($this->activeModal === 'tooth_3d' && $this->selectedToothFor3D === $toothNumber) {
             $this->openTooth3DModal($toothNumber);
@@ -267,6 +281,7 @@ class PatientMedicalHistory360Widget extends Widget
         }
 
         $this->record?->touch();
+        $this->invalidateCaches();
 
         Notification::make()
             ->title('External treatment logged')
@@ -291,6 +306,7 @@ class PatientMedicalHistory360Widget extends Widget
         }
 
         $treatment->delete();
+        $this->invalidateCaches();
 
         if ($this->activeModal === 'external' && ($this->modalData['id'] ?? null) === $id) {
             $this->closeModal();
@@ -588,6 +604,10 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getMedicalRiskAssessment(): array
     {
+        if ($this->medicalRiskAssessmentCache !== null) {
+            return $this->medicalRiskAssessmentCache;
+        }
+
         $med = $this->record?->medicalHistory;
         $risks = [];
 
@@ -765,6 +785,54 @@ class PatientMedicalHistory360Widget extends Widget
             ];
         }
 
+        // 6. HYPERTENSION & VASOCONSTRICTOR (LOCAL ANESTHETIC) PROTOCOL
+        if ($med && $med->hypertension_status) {
+            $bpStage = $med->blood_pressure_stage ? ucwords(str_replace('_', ' ', $med->blood_pressure_stage)) : 'Hypertensive';
+            $bpReading = $med->typical_blood_pressure ? "BP: {$med->typical_blood_pressure}" : $bpStage;
+            $risks['hypertension'] = [
+                'level' => 'danger',
+                'title' => 'Hypertension & Anesthetic Protocol',
+                'badge' => "Caution · {$bpReading}",
+                'description' => "Hypertension active. Vasoconstrictor safety protocol: Limit epinephrine to max 0.04 mg (≤ 2 carpules 1:100,000) or utilize 3% Mepivacaine plain without vasoconstrictor.",
+                'color' => 'rose',
+            ];
+        } elseif ($med && $med->hypertension_status === false) {
+            $risks['hypertension'] = [
+                'level' => 'safe',
+                'title' => 'Blood Pressure / Hypertension',
+                'badge' => 'Documented Normal',
+                'description' => 'Patient has normal blood pressure with no documented hypertensive disease.',
+                'color' => 'emerald',
+            ];
+        }
+
+        // 7. DENTAL ANXIETY & GAG REFLEX (Chairside Management)
+        if ($med && ($med->dental_anxiety_level === 'severe_phobia' || $med->dental_anxiety_level === 'moderate' || $med->severe_gag_reflex)) {
+            $anxLabel = $med->dental_anxiety_level === 'severe_phobia' ? 'Severe Dental Phobia' : ($med->dental_anxiety_level === 'moderate' ? 'Moderate Anxiety' : 'Gag Reflex Alert');
+            $gagNote = $med->severe_gag_reflex ? '⚠️ Severe Gag Reflex Documented. Use fast-setting impression material, topical lidocaine, or 3D intraoral optical scan. ' : '';
+            $anxNote = ($med->dental_anxiety_level && $med->dental_anxiety_level !== 'low') ? 'Sedation protocol / nitrous oxide advised.' : '';
+            $risks['anxiety_reflex'] = [
+                'level' => 'warning',
+                'title' => 'Dental Anxiety & Gag Reflex',
+                'badge' => $anxLabel,
+                'description' => trim("{$gagNote}{$anxNote}"),
+                'color' => 'amber',
+            ];
+        }
+
+        // 8. PREGNANCY PRECAUTIONS
+        if ($med && $med->pregnancy_trimester && !in_array($med->pregnancy_trimester, ['none', 'not_applicable'], true)) {
+            $trim = ucwords(str_replace('_', ' ', $med->pregnancy_trimester));
+            $risks['pregnancy'] = [
+                'level' => 'warning',
+                'title' => 'Pregnancy Protocol',
+                'badge' => "{$trim} Trimester",
+                'description' => "Strict maternal/fetal safety: Avoid non-urgent radiographs (double apron if required). Strictly avoid NSAIDs in 3rd trimester. Safe local anesthetic: 2% Lidocaine with 1:100,000 epi.",
+                'color' => 'amber',
+            ];
+        }
+
+        $this->medicalRiskAssessmentCache = $risks;
         return $risks;
     }
 
@@ -773,19 +841,23 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getToothHistoryMap(): array
     {
+        if ($this->toothHistoryMapCache !== null) {
+            return $this->toothHistoryMapCache;
+        }
+
         $patientId = $this->record?->id;
         $teeth = [];
 
         $conditionLabels = [
             'missing' => ['label' => 'Missing Tooth', 'color' => 'slate'],
-            'crown' => ['label' => 'Crown', 'color' => 'purple'],
-            'implant' => ['label' => 'Implant', 'color' => 'blue'],
-            'root_canal' => ['label' => 'Root Canal (Endo)', 'color' => 'rose'],
-            'active_caries' => ['label' => 'Active Caries', 'color' => 'amber'],
-            'caries' => ['label' => 'Active Caries', 'color' => 'amber'],
-            'composite_filled' => ['label' => 'Composite Filling', 'color' => 'emerald'],
-            'restoration' => ['label' => 'Restoration', 'color' => 'emerald'],
-            'healthy' => ['label' => 'Healthy / Sound', 'color' => 'gray'],
+            'crown' => ['label' => 'Crown', 'color' => 'amber'],
+            'implant' => ['label' => 'Implant', 'color' => 'cyan'],
+            'root_canal' => ['label' => 'Root Canal (Endo)', 'color' => 'purple'],
+            'active_caries' => ['label' => 'Active Caries', 'color' => 'rose'],
+            'caries' => ['label' => 'Active Caries', 'color' => 'rose'],
+            'composite_filled' => ['label' => 'Composite Filling', 'color' => 'blue'],
+            'restoration' => ['label' => 'Restoration', 'color' => 'blue'],
+            'healthy' => ['label' => 'Healthy / Sound', 'color' => 'emerald'],
             'custom' => ['label' => 'Custom Finding', 'color' => 'indigo'],
         ];
 
@@ -995,6 +1067,7 @@ class PatientMedicalHistory360Widget extends Widget
         // Sort by tooth number numerically
         ksort($teeth, SORT_NUMERIC);
 
+        $this->toothHistoryMapCache = $teeth;
         return $teeth;
     }
 
@@ -1014,6 +1087,10 @@ class PatientMedicalHistory360Widget extends Widget
      */
     public function getRawTimelineItems(): array
     {
+        if ($this->rawTimelineItemsCache !== null) {
+            return $this->rawTimelineItemsCache;
+        }
+
         $patientId = $this->record?->id;
         if (!$patientId) return [];
 
@@ -1240,6 +1317,7 @@ class PatientMedicalHistory360Widget extends Widget
             ];
         }
 
+        $this->rawTimelineItemsCache = $timeline;
         return $timeline;
     }
 

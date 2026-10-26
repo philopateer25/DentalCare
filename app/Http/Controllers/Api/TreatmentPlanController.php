@@ -112,19 +112,22 @@ class TreatmentPlanController extends Controller
             'tooth_number_fdi' => 'required|integer',
             'surface' => 'nullable|string',
             'procedure_code' => 'required|string', // We expect the string code, e.g. D2140
+            'anesthetic_agent' => 'nullable|string',
+            'anesthetic_dosage' => 'nullable|string',
+            'anesthetic_technique' => 'nullable|string',
+            'materials_used_json' => 'nullable|array',
+            'tools_used_json' => 'nullable|array',
         ]);
 
         // Find the procedure code in the database
         $code = ProcedureCode::where('code', $validated['procedure_code'])->first();
         if (!$code) {
-            // For now, if the code doesn't exist, we'll quickly stub one. 
-            // In a real app, you'd seed these.
             $code = ProcedureCode::firstOrCreate(
                 ['code' => $validated['procedure_code']],
                 [
-                    'title' => 'Custom Procedure ' . $validated['procedure_code'],
+                    'title' => 'Procedure ' . $validated['procedure_code'],
                     'standard_fee' => 0.00,
-                    'category_id' => 1, // Assuming category 1 exists
+                    'category_id' => 1,
                 ]
             );
         }
@@ -135,7 +138,7 @@ class TreatmentPlanController extends Controller
             $phase = $plan->phases()->create(['sequence' => 1, 'name' => 'Phase 1']);
         }
 
-        // Add the procedure to the phase
+        // Add the procedure to the phase with clinical details
         $procedure = $phase->procedures()->create([
             'tooth_number_fdi' => $validated['tooth_number_fdi'],
             'surface' => $validated['surface'] ?? 'WHOLE',
@@ -143,6 +146,11 @@ class TreatmentPlanController extends Controller
             'fee' => $code->standard_fee,
             'net_amount' => $code->standard_fee,
             'status' => 'planned',
+            'anesthetic_agent' => $validated['anesthetic_agent'] ?? null,
+            'anesthetic_dosage' => $validated['anesthetic_dosage'] ?? null,
+            'anesthetic_technique' => $validated['anesthetic_technique'] ?? null,
+            'materials_used_json' => $validated['materials_used_json'] ?? null,
+            'tools_used_json' => $validated['tools_used_json'] ?? null,
         ]);
 
         // Recalculate plan totals

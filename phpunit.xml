@@ -18,6 +18,7 @@
         </include>
     </source>
     <php>
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_KEY" value="base64:HuZN0YO/5dcs/UMYgN+XB20tX8Lx+tJNz5qQfIVbaWE="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

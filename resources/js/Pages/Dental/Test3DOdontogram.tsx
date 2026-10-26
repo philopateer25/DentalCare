@@ -10,7 +10,9 @@ import {
   PatientInfo,
   ToothRecord,
   SurfaceCondition,
+  ToothSurfaces,
 } from '../../Components/Dental3D/types';
+import { ToothSurfaceKey } from '../../Components/Dental3D/dentitionManifest';
 
 interface Props {
   patient: PatientInfo;
@@ -19,6 +21,193 @@ interface Props {
   initialProcedures?: Record<string, any[]>;
   initialViewMode?: 'clean' | 'detailed';
 }
+
+export interface MedicalDetails {
+  diagnosis: string;
+  severity: string;
+  urgency: string;
+  mobility: string;
+}
+
+export const parseMedicalDetails = (rawNotes?: string): MedicalDetails => {
+  const defaults: MedicalDetails = {
+    diagnosis: '',
+    severity: '',
+    urgency: '',
+    mobility: '',
+  };
+  if (!rawNotes) return defaults;
+
+  try {
+    const parsed = JSON.parse(rawNotes);
+    if (typeof parsed === 'object' && parsed !== null) {
+      return {
+        diagnosis: parsed.diagnosis || '',
+        severity: parsed.severity || '',
+        urgency: parsed.urgency || '',
+        mobility: parsed.mobility || '',
+      };
+    }
+  } catch {}
+
+  const dxMatch = rawNotes.match(/\[Dx:\s*([^\]]+)\]/i);
+  const sevMatch = rawNotes.match(/\[Severity:\s*([^\]]+)\]/i);
+  const urgMatch = rawNotes.match(/\[Urgency:\s*([^\]]+)\]/i);
+  const mobMatch = rawNotes.match(/\[Mobility:\s*([^\]]+)\]/i);
+
+  if (dxMatch || sevMatch || urgMatch || mobMatch) {
+    return {
+      diagnosis: dxMatch ? dxMatch[1].trim() : '',
+      severity: sevMatch ? sevMatch[1].trim() : '',
+      urgency: urgMatch ? urgMatch[1].trim() : '',
+      mobility: mobMatch ? mobMatch[1].trim() : '',
+    };
+  }
+
+  return { ...defaults, diagnosis: rawNotes.trim() };
+};
+
+export const formatMedicalDetails = (details: MedicalDetails): string => {
+  const parts: string[] = [];
+  if (details.diagnosis) parts.push(`[Dx: ${details.diagnosis}]`);
+  if (details.severity) parts.push(`[Severity: ${details.severity}]`);
+  if (details.urgency) parts.push(`[Urgency: ${details.urgency}]`);
+  if (details.mobility) parts.push(`[Mobility: ${details.mobility}]`);
+  return parts.join(' ');
+};
+
+export const DIAGNOSIS_OPTIONS = [
+  { value: '', label: 'Select Clinical Diagnosis...' },
+  { value: 'Reversible Pulpitis', label: 'Reversible Pulpitis (Sensitivity to Cold/Sweet)' },
+  { value: 'Irreversible Pulpitis', label: 'Irreversible Pulpitis (Spontaneous Throbbing)' },
+  { value: 'Pulpal Necrosis', label: 'Pulpal Necrosis (Non-Vital Pulp)' },
+  { value: 'Acute Apical Abscess', label: 'Acute Apical Abscess (Localized Swelling)' },
+  { value: 'Chronic Apical Periodontitis', label: 'Chronic Apical Periodontitis (Radiolucency)' },
+  { value: 'Enamel Fracture', label: 'Enamel Fracture / Chipped Incisal Edge' },
+  { value: 'Dentin Fracture', label: 'Uncomplicated Crown Fracture (Dentin)' },
+  { value: 'Crown-Root Fracture', label: 'Complicated Crown-Root Fracture' },
+  { value: 'Incipient Caries', label: 'Incipient Enamel Demineralization (White Spot)' },
+  { value: 'Gingival Recession', label: 'Cervical Gingival Recession' },
+  { value: 'Deep Periodontal Pocket', label: 'Periodontitis (Pocket > 5mm)' },
+  { value: 'Food Impaction', label: 'Interproximal Open Contact / Food Impaction' },
+  { value: 'Pathological Mobility', label: 'Tooth Mobility / Trauma From Occlusion' },
+  { value: 'Severe Bruxism / Attrition', label: 'Severe Attrition / Bruxism Facet' },
+  { value: 'Cervical Abfraction', label: 'Cervical Abfraction / Wedge Defect' },
+  { value: 'Acid Erosion', label: 'Enamel Acid Erosion (GERD / Bulimia)' },
+  { value: 'Partially Impacted', label: 'Partially Impacted / Pericoronitis' },
+];
+
+export const SEVERITY_OPTIONS = [
+  { value: '', label: 'Select Severity / Depth...' },
+  { value: 'Mild / Initial', label: 'Mild (Enamel / Reversible)' },
+  { value: 'Moderate / Localized', label: 'Moderate (Dentin Involvement)' },
+  { value: 'Severe / Deep', label: 'Severe (Near Pulp / Deep Pocket)' },
+  { value: 'Critical / Acute', label: 'Critical (Pulp Exposure / Acute Abscess)' },
+];
+
+export const URGENCY_OPTIONS = [
+  { value: '', label: 'Select Treatment Priority...' },
+  { value: 'Routine', label: 'Routine (Elective / Next Recall)' },
+  { value: 'Priority', label: 'Priority (Schedule Within 1-2 Weeks)' },
+  { value: 'Urgent / Emergency', label: 'Urgent (Emergency Same-Day)' },
+  { value: 'Observation', label: 'Observation (Monitor Next Visit)' },
+];
+
+export const MOBILITY_OPTIONS = [
+  { value: '', label: 'Select Mobility Grade...' },
+  { value: 'Grade 0 (Physiologic)', label: 'Grade 0: Physiologic Mobility (Normal)' },
+  { value: 'Grade I (< 1mm)', label: 'Grade I: Slight Mobility (< 1mm Horizontal)' },
+  { value: 'Grade II (> 1mm)', label: 'Grade II: Moderate Mobility (> 1mm Horizontal)' },
+  { value: 'Grade III (Vertical)', label: 'Grade III: Severe Horizontal & Vertical Mobility' },
+];
+
+export const PLAN_TEMPLATES = [
+  'Comprehensive Oral Rehabilitation',
+  'Restorative & Esthetic Smile Design',
+  'Endodontic Therapy & Core Buildup',
+  'Periodontal Scaling & Maintenance',
+  'Prosthodontic Crown & Bridge Plan',
+  'Oral Surgery & Implant Protocol',
+  'Orthodontic Alignment Plan',
+  'Emergency Palliative Protocol',
+];
+
+export const PROCEDURE_CATEGORIES = [
+  {
+    category: 'Restorative',
+    procedures: [
+      { code: 'D2330', name: 'Composite - 1 Surface, Anterior ($120)' },
+      { code: 'D2331', name: 'Composite - 2 Surfaces, Anterior ($160)' },
+      { code: 'D2391', name: 'Composite - 1 Surface, Posterior ($140)' },
+      { code: 'D2392', name: 'Composite - 2 Surfaces, Posterior ($190)' },
+      { code: 'D2393', name: 'Composite - 3+ Surfaces, Posterior ($240)' },
+      { code: 'D2950', name: 'Core Buildup, Including Any Pins ($180)' },
+    ],
+  },
+  {
+    category: 'Endodontics',
+    procedures: [
+      { code: 'D3310', name: 'Root Canal Therapy - Anterior ($450)' },
+      { code: 'D3320', name: 'Root Canal Therapy - Premolar ($600)' },
+      { code: 'D3330', name: 'Root Canal Therapy - Molar ($850)' },
+      { code: 'D3410', name: 'Apicoectomy - Anterior ($400)' },
+    ],
+  },
+  {
+    category: 'Prosthodontics & Implants',
+    procedures: [
+      { code: 'D2740', name: 'Crown - Porcelain / Ceramic (Zirconia) ($750)' },
+      { code: 'D2750', name: 'Crown - Porcelain Fused to High Noble ($650)' },
+      { code: 'D6010', name: 'Surgical Placement of Implant Body ($1,200)' },
+      { code: 'D6058', name: 'Abutment Supported Ceramic Crown ($850)' },
+    ],
+  },
+  {
+    category: 'Oral Surgery & Periodontics',
+    procedures: [
+      { code: 'D7140', name: 'Extraction, Erupted Tooth ($110)' },
+      { code: 'D7210', name: 'Surgical Removal of Erupted Tooth ($220)' },
+      { code: 'D4341', name: 'Periodontal Scaling & Root Planing ($150)' },
+      { code: 'D1351', name: 'Pit & Fissure Sealant ($45)' },
+    ],
+  },
+];
+
+export const ANESTHESIA_OPTIONS = [
+  { value: '', label: 'Select Anesthesia (Optional)...' },
+  { value: 'Lidocaine 2% with 1:100,000 Epinephrine', label: 'Lidocaine 2% with 1:100k Epi (Standard)' },
+  { value: 'Articaine 4% with 1:100,000 Epinephrine', label: 'Articaine 4% with 1:100k Epi (Septocaine)' },
+  { value: 'Mepivacaine 3% Plain (No Epinephrine)', label: 'Mepivacaine 3% Plain (Cardiac Safe)' },
+  { value: 'Bupivacaine 0.5% with 1:200,000 Epinephrine', label: 'Bupivacaine 0.5% with 1:200k Epi (Long Acting)' },
+];
+
+export const DOSAGE_OPTIONS = [
+  { value: '', label: 'Select Dosage...' },
+  { value: '0.5 carpule (0.9 mL)', label: '0.5 carpule (0.9 mL)' },
+  { value: '1.0 carpule (1.8 mL)', label: '1.0 carpule (1.8 mL)' },
+  { value: '1.5 carpules (2.7 mL)', label: '1.5 carpules (2.7 mL)' },
+  { value: '2.0 carpules (3.6 mL)', label: '2.0 carpules (3.6 mL)' },
+];
+
+export const TECHNIQUE_OPTIONS = [
+  { value: '', label: 'Select Injection Technique...' },
+  { value: 'Local Infiltration', label: 'Local Infiltration (Buccal/Palatal)' },
+  { value: 'Inferior Alveolar Nerve Block', label: 'Inferior Alveolar Nerve Block (IANB)' },
+  { value: 'Mental / Incisive Nerve Block', label: 'Mental / Incisive Nerve Block' },
+  { value: 'Greater Palatine Block', label: 'Greater Palatine Nerve Block' },
+  { value: 'Intraligamentary (PDL)', label: 'Intraligamentary / PDL Injection' },
+];
+
+export const MATERIAL_OPTIONS = [
+  { value: '', label: 'Select Dental Material (Optional)...' },
+  { value: 'Composite Nano-Hybrid (VITA A2)', label: 'Composite Nano-Hybrid (VITA A2)' },
+  { value: 'Glass Ionomer Cement (GIC)', label: 'Glass Ionomer Cement (GIC)' },
+  { value: 'High-Translucency Zirconia', label: 'High-Translucency Zirconia' },
+  { value: 'IPS E-Max Lithium Disilicate', label: 'IPS E-Max Lithium Disilicate' },
+  { value: 'Gutta-Percha & Bio-Ceramic Sealer', label: 'Gutta-Percha & Bio-Ceramic Sealer' },
+  { value: 'Mineral Trioxide Aggregate (MTA)', label: 'Mineral Trioxide Aggregate (MTA)' },
+  { value: 'Dental Amalgam Alloy', label: 'Dental Amalgam Alloy' },
+];
 
 // FDI Teeth list in anatomical order
 const FDI_TEETH = {
@@ -89,7 +278,12 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>(initialProcedures);
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
-  const [newPlanTitle, setNewPlanTitle] = useState('');
+  const [newPlanTitle, setNewPlanTitle] = useState(PLAN_TEMPLATES[0]);
+  const [selectedProcCode, setSelectedProcCode] = useState<string>('D2330');
+  const [selectedAnesthesia, setSelectedAnesthesia] = useState<string>('');
+  const [selectedDosage, setSelectedDosage] = useState<string>('');
+  const [selectedTechnique, setSelectedTechnique] = useState<string>('');
+  const [selectedMaterial, setSelectedMaterial] = useState<string>('');
 
   // Clinical Control States
   const [showGums, setShowGums] = useState(true);
@@ -174,7 +368,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       setActivePlan(res.data);
       loadProceduresFromPlan(res.data);
       setIsCreatingPlan(false);
-      setNewPlanTitle('');
+      setNewPlanTitle(PLAN_TEMPLATES[0]);
       setSavingStatus('saved');
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
@@ -191,13 +385,22 @@ const Test3DOdontogramInner: React.FC<Props> = ({
     }
   };
 
-  const handleTreatmentSelect = async (procedureCode: string) => {
+  const handleTreatmentSelect = async (procedureCode: string, details?: {
+    anesthetic_agent?: string;
+    anesthetic_dosage?: string;
+    anesthetic_technique?: string;
+    materials_used_json?: string[];
+  }) => {
     if (!selectedTooth || !activePlan) return;
     setSavingStatus('saving');
     try {
       const res = await axios.post(`/api/treatment-plans/${activePlan.id}/procedures`, {
         tooth_number_fdi: selectedTooth,
         procedure_code: procedureCode,
+        anesthetic_agent: details?.anesthetic_agent,
+        anesthetic_dosage: details?.anesthetic_dosage,
+        anesthetic_technique: details?.anesthetic_technique,
+        materials_used_json: details?.materials_used_json,
       });
       // Update local state
       setPlannedProcedures(prev => ({
@@ -267,6 +470,38 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   const currentCondition: ToothCondition = currentRecord?.condition || 'healthy';
   const currentNote = currentRecord?.notes || '';
   const currentSurfaces = currentRecord?.surfaces || {};
+  const currentMedicalDetails = parseMedicalDetails(currentNote);
+
+  const handleMedicalDetailChange = async (field: keyof MedicalDetails, value: string) => {
+    if (!selectedTooth) return;
+    const previousState = { ...teethRecords };
+    const updatedDetails = { ...currentMedicalDetails, [field]: value };
+    const newNote = formatMedicalDetails(updatedDetails);
+    const updatedRecord = { ...currentRecord, condition: currentCondition, notes: newNote };
+
+    setTeethRecords((prev) => ({
+      ...prev,
+      [selectedTooth]: updatedRecord,
+    }));
+
+    setSavingStatus('saving');
+
+    try {
+      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
+        tooth_number: selectedTooth,
+        condition: currentCondition,
+        notes: newNote,
+        surfaces: currentSurfaces,
+      });
+      setSavingStatus('saved');
+      notifyParentWindow(selectedTooth, currentCondition);
+      setTimeout(() => setSavingStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to update medical details:', err);
+      setTeethRecords(previousState);
+      setSavingStatus('error');
+    }
+  };
 
   const handleConditionSelect = async (condition: ToothCondition) => {
     if (!selectedTooth) return;
@@ -362,6 +597,17 @@ const Test3DOdontogramInner: React.FC<Props> = ({
     }
   };
 
+  const handleSurfaceClick3D = (toothNumber: string, surfaceKey: ToothSurfaceKey) => {
+    setSelectedTooth(toothNumber);
+    if (surfaceKey === 'cervical') return;
+    const surfKey = surfaceKey as keyof ToothSurfaces;
+    const currentSurf = teethRecords[toothNumber]?.surfaces?.[surfKey] || 'healthy';
+    let nextCond: SurfaceCondition = 'active_caries';
+    if (currentSurf === 'active_caries') nextCond = 'composite_filled';
+    else if (currentSurf === 'composite_filled') nextCond = 'healthy';
+    handleSurfaceSelect(surfKey, nextCond);
+  };
+
   // Double-Click Modal State
   const [modalTooth, setModalTooth] = useState<string | null>(null);
 
@@ -380,6 +626,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
           plannedProcedures={plannedProcedures}
           selectedTooth={selectedTooth}
           onSelectTooth={(num) => setSelectedTooth(num)}
+          onSelectSurface={handleSurfaceClick3D}
           onDoubleClickTooth={(num) => setModalTooth(num)}
           showGums={showGums}
           onShowGumsChange={setShowGums}
@@ -423,7 +670,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-b border-slate-800">
                 <div className="bg-slate-950/40 p-4 border-b md:border-b-0 md:border-r border-slate-800">
                   <SingleToothViewer 
-                    modelUrl="/models/teeth-seperated-optimized.glb" 
+                    modelUrl="/models/Dentition_Permanent_Full_V2.1.glb" 
                     toothNumber={modalTooth} 
                     record={teethRecords[modalTooth]} 
                   />
@@ -652,6 +899,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
               plannedProcedures={plannedProcedures}
               selectedTooth={selectedTooth}
               onSelectTooth={(num) => setSelectedTooth(num)}
+              onSelectSurface={handleSurfaceClick3D}
               onDoubleClickTooth={(num) => setModalTooth(num)}
               showGums={showGums}
               onShowGumsChange={setShowGums}
@@ -772,149 +1020,170 @@ const Test3DOdontogramInner: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Condition Selector Action Buttons */}
+            {/* Clinical Dropdown Command Center */}
             <div className="mt-5">
               <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
-                {mode === 'findings' ? 'Apply Clinical Condition (1-Click)' : 'Propose Treatment Procedure'}
+                {mode === 'findings' ? 'Clinical Findings & Medical Details' : 'Propose Treatment Procedure'}
               </label>
 
               {mode === 'findings' ? (
-                <>
-                  <div className="grid grid-cols-1 gap-2.5">
-                    {(Object.keys(CONDITION_LABELS) as ToothCondition[]).map((condKey) => {
-                      const meta = CONDITION_LABELS[condKey];
-                      const isCurrent = currentCondition === condKey;
-                      const hexColor = CONDITION_COLORS[condKey];
-
-                      return (
-                        <button
-                          key={condKey}
-                          onClick={() => handleConditionSelect(condKey)}
-                          disabled={!selectedTooth}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
-                            isCurrent
-                              ? 'bg-slate-800 border-slate-600 shadow-md ring-1 ring-slate-500'
-                              : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700'
-                          } ${!selectedTooth ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-4 h-4 rounded-full border border-slate-700 flex-shrink-0 shadow-inner"
-                              style={{ backgroundColor: hexColor }}
-                            />
-                            <div>
-                              <div className="text-sm font-semibold text-slate-200">
-                                {meta.label}
-                              </div>
-                              <div className="text-xs text-slate-400">
-                                {meta.description}
-                              </div>
-                            </div>
-                          </div>
-
-                          {isCurrent && (
-                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              Active
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                <div className="flex flex-col gap-3.5">
+                  {/* 1. Primary Condition Dropdown */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
+                      Primary Condition
+                    </label>
+                    <select
+                      value={currentCondition}
+                      onChange={(e) => handleConditionSelect(e.target.value as ToothCondition)}
+                      disabled={!selectedTooth}
+                      className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {(Object.keys(CONDITION_LABELS) as ToothCondition[]).map((condKey) => (
+                        <option key={condKey} value={condKey} className="bg-slate-900 text-slate-100 py-1">
+                          {CONDITION_LABELS[condKey].label} - {CONDITION_LABELS[condKey].description}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  
-                  {currentCondition === 'custom' && selectedTooth && (
-                    <div className="mt-4 p-4 bg-slate-950/60 border border-rose-500/30 rounded-xl">
-                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">
-                        Custom Note for Tooth #{selectedTooth}
-                      </label>
-                      <textarea
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/50 transition-all resize-none"
-                        rows={3}
-                        placeholder="Type custom doctor notes here... (e.g. Needs specialized cleaning)"
-                        value={currentNote}
-                        onChange={(e) => {
-                          const updatedRecord = { ...currentRecord, condition: currentCondition, notes: e.target.value };
-                          setTeethRecords(prev => ({
-                            ...prev,
-                            [selectedTooth]: updatedRecord
-                          }));
-                        }}
-                        onBlur={(e) => handleNoteSave(e.target.value)}
-                      />
-                      <div className="text-right mt-2 text-[10px] text-slate-500">
-                        Saves automatically on click away
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Surface Details (M-O-D-B-L) */}
-                  {selectedTooth && ['healthy', 'active_caries', 'composite_filled'].includes(currentCondition) && (
-                    <div className="mt-5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
-                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
-                        Surface Details (M-O-D-B-L)
+                  {/* 2. Medical Diagnosis Dropdown */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
+                      Pathological Diagnosis
+                    </label>
+                    <select
+                      value={currentMedicalDetails.diagnosis}
+                      onChange={(e) => handleMedicalDetailChange('diagnosis', e.target.value)}
+                      disabled={!selectedTooth}
+                      className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-100 focus:outline-none focus:border-emerald-500 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {DIAGNOSIS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 3. Severity & Treatment Urgency (2 Columns) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
+                        Severity / Stage
                       </label>
-                      <div className="flex justify-between gap-2">
+                      <select
+                        value={currentMedicalDetails.severity}
+                        onChange={(e) => handleMedicalDetailChange('severity', e.target.value)}
+                        disabled={!selectedTooth}
+                        className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-100 focus:outline-none focus:border-emerald-500 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {SEVERITY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
+                        Urgency Priority
+                      </label>
+                      <select
+                        value={currentMedicalDetails.urgency}
+                        onChange={(e) => handleMedicalDetailChange('urgency', e.target.value)}
+                        disabled={!selectedTooth}
+                        className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-medium text-slate-100 focus:outline-none focus:border-emerald-500 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {URGENCY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 4. Mobility & Perio Grade */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
+                      Mobility & Perio Grade
+                    </label>
+                    <select
+                      value={currentMedicalDetails.mobility}
+                      onChange={(e) => handleMedicalDetailChange('mobility', e.target.value)}
+                      disabled={!selectedTooth}
+                      className="w-full bg-slate-950/80 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium text-slate-100 focus:outline-none focus:border-emerald-500 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {MOBILITY_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 5. Surface Details (M-O-D-B-L) Dropdowns */}
+                  {selectedTooth && ['healthy', 'active_caries', 'composite_filled', 'custom'].includes(currentCondition) && (
+                    <div className="mt-2 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5">
+                      <label className="block text-xs font-semibold uppercase text-slate-400 mb-2.5">
+                        Surface-Level Findings (M-O-D-B-L)
+                      </label>
+                      <div className="flex flex-col gap-2">
                         {(['mesial', 'occlusal', 'distal', 'buccal', 'lingual'] as const).map((surface) => {
                           const surfCond = currentSurfaces[surface] || 'healthy';
-                          const label = surface.charAt(0).toUpperCase();
-                          const isActive = surfCond !== 'healthy';
                           return (
-                            <button
-                              key={surface}
-                              onClick={() => {
-                                let nextCond: SurfaceCondition = 'active_caries';
-                                if (surfCond === 'active_caries') nextCond = 'composite_filled';
-                                if (surfCond === 'composite_filled') nextCond = 'healthy';
-                                handleSurfaceSelect(surface, nextCond);
-                              }}
-                              className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold border transition-all ${
-                                isActive 
-                                  ? `bg-slate-800 text-white shadow-md border-slate-600` 
-                                  : `bg-slate-900 text-slate-500 border-slate-800 hover:bg-slate-800 hover:text-slate-300`
-                              }`}
-                              style={{
-                                borderColor: isActive ? CONDITION_COLORS[surfCond] : undefined,
-                                boxShadow: isActive ? `0 0 8px ${CONDITION_COLORS[surfCond]}40` : undefined,
-                              }}
-                              title={surface}
-                            >
-                              {label}
-                            </button>
+                            <div key={surface} className="flex items-center justify-between gap-3 bg-slate-900/60 p-1.5 px-2.5 rounded-lg border border-slate-800/80">
+                              <span className="text-xs font-semibold text-slate-300 capitalize w-20">
+                                {surface}:
+                              </span>
+                              <select
+                                value={surfCond}
+                                onChange={(e) => handleSurfaceSelect(surface, e.target.value as SurfaceCondition)}
+                                className="flex-1 bg-slate-950 border border-slate-700 rounded-md px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                              >
+                                <option value="healthy">Healthy Enamel</option>
+                                <option value="active_caries">Caries (Decay)</option>
+                                <option value="composite_filled">Composite Resin</option>
+                                <option value="amalgam">Amalgam Filling</option>
+                                <option value="sealant">Pit & Fissure Sealant</option>
+                              </select>
+                            </div>
                           );
                         })}
                       </div>
-                      <div className="flex items-center gap-3 mt-3 text-[10px] text-slate-500 justify-center">
-                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#E8E8E8]" /> Healthy</span>
-                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#DC2626]" /> Caries</span>
-                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" /> Filled</span>
-                      </div>
                     </div>
                   )}
-                </>
+                </div>
               ) : (
-                <div className="flex-1 overflow-y-auto p-5 scrollbar-thin scrollbar-thumb-slate-700">
-                  <div className="mb-6 flex flex-col gap-2">
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 flex flex-col gap-4">
+                  {/* Target Treatment Plan Selector */}
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                       Target Treatment Plan
                     </label>
                     {isCreatingPlan ? (
                       <div className="flex gap-2">
-                        <input
-                          type="text"
+                        <select
                           value={newPlanTitle}
                           onChange={(e) => setNewPlanTitle(e.target.value)}
-                          placeholder="e.g. Orthodontic Plan"
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 text-white focus:outline-none focus:border-purple-500"
-                        />
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-xs px-3 py-2 text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                        >
+                          {PLAN_TEMPLATES.map((tmpl) => (
+                            <option key={tmpl} value={tmpl}>{tmpl}</option>
+                          ))}
+                        </select>
                         <button
+                          type="button"
                           onClick={handleCreatePlan}
-                          className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors font-medium"
+                          className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors font-medium"
                         >
                           Save
                         </button>
                         <button
+                          type="button"
                           onClick={() => setIsCreatingPlan(false)}
-                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg transition-colors"
                         >
                           Cancel
                         </button>
@@ -922,7 +1191,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
                     ) : (
                       <div className="flex gap-2">
                         <select
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 appearance-none font-medium"
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg text-xs px-3 py-2.5 text-white focus:outline-none focus:border-purple-500 appearance-none font-medium cursor-pointer"
                           value={activePlan?.id || ''}
                           onChange={(e) => handlePlanChange(Number(e.target.value))}
                         >
@@ -931,8 +1200,9 @@ const Test3DOdontogramInner: React.FC<Props> = ({
                           ))}
                         </select>
                         <button
+                          type="button"
                           onClick={() => setIsCreatingPlan(true)}
-                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors flex items-center justify-center whitespace-nowrap font-medium"
+                          className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg transition-colors flex items-center justify-center whitespace-nowrap font-medium"
                         >
                           + New Plan
                         </button>
@@ -940,38 +1210,126 @@ const Test3DOdontogramInner: React.FC<Props> = ({
                     )}
                   </div>
                   
-                  {/* Common Procedures Grid */}
-                  <div className="grid grid-cols-1 gap-2.5">
-                  {[
-                    { code: 'D2330', name: 'Composite Filling (White)', color: '#3B82F6' }, // Blue
-                    { code: 'D2740', name: 'Crown - Porcelain/Ceramic', color: '#8B5CF6' }, // Purple
-                    { code: 'D3310', name: 'Root Canal Therapy', color: '#F59E0B' }, // Amber
-                    { code: 'D7140', name: 'Extraction, Erupted Tooth', color: '#EF4444' }, // Red
-                    { code: 'D6010', name: 'Surgical Placement of Implant', color: '#06B6D4' }, // Cyan
-                  ].map(proc => (
-                    <button
-                      key={proc.code}
-                      onClick={() => handleTreatmentSelect(proc.code)}
-                      disabled={!selectedTooth}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all bg-slate-950/60 border-slate-800/80 hover:bg-slate-850 hover:border-slate-700 ${!selectedTooth ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-4 h-4 rounded-full border border-slate-700 flex-shrink-0 shadow-inner"
-                          style={{ backgroundColor: proc.color }}
-                        />
-                        <div>
-                          <div className="text-sm font-semibold text-slate-200">
-                            {proc.name}
-                          </div>
-                          <div className="text-xs text-slate-400">
-                            CDT Code: {proc.code}
-                          </div>
-                        </div>
+                  {/* Treatment Procedure Dropdowns Builder */}
+                  <div className="flex flex-col gap-3 p-4 bg-slate-950/70 border border-slate-800 rounded-xl">
+                    <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">
+                      Add Planned Procedure to #{selectedTooth || 'None'}
+                    </span>
+
+                    {/* Procedure Code Dropdown */}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
+                        Procedure (CDT Code)
+                      </label>
+                      <select
+                        value={selectedProcCode}
+                        onChange={(e) => setSelectedProcCode(e.target.value)}
+                        disabled={!selectedTooth}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium text-slate-100 focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                      >
+                        {PROCEDURE_CATEGORIES.map((cat) => (
+                          <optgroup key={cat.category} label={cat.category} className="bg-slate-950 font-bold text-slate-300">
+                            {cat.procedures.map((p) => (
+                              <option key={p.code} value={p.code} className="bg-slate-900 text-slate-100 font-normal">
+                                [{p.code}] {p.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Anesthetic Agent Dropdown */}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
+                        Anesthetic Agent
+                      </label>
+                      <select
+                        value={selectedAnesthesia}
+                        onChange={(e) => setSelectedAnesthesia(e.target.value)}
+                        disabled={!selectedTooth}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                      >
+                        {ANESTHESIA_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Dosage & Technique Dropdowns */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
+                          Dosage
+                        </label>
+                        <select
+                          value={selectedDosage}
+                          onChange={(e) => setSelectedDosage(e.target.value)}
+                          disabled={!selectedTooth}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                        >
+                          {DOSAGE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <span className="text-xs text-slate-500 group-hover:text-emerald-400 transition-colors">+ Add</span>
+                      <div>
+                        <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
+                          Technique
+                        </label>
+                        <select
+                          value={selectedTechnique}
+                          onChange={(e) => setSelectedTechnique(e.target.value)}
+                          disabled={!selectedTooth}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                        >
+                          {TECHNIQUE_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Primary Material Dropdown */}
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
+                        Primary Dental Material
+                      </label>
+                      <select
+                        value={selectedMaterial}
+                        onChange={(e) => setSelectedMaterial(e.target.value)}
+                        disabled={!selectedTooth}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-50"
+                      >
+                        {MATERIAL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-100">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleTreatmentSelect(selectedProcCode, {
+                          anesthetic_agent: selectedAnesthesia || undefined,
+                          anesthetic_dosage: selectedDosage || undefined,
+                          anesthetic_technique: selectedTechnique || undefined,
+                          materials_used_json: selectedMaterial ? [selectedMaterial] : undefined,
+                        });
+                      }}
+                      disabled={!selectedTooth}
+                      className="mt-1 w-full py-2 px-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>+ Add Planned Procedure</span>
                     </button>
-                  ))}
                   </div>
                   
                   {/* List planned treatments for selected tooth */}
@@ -1058,7 +1416,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
               {/* Left Column: Isolated 3D View */}
               <div className="bg-slate-950/40 p-4 border-b md:border-b-0 md:border-r border-slate-800">
                 <SingleToothViewer 
-                  modelUrl="/models/teeth-seperated-optimized.glb" 
+                  modelUrl="/models/Dentition_Permanent_Full_V2.1.glb" 
                   toothNumber={modalTooth} 
                   record={teethRecords[modalTooth]} 
                 />

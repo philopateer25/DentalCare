@@ -16,12 +16,15 @@ class PatientTooth extends Model
         'patient_id',
         'tooth_number',
         'condition',
+        'status',
         'notes',
         'surfaces',
+        'clinical_details',
     ];
 
     protected $casts = [
         'surfaces' => 'array',
+        'clinical_details' => 'array',
     ];
 
     public function patient(): BelongsTo

@@ -745,21 +745,54 @@
                                                         @endif
                                                     @elseif($item['type'] === 'condition')
                                                         <div class="flex items-center justify-between">
-                                                            <span class="font-bold text-cyan-700 dark:text-cyan-300">🦷 Documented in 3D: {{ $item['details']['condition'] ?? '' }}</span>
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="font-bold text-cyan-700 dark:text-cyan-300">🦷 Documented in 3D: {{ $item['details']['condition'] ?? '' }}</span>
+                                                                @php
+                                                                    $cStatus = $item['details']['clinical_status'] ?? 'existing';
+                                                                @endphp
+                                                                @if($cStatus === 'needs_treatment')
+                                                                    <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                                                                        ⚠️ Needs Treatment
+                                                                    </span>
+                                                                @elseif($cStatus === 'watch')
+                                                                    <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                                                        👁️ Watch & Monitor
+                                                                    </span>
+                                                                @else
+                                                                    <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                                                        ✓ Existing Baseline
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                             @if(!empty($item['tooth_number_fdi']))
                                                                 <button 
                                                                     type="button" 
                                                                     wire:click="openTooth3DModal('{{ $item['tooth_number_fdi'] }}')"
                                                                     class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold hover:underline">
-                                                                    Inspect 3D Model &rarr;
+                                                                    Inspect 3D & Records &rarr;
                                                                 </button>
                                                             @endif
                                                         </div>
+
+                                                        {{-- Detailed Clinical Metadata Tags --}}
+                                                        @if(!empty($item['details']['clinical_details']))
+                                                            <div class="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
+                                                                @foreach($item['details']['clinical_details'] as $k => $v)
+                                                                    @if(!empty($v))
+                                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono text-[10px]">
+                                                                            <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ ucwords(str_replace('_', ' ', $k)) }}:</span>
+                                                                            <span>{{ ucwords(str_replace('_', ' ', $v)) }}</span>
+                                                                        </span>
+                                                                    @endif
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+
                                                         @if(!empty($item['details']['surfaces']))
-                                                            <p class="text-[11px] text-gray-500">Surfaces Involved: <strong>{{ $item['details']['surfaces'] }}</strong></p>
+                                                            <p class="text-[11px] text-gray-500 mt-1">Surfaces Involved: <strong>{{ $item['details']['surfaces'] }}</strong></p>
                                                         @endif
                                                         @if(!empty($item['details']['notes']))
-                                                            <p class="italic text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800/80 p-2 rounded border border-gray-100 dark:border-gray-800">
+                                                            <p class="italic text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800/80 p-2 rounded border border-gray-100 dark:border-gray-800 mt-1">
                                                                 &ldquo;{{ $item['details']['notes'] }}&rdquo;
                                                             </p>
                                                         @endif
@@ -1547,6 +1580,240 @@
                                         @endif
                                     </button>
                                 @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Doctor's Deep Clinical Details & Treatment Planning Inspector --}}
+                        <div class="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/30 dark:from-indigo-950/20 dark:via-gray-900 dark:to-purple-950/20 shadow-xs space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="p-1.5 rounded-lg bg-indigo-600 text-white text-xs">🔬</span>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                                            Clinical Detail Inspector & Treatment Decision
+                                        </h4>
+                                        <p class="text-[10px] text-gray-500">Specify pathology depth, class, materials, and treatment plan billing status</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
+                                    Doctor Spec
+                                </span>
+                            </div>
+
+                            {{-- 1. Clinical Status Selector: Existing vs Needs Treatment vs Watch --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1.5">
+                                    1. Clinical Status / Action Required:
+                                </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all {{ $detailStatus === 'existing' ? 'bg-emerald-50 border-emerald-500 dark:bg-emerald-950/40 dark:border-emerald-500' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300' }}">
+                                        <input type="radio" wire:model.live="detailStatus" value="existing" class="text-emerald-600 focus:ring-emerald-500">
+                                        <div class="text-xs">
+                                            <div class="font-bold text-emerald-800 dark:text-emerald-300">✓ Existing in Mouth</div>
+                                            <div class="text-[10px] text-gray-500">Past baseline, not billed</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all {{ $detailStatus === 'needs_treatment' ? 'bg-rose-50 border-rose-500 dark:bg-rose-950/40 dark:border-rose-500' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300' }}">
+                                        <input type="radio" wire:model.live="detailStatus" value="needs_treatment" class="text-rose-600 focus:ring-rose-500">
+                                        <div class="text-xs">
+                                            <div class="font-bold text-rose-800 dark:text-rose-300">⚠️ Needs Treatment</div>
+                                            <div class="text-[10px] text-gray-500">Add to Treatment Plan</div>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all {{ $detailStatus === 'watch' ? 'bg-amber-50 border-amber-500 dark:bg-amber-950/40 dark:border-amber-500' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300' }}">
+                                        <input type="radio" wire:model.live="detailStatus" value="watch" class="text-amber-600 focus:ring-amber-500">
+                                        <div class="text-xs">
+                                            <div class="font-bold text-amber-800 dark:text-amber-300">👁️ Watch & Monitor</div>
+                                            <div class="text-[10px] text-gray-500">Review next recall</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {{-- 2. Disease-Specific Clinical Parameters --}}
+                            <div class="pt-2 border-t border-gray-200/60 dark:border-gray-800 space-y-3">
+                                {{-- CARIES DETAILS --}}
+                                @if($detailCondition === 'active_caries')
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Caries Depth (ICDAS / Radiographic)</label>
+                                            <select wire:model="cariesDepth" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Depth...</option>
+                                                <option value="D1_enamel">D1 - Enamel Only</option>
+                                                <option value="D2_dentin">D2 - Dentin Shallow</option>
+                                                <option value="D3_deep_pulp">D3 - Deep / Near Pulp</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">G.V. Black Classification</label>
+                                            <select wire:model="cariesClass" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Class...</option>
+                                                <option value="class_1">Class I (Occlusal / Pits)</option>
+                                                <option value="class_2">Class II (Proximal Posterior)</option>
+                                                <option value="class_3">Class III (Proximal Anterior)</option>
+                                                <option value="class_4">Class IV (Incisal Angle)</option>
+                                                <option value="class_5">Class V (Cervical / Gumline)</option>
+                                                <option value="class_6">Class VI (Cusp Tips)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Caries Activity</label>
+                                            <select wire:model="cariesActivity" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Activity...</option>
+                                                <option value="active">Active Soft (Rapid)</option>
+                                                <option value="arrested">Arrested Hard (Inactive)</option>
+                                                <option value="secondary_recurrent">Secondary Recurrent</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                @elseif($detailCondition === 'root_canal')
+                                    {{-- ENDODONTIC DETAILS --}}
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Pulpal Diagnosis</label>
+                                            <select wire:model="pulpDiagnosis" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Pulp Status...</option>
+                                                <option value="normal">Normal Pulp</option>
+                                                <option value="reversible_pulpitis">Reversible Pulpitis</option>
+                                                <option value="symptomatic_irreversible">Symptomatic Irreversible Pulpitis</option>
+                                                <option value="asymptomatic_irreversible">Asymptomatic Irreversible Pulpitis</option>
+                                                <option value="necrosis">Pulp Necrosis</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Periapical Status</label>
+                                            <select wire:model="periapicalDiagnosis" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Periapical...</option>
+                                                <option value="normal">Normal Apical Tissues</option>
+                                                <option value="symptomatic_periodontitis">Symptomatic Apical Periodontitis</option>
+                                                <option value="asymptomatic_periodontitis">Asymptomatic Apical Periodontitis</option>
+                                                <option value="acute_abscess">Acute Apical Abscess</option>
+                                                <option value="chronic_abscess">Chronic Apical Abscess</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Root Canals Count</label>
+                                            <select wire:model="canalsCount" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Canals...</option>
+                                                <option value="1">1 Canal (Anterior / Pre)</option>
+                                                <option value="2">2 Canals</option>
+                                                <option value="3">3 Canals (Molar)</option>
+                                                <option value="4">4 Canals (MB2, etc.)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                @elseif($detailCondition === 'crown')
+                                    {{-- CROWN DETAILS --}}
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Prosthetic Material</label>
+                                            <select wire:model="crownMaterial" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Material...</option>
+                                                <option value="zirconia">Monolithic Zirconia</option>
+                                                <option value="layered_zirconia">Layered Aesthetic Zirconia</option>
+                                                <option value="emax">E-Max (Lithium Disilicate)</option>
+                                                <option value="pfm">PFM (Porcelain Fused to Metal)</option>
+                                                <option value="gold">Full Cast Gold</option>
+                                                <option value="temporary">PMMA Temporary</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Crown Margin Fit</label>
+                                            <select wire:model="crownMarginFit" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Fit...</option>
+                                                <option value="intact">Intact / Well Adapted</option>
+                                                <option value="overhang">Marginal Overhang</option>
+                                                <option value="defective_open">Open Margin / Defective</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                @elseif($detailCondition === 'implant')
+                                    {{-- IMPLANT DETAILS --}}
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Implant System</label>
+                                            <input type="text" wire:model="implantBrand" placeholder="e.g. Straumann, Osstem" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Diameter (mm)</label>
+                                            <select wire:model="implantDiameter" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Dia...</option>
+                                                <option value="3.0mm">3.0 mm (Narrow)</option>
+                                                <option value="3.5mm">3.5 mm</option>
+                                                <option value="4.0mm">4.0 mm (Regular)</option>
+                                                <option value="4.5mm">4.5 mm</option>
+                                                <option value="5.0mm">5.0 mm (Wide)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Length (mm)</label>
+                                            <select wire:model="implantLength" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="">Select Length...</option>
+                                                <option value="8mm">8.0 mm</option>
+                                                <option value="10mm">10.0 mm</option>
+                                                <option value="11.5mm">11.5 mm</option>
+                                                <option value="13mm">13.0 mm</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Bone Graft</label>
+                                            <select wire:model="implantBoneGraft" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800">
+                                                <option value="none">None</option>
+                                                <option value="sinus_lift">Sinus Lift</option>
+                                                <option value="gbr">GBR Bone Graft</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Doctor's Clinical Notes --}}
+                                <div>
+                                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">Doctor's Clinical Notes for Tooth #{{ $modalData['tooth'] }}</label>
+                                    <textarea wire:model="detailNotes" rows="2" placeholder="e.g. Sensitivity to cold, asymptomatic on percussion, patient prefers tooth-colored restoration." class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800"></textarea>
+                                </div>
+
+                                {{-- 3. Procedure Linking & Price Schedule (when Needs Treatment) --}}
+                                @if($detailStatus === 'needs_treatment')
+                                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                                <span>🏷️</span>
+                                                <span>Proposed Procedure from Clinic Fee Schedule</span>
+                                            </span>
+                                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+                                                Custom Pricing Active
+                                            </span>
+                                        </div>
+                                        <select wire:model.live="detailProcedureId" class="w-full text-xs rounded-lg border-gray-200 dark:border-gray-700 dark:bg-gray-800 font-medium">
+                                            <option value="">-- Auto-select matching procedure from catalog --</option>
+                                            @foreach($modalData['procedure_catalog'] ?? [] as $code)
+                                                <option value="{{ $code->id }}">
+                                                    [{{ $code->code }}] {{ $code->title }} — {{ \App\Services\CurrencyHelper::format($code->standard_fee) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+
+                                {{-- Submit Button --}}
+                                <div class="flex items-center justify-end gap-2 pt-1">
+                                    <button 
+                                        type="button" 
+                                        wire:click="saveDetailedToothRecord('{{ $modalData['tooth'] }}')"
+                                        wire:loading.attr="disabled"
+                                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl text-white shadow-md active:scale-95 transition-all cursor-pointer {{ $detailStatus === 'needs_treatment' ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30' : ($detailStatus === 'watch' ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30') }}">
+                                        <x-heroicon-m-check class="w-4 h-4" />
+                                        <span>
+                                            @if($detailStatus === 'needs_treatment')
+                                                Save Details & Add to Treatment Plan
+                                            @elseif($detailStatus === 'watch')
+                                                Save to 360 History (Watch / Recall)
+                                            @else
+                                                Save Baseline Finding to 360 History
+                                            @endif
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

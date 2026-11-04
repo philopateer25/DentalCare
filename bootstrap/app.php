@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => \App\Http\Middleware\RequireFeature::class,
             'onboarding' => \App\Http\Middleware\EnsureOnboardingIsCompleted::class,
         ]);
+        $middleware->trustProxies(at: '*');
         $middleware->validateCsrfTokens(except: [
             'api/*',
             'onboarding/*',

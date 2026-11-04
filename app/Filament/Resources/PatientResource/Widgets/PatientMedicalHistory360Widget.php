@@ -7,11 +7,13 @@ use App\Models\ExternalTreatment;
 use App\Models\Patient;
 use App\Models\PatientTooth;
 use App\Models\Prescription;
+use App\Models\ProcedureCode;
 use App\Models\ToothFinding;
 use App\Models\TreatmentPlan;
 use App\Models\TreatmentProcedure;
 use App\Models\VoiceNote;
 use App\Services\ClinicalPresets;
+use App\Services\CurrencyHelper;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
@@ -50,6 +52,32 @@ class PatientMedicalHistory360Widget extends Widget
     public string $extPerformedYear = '';
     public string $extClinicOrDoctor = '';
     public string $extNotes = '';
+
+    // Detailed Tooth Inspector Form State
+    public string $detailCondition = 'healthy';
+    public string $detailStatus = 'existing'; // 'existing', 'needs_treatment', 'watch'
+    public ?string $detailNotes = null;
+    public ?int $detailProcedureId = null;
+
+    // Caries Details
+    public ?string $cariesDepth = null; // 'D1_enamel', 'D2_dentin', 'D3_deep_pulp'
+    public ?string $cariesClass = null; // 'class_1', 'class_2', 'class_3', 'class_4', 'class_5', 'class_6'
+    public ?string $cariesActivity = null; // 'active', 'arrested', 'secondary_recurrent'
+
+    // Endo Details
+    public ?string $pulpDiagnosis = null; // 'normal', 'reversible_pulpitis', 'irreversible_pulpitis', 'necrosis'
+    public ?string $periapicalDiagnosis = null; // 'normal', 'apical_periodontitis', 'apical_abscess'
+    public ?string $canalsCount = null;
+
+    // Crown / Prosthetics Details
+    public ?string $crownMaterial = null; // 'zirconia', 'emax', 'pfm', 'gold', 'temporary'
+    public ?string $crownMarginFit = null; // 'intact', 'overhang', 'defective_open'
+
+    // Implant Details
+    public ?string $implantBrand = null; // 'Straumann', 'Nobel Biocare', 'Osstem', 'Zimmer', 'Other'
+    public ?string $implantDiameter = null; // '3.5mm', '4.0mm', '4.5mm', '5.0mm'
+    public ?string $implantLength = null; // '8mm', '10mm', '11.5mm', '13mm'
+    public ?string $implantBoneGraft = null; // 'none', 'sinus_lift', 'gbr'
 
     // Request-level memory caches to eliminate duplicate SQL queries during render
     protected static array $staticTimelineCache = [];
@@ -624,18 +652,179 @@ class PatientMedicalHistory360Widget extends Widget
             ->latest()
             ->get();
 
+        $ptDetails = $patientTooth?->clinical_details ?? [];
+        $this->detailCondition = $conditionRaw;
+        $this->detailStatus = $patientTooth?->status ?? 'existing';
+        $this->detailNotes = $notes;
+        $this->detailProcedureId = null;
+
+        $this->cariesDepth = $ptDetails['caries_depth'] ?? null;
+        $this->cariesClass = $ptDetails['caries_class'] ?? null;
+        $this->cariesActivity = $ptDetails['caries_activity'] ?? null;
+
+        $this->pulpDiagnosis = $ptDetails['pulp_diagnosis'] ?? null;
+        $this->periapicalDiagnosis = $ptDetails['periapical_diagnosis'] ?? null;
+        $this->canalsCount = $ptDetails['canals_count'] ?? null;
+
+        $this->crownMaterial = $ptDetails['crown_material'] ?? null;
+        $this->crownMarginFit = $ptDetails['crown_margin_fit'] ?? null;
+
+        $this->implantBrand = $ptDetails['implant_brand'] ?? null;
+        $this->implantDiameter = $ptDetails['implant_diameter'] ?? null;
+        $this->implantLength = $ptDetails['implant_length'] ?? null;
+        $this->implantBoneGraft = $ptDetails['implant_bone_graft'] ?? null;
+
         $this->modalData = [
             'tooth' => $toothNumber,
             'current_condition' => $conditionLabel,
             'condition_raw' => $conditionRaw,
             'surfaces' => $surfaces,
             'tooth_notes' => $notes,
+            'status' => $patientTooth?->status ?? 'existing',
+            'clinical_details' => $ptDetails,
             'inside_procedures' => $insideProcs,
             'outside_treatments' => $outsideTreatments,
             'voice_notes' => $voiceNotes,
+            'procedure_catalog' => ProcedureCode::with('category')->orderBy('title')->get(),
         ];
 
         $this->activeModal = 'tooth_3d';
+    }
+
+    public function saveDetailedToothRecord(string $toothNumber): void
+    {
+        $user = auth()->user();
+        if ($user && $user->practice_id && $this->record?->practice_id !== $user->practice_id) {
+            abort(403, 'Unauthorized cross-tenant patient access.');
+        }
+
+        $patientId = $this->record?->id;
+        if (!$patientId) return;
+
+        $clinicalDetails = [];
+        if ($this->detailCondition === 'active_caries') {
+            $clinicalDetails = array_filter([
+                'caries_depth' => $this->cariesDepth,
+                'caries_class' => $this->cariesClass,
+                'caries_activity' => $this->cariesActivity,
+            ]);
+        } elseif ($this->detailCondition === 'root_canal') {
+            $clinicalDetails = array_filter([
+                'pulp_diagnosis' => $this->pulpDiagnosis,
+                'periapical_diagnosis' => $this->periapicalDiagnosis,
+                'canals_count' => $this->canalsCount,
+            ]);
+        } elseif ($this->detailCondition === 'crown') {
+            $clinicalDetails = array_filter([
+                'crown_material' => $this->crownMaterial,
+                'crown_margin_fit' => $this->crownMarginFit,
+            ]);
+        } elseif ($this->detailCondition === 'implant') {
+            $clinicalDetails = array_filter([
+                'implant_brand' => $this->implantBrand,
+                'implant_diameter' => $this->implantDiameter,
+                'implant_length' => $this->implantLength,
+                'implant_bone_graft' => $this->implantBoneGraft,
+            ]);
+        }
+
+        // 1. Update or create PatientTooth record
+        PatientTooth::updateOrCreate(
+            ['patient_id' => $patientId, 'tooth_number' => (string) $toothNumber],
+            [
+                'condition' => $this->detailCondition,
+                'status' => $this->detailStatus,
+                'notes' => $this->detailNotes,
+                'clinical_details' => $clinicalDetails,
+            ]
+        );
+
+        // 2. Examination Finding
+        $exam = $this->record->examinations()->latest('examined_at')->first();
+        if (!$exam) {
+            $exam = $this->record->examinations()->create([
+                'doctor_id' => auth()->id() ?? 1,
+                'type' => 'periodic',
+                'examined_at' => now(),
+            ]);
+        }
+
+        $exam->toothFindings()->updateOrCreate(
+            ['tooth_number_fdi' => (string) $toothNumber],
+            [
+                'finding_type' => $this->detailCondition,
+                'notes' => $this->detailNotes,
+            ]
+        );
+
+        // 3. Treatment Plan sync if Needs Treatment
+        $procedureAddedNotice = '';
+        if ($this->detailStatus === 'needs_treatment') {
+            $procedure = null;
+            if ($this->detailProcedureId) {
+                $procedure = ProcedureCode::find($this->detailProcedureId);
+            } else {
+                // Auto-match best procedure from customized catalog
+                $procedure = match($this->detailCondition) {
+                    'active_caries' => ProcedureCode::where('title', 'like', '%composite%')->orWhere('code', 'D2330')->orWhere('code', 'D2391')->first(),
+                    'root_canal' => ProcedureCode::where('title', 'like', '%root canal%')->orWhere('code', 'like', 'D33%')->first(),
+                    'crown' => ProcedureCode::where('title', 'like', '%crown%')->orWhere('code', 'like', 'D27%')->first(),
+                    'implant' => ProcedureCode::where('title', 'like', '%implant%')->orWhere('code', 'like', 'D60%')->first(),
+                    'missing' => ProcedureCode::where('title', 'like', '%extract%')->orWhere('code', 'like', 'D71%')->first(),
+                    default => ProcedureCode::first(),
+                };
+            }
+
+            if ($procedure) {
+                $plan = $this->record->treatmentPlans()
+                    ->whereIn('status', ['draft', 'in_progress'])
+                    ->latest()
+                    ->first();
+
+                if (!$plan) {
+                    $plan = $this->record->treatmentPlans()->create([
+                        'doctor_id' => auth()->id() ?? 1,
+                        'title' => 'Treatment Plan - 3D Odontogram Charting',
+                        'status' => 'draft',
+                        'total_amount' => 0,
+                        'discount_amount' => 0,
+                        'net_amount' => 0,
+                    ]);
+                }
+
+                $phase = $plan->phases()->firstOrCreate(
+                    ['sequence' => 1],
+                    ['name' => 'Phase 1 - Proposed Clinical Care']
+                );
+
+                $phase->procedures()->create([
+                    'tooth_number_fdi' => (int) $toothNumber,
+                    'surface' => 'WHOLE',
+                    'procedure_code_id' => $procedure->id,
+                    'doctor_id' => auth()->id() ?? 1,
+                    'fee' => $procedure->standard_fee,
+                    'discount' => 0,
+                    'net_amount' => $procedure->standard_fee,
+                    'status' => 'planned',
+                    'notes' => "Added via 3D Odontogram. Tooth #{$toothNumber}. Diagnosis: {$this->detailCondition}",
+                ]);
+
+                $plan->recalculateTotals();
+                $procedureAddedNotice = " & added '{$procedure->title}' (" . CurrencyHelper::format($procedure->standard_fee) . ") to Treatment Plan";
+            }
+        }
+
+        $this->record?->touch();
+        $this->invalidateCaches();
+        $this->openTooth3DModal($toothNumber);
+
+        Notification::make()
+            ->title("Tooth #{$toothNumber} Clinical Record Updated")
+            ->body("Status: " . ucfirst(str_replace('_', ' ', $this->detailStatus)) . $procedureAddedNotice)
+            ->success()
+            ->send();
+
+        $this->dispatch('refreshPatient360');
     }
 
     /**
@@ -1352,6 +1541,12 @@ class PatientMedicalHistory360Widget extends Widget
             if (in_array($keyCheck, $chartedTeethConditions, true)) continue;
 
             $condLabel = $conditionLabels[$cond] ?? ucwords(str_replace('_', ' ', $cond));
+            $statusLabel = match($pt->status ?? 'existing') {
+                'needs_treatment' => 'Needs Treatment (Active Pathology)',
+                'watch' => 'Watch & Monitor (Next Recall)',
+                default => 'Existing Baseline Finding',
+            };
+
             $timeline[] = [
                 'key' => "pt-{$pt->id}",
                 'id' => $pt->id,
@@ -1361,10 +1556,14 @@ class PatientMedicalHistory360Widget extends Widget
                 'date' => Carbon::parse($pt->updated_at ?: $pt->created_at),
                 'title' => "Tooth #{$pt->tooth_number}: {$condLabel}",
                 'doctor' => '3D Odontogram',
-                'status' => 'Documented Condition',
+                'status' => $statusLabel,
+                'clinical_status' => $pt->status ?? 'existing',
                 'details' => [
                     'condition' => $condLabel,
+                    'status_label' => $statusLabel,
+                    'clinical_status' => $pt->status ?? 'existing',
                     'notes' => $pt->notes,
+                    'clinical_details' => $pt->clinical_details ?? [],
                 ],
             ];
         }

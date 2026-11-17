@@ -13,11 +13,6 @@ class ListAppointments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('open_calendar')
-                ->label('Open Interactive Calendar')
-                ->icon('heroicon-o-calendar-days')
-                ->color('info')
-                ->url('/calendar'),
             Actions\CreateAction::make(),
         ];
     }

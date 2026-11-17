@@ -17,8 +17,7 @@ class DoctorScheduleWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        $user = auth()->user();
-        return $user ? ($user->hasRole('doctor') || $user->isDoctor()) : false;
+        return false;
     }
 
     public function table(Table $table): Table

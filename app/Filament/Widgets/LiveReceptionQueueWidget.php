@@ -17,7 +17,7 @@ class LiveReceptionQueueWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['secretary', 'clinic_admin', 'super_admin', 'developer']) ?? false;
+        return false;
     }
 
     public function table(Table $table): Table

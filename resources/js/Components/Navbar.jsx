@@ -46,7 +46,6 @@ export default function Navbar({ auth, appName = 'DentalCare', onMenuClick }) {
                 {/* Middle Nav Links */}
                 <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600 dark:text-slate-400">
                     <Link href="/dashboard" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Dashboard')}</Link>
-                    <Link href="/calendar" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Calendar')}</Link>
                     <Link href="/patients" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Patients')}</Link>
                     <Link href="/operations" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Operations')}</Link>
                     {features.includes('finance') && (

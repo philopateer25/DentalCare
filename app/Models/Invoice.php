@@ -87,26 +87,6 @@ class Invoice extends Model
                 }
             }
         });
-
-        static::saved(function (Invoice $invoice) {
-            // If invoice has paid_amount > 0 and payments table has less, auto-create the payment record
-            $existingPaymentsSum = (float) $invoice->payments()->sum('amount');
-            $paidAmount = (float) $invoice->paid_amount;
-            if ($paidAmount > $existingPaymentsSum) {
-                $difference = $paidAmount - $existingPaymentsSum;
-                Payment::create([
-                    'practice_id' => $invoice->practice_id ?? \Filament\Facades\Filament::getTenant()?->id ?? 1,
-                    'invoice_id' => $invoice->id,
-                    'patient_id' => $invoice->patient_id,
-                    'amount' => $difference,
-                    'payment_method' => 'cash',
-                    'transaction_reference' => 'PAY-' . date('Ymd') . '-' . str_pad((string) (Payment::max('id') + 1), 4, '0', STR_PAD_LEFT),
-                    'logged_by_user_id' => auth()->id() ?? 1,
-                    'paid_at' => now(),
-                    'notes' => 'Payment registered with invoice ' . $invoice->invoice_number,
-                ]);
-            }
-        });
     }
 
     public function practice(): BelongsTo

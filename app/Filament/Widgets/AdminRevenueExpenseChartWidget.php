@@ -16,7 +16,7 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer']) ?? false;
+        return false;
     }
 
     protected function getData(): array

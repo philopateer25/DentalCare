@@ -123,6 +123,7 @@ class DashboardCalendarWidget extends BaseWidget
                         'this_week' => 'This Week',
                         'upcoming' => 'All Upcoming',
                         'past' => 'Past Appointments',
+                        'all' => 'All Records',
                     ])
                     ->default('today')
                     ->query(function (Builder $query, array $data) {
@@ -133,6 +134,7 @@ class DashboardCalendarWidget extends BaseWidget
                             'this_week' => $query->whereBetween('start_time', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]),
                             'upcoming' => $query->where('start_time', '>=', Carbon::now()),
                             'past' => $query->where('start_time', '<', Carbon::now()),
+                            'all' => $query,
                             default => $query->whereDate('start_time', Carbon::today()),
                         };
                     }),
@@ -255,8 +257,12 @@ class DashboardCalendarWidget extends BaseWidget
                         $duration = (int) ($data['duration_minutes'] ?? 30);
                         $endTime = (clone $startTime)->addMinutes($duration);
 
+                        $operatory = Operatory::find($data['operatory_id']);
+                        $branchId = $operatory?->branch_id ?? \App\Models\Branch::where('practice_id', $practiceId)->value('id');
+
                         Appointment::create([
                             'practice_id' => $practiceId,
+                            'branch_id' => $branchId,
                             'patient_id' => $data['patient_id'],
                             'doctor_id' => $isDoctorOnly ? $user->id : $data['doctor_id'],
                             'operatory_id' => $data['operatory_id'],
@@ -278,6 +284,10 @@ class DashboardCalendarWidget extends BaseWidget
                     ->color('gray')
                     ->url(\App\Filament\Resources\AppointmentResource::getUrl('index')),
             ])
+            ->emptyStateHeading('No Appointments Found')
+            ->emptyStateDescription('There are no appointments scheduled for this period. Use the period filter above or click "Book Appointment" to add one.')
+            ->emptyStateIcon('heroicon-o-calendar-days')
+            ->poll('30s')
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10);
     }

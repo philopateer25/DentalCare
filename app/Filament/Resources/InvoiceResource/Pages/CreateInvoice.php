@@ -29,6 +29,27 @@ class CreateInvoice extends CreateRecord
         return $data;
     }
 
+    protected function afterCreate(): void
+    {
+        $invoice = $this->record;
+        $paidAmount = (float) $invoice->paid_amount;
+        $existingPaymentsSum = (float) $invoice->payments()->sum('amount');
+        if ($paidAmount > $existingPaymentsSum) {
+            $difference = $paidAmount - $existingPaymentsSum;
+            \App\Models\Payment::create([
+                'practice_id' => $invoice->practice_id ?? \Filament\Facades\Filament::getTenant()?->id ?? 1,
+                'invoice_id' => $invoice->id,
+                'patient_id' => $invoice->patient_id,
+                'amount' => $difference,
+                'payment_method' => 'cash',
+                'transaction_reference' => 'PAY-' . date('Ymd') . '-' . str_pad((string) (\App\Models\Payment::max('id') + 1), 4, '0', STR_PAD_LEFT),
+                'logged_by_user_id' => auth()->id() ?? 1,
+                'paid_at' => now(),
+                'notes' => 'Payment registered with invoice ' . $invoice->invoice_number,
+            ]);
+        }
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

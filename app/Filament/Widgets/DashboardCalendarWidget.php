@@ -164,7 +164,7 @@ class DashboardCalendarWidget extends BaseWidget
                 // Quick transition: Booked -> Arrived
                 Tables\Actions\Action::make('mark_arrived')
                     ->label('Patient Arrived')
-                    ->icon('heroicon-o-user-check')
+                    ->icon('heroicon-o-check-badge')
                     ->color('warning')
                     ->visible(fn (Appointment $record) => $record->status === 'booked')
                     ->action(function (Appointment $record) {

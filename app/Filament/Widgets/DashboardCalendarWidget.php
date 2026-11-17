@@ -141,8 +141,10 @@ class DashboardCalendarWidget extends BaseWidget
 
                 Tables\Filters\SelectFilter::make('doctor_id')
                     ->label('Doctor')
-                    ->relationship('doctor', 'name', fn ($q) => 
-                        $q->where('practice_id', $practiceId)->whereHas('roles', fn ($rq) => $rq->where('name', 'doctor'))
+                    ->options(fn () => User::where('practice_id', $practiceId)
+                        ->whereHas('roles', fn ($rq) => $rq->where('name', 'doctor'))
+                        ->pluck('name', 'id')
+                        ->toArray()
                     )
                     ->searchable()
                     ->preload()
@@ -203,16 +205,21 @@ class DashboardCalendarWidget extends BaseWidget
                     ->form([
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
-                            ->relationship('patient', 'first_name', fn ($q) => $q->where('practice_id', $practiceId))
-                            ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
-                            ->searchable(['first_name', 'last_name', 'file_number'])
+                            ->options(fn () => Patient::where('practice_id', $practiceId)
+                                ->get()
+                                ->mapWithKeys(fn ($p) => [$p->id => "{$p->first_name} {$p->last_name} ({$p->file_number})"])
+                                ->toArray()
+                            )
+                            ->searchable()
                             ->preload()
                             ->required(),
 
                         Forms\Components\Select::make('doctor_id')
                             ->label('Doctor')
-                            ->relationship('doctor', 'name', fn ($q) => 
-                                $q->where('practice_id', $practiceId)->whereHas('roles', fn ($rq) => $rq->where('name', 'doctor'))
+                            ->options(fn () => User::where('practice_id', $practiceId)
+                                ->whereHas('roles', fn ($rq) => $rq->where('name', 'doctor'))
+                                ->pluck('name', 'id')
+                                ->toArray()
                             )
                             ->default(fn () => $isDoctorOnly ? $user->id : null)
                             ->disabled($isDoctorOnly)
@@ -223,8 +230,9 @@ class DashboardCalendarWidget extends BaseWidget
 
                         Forms\Components\Select::make('operatory_id')
                             ->label('Room / Operatory Chair')
-                            ->relationship('operatory', 'name', fn ($q) => 
-                                $q->whereHas('branch', fn ($bq) => $bq->where('practice_id', $practiceId))
+                            ->options(fn () => Operatory::whereHas('branch', fn ($bq) => $bq->where('practice_id', $practiceId))
+                                ->pluck('name', 'id')
+                                ->toArray()
                             )
                             ->preload()
                             ->required(),

@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->databaseNotifications()
-            ->databaseNotificationsPolling('3s')
+            ->databaseNotificationsPolling('30s')
             ->navigationGroups([
                 'Clinical Management',
                 'Finance & Treasury',
@@ -55,10 +55,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::USER_MENU_BEFORE,
                 fn () => view('filament.components.language-switch')
-            )
-            ->renderHook(
-                \Filament\View\PanelsRenderHook::BODY_END,
-                fn (): string => \Illuminate\Support\Facades\Blade::render('@include("filament.push-subscription")'),
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,

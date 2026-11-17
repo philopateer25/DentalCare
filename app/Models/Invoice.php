@@ -54,6 +54,59 @@ class Invoice extends Model
                 $invoice->invoice_number = 'INV-' . date('Y') . '-' . str_pad((string) (static::max('id') + 1), 5, '0', STR_PAD_LEFT);
             }
         });
+
+        static::saving(function (Invoice $invoice) {
+            // Check if items exist
+            if ($invoice->exists && $invoice->items()->exists()) {
+                $invoice->subtotal = (float) $invoice->items()->sum('total_price');
+                $invoice->total_amount = max(0, (float)$invoice->subtotal - (float)$invoice->discount_amount + (float)$invoice->tax_amount);
+            } else {
+                if (empty($invoice->subtotal) && !empty($invoice->total_amount)) {
+                    $invoice->subtotal = $invoice->total_amount;
+                } elseif (!empty($invoice->subtotal) && empty($invoice->total_amount)) {
+                    $invoice->total_amount = max(0, (float)$invoice->subtotal - (float)$invoice->discount_amount + (float)$invoice->tax_amount);
+                }
+            }
+
+            // Sync paid amount from payments if payments exist
+            if ($invoice->exists && $invoice->payments()->exists()) {
+                $invoice->paid_amount = (float) $invoice->payments()->sum('amount');
+            }
+
+            // Always recalculate balance due: Total - Paid
+            $invoice->balance_due = max(0, (float)$invoice->total_amount - (float)$invoice->paid_amount);
+
+            // Automatically set status based on paid vs total if not manually cancelled
+            if ($invoice->status !== 'cancelled') {
+                if ((float)$invoice->paid_amount >= (float)$invoice->total_amount && (float)$invoice->total_amount > 0) {
+                    $invoice->status = 'paid';
+                } elseif ((float)$invoice->paid_amount > 0 && (float)$invoice->paid_amount < (float)$invoice->total_amount) {
+                    $invoice->status = 'partially_paid';
+                } elseif ((float)$invoice->paid_amount == 0) {
+                    $invoice->status = 'unpaid';
+                }
+            }
+        });
+
+        static::saved(function (Invoice $invoice) {
+            // If invoice has paid_amount > 0 and payments table has less, auto-create the payment record
+            $existingPaymentsSum = (float) $invoice->payments()->sum('amount');
+            $paidAmount = (float) $invoice->paid_amount;
+            if ($paidAmount > $existingPaymentsSum) {
+                $difference = $paidAmount - $existingPaymentsSum;
+                Payment::create([
+                    'practice_id' => $invoice->practice_id ?? \Filament\Facades\Filament::getTenant()?->id ?? 1,
+                    'invoice_id' => $invoice->id,
+                    'patient_id' => $invoice->patient_id,
+                    'amount' => $difference,
+                    'payment_method' => 'cash',
+                    'transaction_reference' => 'PAY-' . date('Ymd') . '-' . str_pad((string) (Payment::max('id') + 1), 4, '0', STR_PAD_LEFT),
+                    'logged_by_user_id' => auth()->id() ?? 1,
+                    'paid_at' => now(),
+                    'notes' => 'Payment registered with invoice ' . $invoice->invoice_number,
+                ]);
+            }
+        });
     }
 
     public function practice(): BelongsTo
@@ -88,9 +141,15 @@ class Invoice extends Model
 
     public function recalculateTotals(): void
     {
-        $subtotal = $this->items()->sum('total_price');
-        $total = $subtotal - $this->discount_amount + $this->tax_amount;
-        $paid = $this->payments()->sum('amount');
+        if ($this->items()->exists()) {
+            $subtotal = (float) $this->items()->sum('total_price');
+            $total = max(0, $subtotal - (float)$this->discount_amount + (float)$this->tax_amount);
+        } else {
+            $subtotal = (float) $this->subtotal;
+            $total = (float) $this->total_amount;
+        }
+
+        $paid = (float) $this->payments()->sum('amount');
         $balance = max(0, $total - $paid);
 
         $status = 'unpaid';

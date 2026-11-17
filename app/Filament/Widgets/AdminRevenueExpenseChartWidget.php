@@ -35,10 +35,8 @@ class AdminRevenueExpenseChartWidget extends ChartWidget
                 ->whereMonth('created_at', $month->month)
                 ->sum('paid_amount');
 
-            $expense = ClinicExpense::where('practice_id', $practiceId)
-                ->whereYear('expense_date', $month->year)
-                ->whereMonth('expense_date', $month->month)
-                ->sum('amount');
+            $financeService = app(\App\Services\Widgets\FinanceWidgetService::class);
+            $expense = $financeService->getMonthlyExpenses($practiceId, $month);
 
             $revenueData[] = $revenue;
             $expenseData[] = $expense;

@@ -19,6 +19,7 @@ interface Props {
   examination: { id: number; type: string; examined_at: string; notes: string | null };
   initialRecords?: Record<string, ToothRecord>;
   initialProcedures?: Record<string, any[]>;
+  procedureCategories?: any[];
   initialViewMode?: 'clean' | 'detailed';
 }
 
@@ -130,6 +131,106 @@ export const PLAN_TEMPLATES = [
   'Oral Surgery & Implant Protocol',
   'Orthodontic Alignment Plan',
   'Emergency Palliative Protocol',
+];
+
+export const CARIES_DEPTH_OPTIONS = [
+  { value: '', label: 'Select Depth...' },
+  { value: 'D1 - Incipient Enamel', label: 'D1: Incipient Enamel (Non-Cavitated)' },
+  { value: 'D2 - Shallow Dentin', label: 'D2: Shallow Dentin (Outer 1/3)' },
+  { value: 'D3 - Deep Dentin', label: 'D3: Deep Dentin (Inner 1/3)' },
+  { value: 'D4 - Pulp-Approaching', label: 'D4: Pulp-Approaching (<0.5mm RDT)' },
+];
+
+export const CARIES_CLASS_OPTIONS = [
+  { value: '', label: 'Select G.V. Black Class...' },
+  { value: 'Class I', label: 'Class I: Pits & Fissures (Occlusal/B/L)' },
+  { value: 'Class II', label: 'Class II: Proximal Posterior (MO/DO/MOD)' },
+  { value: 'Class III', label: 'Class III: Proximal Anterior (No Incisal Angle)' },
+  { value: 'Class IV', label: 'Class IV: Proximal Anterior with Incisal Angle' },
+  { value: 'Class V', label: 'Class V: Gingival / Cervical Third' },
+  { value: 'Class VI', label: 'Class VI: Cusp Tip / Incisal Edge' },
+];
+
+export const CROWN_MATERIAL_OPTIONS = [
+  { value: '', label: 'Select Crown Material...' },
+  { value: 'High-Translucency Zirconia', label: 'High-Translucency Zirconia (Monolithic)' },
+  { value: 'IPS E-Max Lithium Disilicate', label: 'IPS E-Max Lithium Disilicate' },
+  { value: 'Porcelain Fused to High Noble (PFM)', label: 'Porcelain Fused to Metal (PFM)' },
+  { value: 'Full Cast Gold Alloy', label: 'Full Cast Gold (Type III)' },
+  { value: 'PMMA Long-Term Provisional', label: 'PMMA Long-Term Provisional' },
+];
+
+export const CROWN_MARGIN_OPTIONS = [
+  { value: '', label: 'Select Margin Fit...' },
+  { value: 'Supragingival Chamfer', label: 'Supragingival Chamfer (0.5mm Coronal)' },
+  { value: 'Equigingival Shoulder', label: 'Equigingival Shoulder' },
+  { value: 'Subgingival Chamfer', label: 'Subgingival Chamfer (0.5mm Sulcus)' },
+  { value: 'Open Margin / Microleakage', label: 'Open Margin / Microleakage Present' },
+  { value: 'Overcontoured Shelf', label: 'Overcontoured Margin Shelf' },
+];
+
+export const PULP_DIAGNOSIS_OPTIONS = [
+  { value: '', label: 'Select Pulpal Diagnosis...' },
+  { value: 'Normal Vital Pulp', label: 'Normal Vital Pulp' },
+  { value: 'Reversible Pulpitis', label: 'Reversible Pulpitis (Sensitivity to Cold)' },
+  { value: 'Symptomatic Irreversible Pulpitis', label: 'Symptomatic Irreversible Pulpitis' },
+  { value: 'Asymptomatic Irreversible Pulpitis', label: 'Asymptomatic Irreversible Pulpitis' },
+  { value: 'Pulpal Necrosis', label: 'Pulpal Necrosis (Non-Vital)' },
+  { value: 'Previously Treated', label: 'Previously Treated Canal' },
+];
+
+export const PERIAPICAL_DIAGNOSIS_OPTIONS = [
+  { value: '', label: 'Select Periapical Diagnosis...' },
+  { value: 'Normal Apical Tissues', label: 'Normal Apical Tissues' },
+  { value: 'Symptomatic Apical Periodontitis', label: 'Symptomatic Apical Periodontitis' },
+  { value: 'Asymptomatic Apical Periodontitis', label: 'Asymptomatic Apical Periodontitis' },
+  { value: 'Acute Apical Abscess', label: 'Acute Apical Abscess (Swelling)' },
+  { value: 'Chronic Apical Abscess', label: 'Chronic Apical Abscess (Sinus Tract)' },
+];
+
+export const CANALS_COUNT_OPTIONS = [
+  { value: '', label: 'Select Canal Count...' },
+  { value: '1 Canal', label: '1 Canal (Single Straight)' },
+  { value: '2 Canals', label: '2 Canals' },
+  { value: '3 Canals', label: '3 Canals (MB, DB, Palatal)' },
+  { value: '4 Canals', label: '4 Canals (MB1, MB2 Located)' },
+];
+
+export const IMPLANT_BRAND_OPTIONS = [
+  { value: '', label: 'Select Implant System...' },
+  { value: 'Straumann BLX / Roxolid', label: 'Straumann (BLX / Roxolid SLActive)' },
+  { value: 'Nobel Biocare Active', label: 'Nobel Biocare (NobelActive Conical)' },
+  { value: 'Osstem TSIII SA', label: 'Osstem (TSIII SA / Hiossen ETIII)' },
+  { value: 'Zimmer Tapered Screw-Vent', label: 'Zimmer Biomet (TSV Internal Hex)' },
+  { value: 'BioHorizons Laser-Lok', label: 'BioHorizons (Tapered Internal Laser-Lok)' },
+  { value: 'Megagen AnyRidge', label: 'Megagen (AnyRidge / BlueDiamond)' },
+];
+
+export const IMPLANT_DIAMETER_OPTIONS = [
+  { value: '', label: 'Select Diameter...' },
+  { value: '3.0 mm', label: '3.0 mm (Narrow Platform)' },
+  { value: '3.5 mm', label: '3.5 mm (Standard Anterior)' },
+  { value: '4.1 mm', label: '4.1 mm (Standard Posterior)' },
+  { value: '4.5 mm', label: '4.5 mm (Wide Platform)' },
+  { value: '5.0 mm', label: '5.0 mm (Ultra-Wide Molar)' },
+];
+
+export const IMPLANT_LENGTH_OPTIONS = [
+  { value: '', label: 'Select Length...' },
+  { value: '8.0 mm', label: '8.0 mm (Short Fixture)' },
+  { value: '10.0 mm', label: '10.0 mm (Standard Length)' },
+  { value: '11.5 mm', label: '11.5 mm (Standard Long)' },
+  { value: '13.0 mm', label: '13.0 mm (Long Fixture)' },
+  { value: '16.0 mm', label: '16.0 mm (Zygomatic / Extended)' },
+];
+
+export const EXTRACTION_REASON_OPTIONS = [
+  { value: '', label: 'Select Extraction Indication...' },
+  { value: 'Non-Restorable Caries', label: 'Severe Non-Restorable Caries' },
+  { value: 'Advanced Periodontitis', label: 'Advanced Periodontitis (Grade III Mobility)' },
+  { value: 'Vertical Root Fracture', label: 'Vertical Root Fracture / Split' },
+  { value: 'Orthodontic Serial', label: 'Serial Orthodontic Extraction' },
+  { value: 'Impacted / Pericoronitis', label: 'Impacted Third Molar / Pericoronitis' },
 ];
 
 export const PROCEDURE_CATEGORIES = [
@@ -257,7 +358,8 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   examination: initialExam,
   initialRecords = {},
   initialProcedures = {},
-  initialViewMode = 'clean',
+  procedureCategories = [],
+  initialViewMode = 'detailed',
 }) => {
   const [teethRecords, setTeethRecords] = useState<Record<string, ToothRecord>>(initialRecords);
   const [selectedTooth, setSelectedTooth] = useState<string | null>(() => {
@@ -273,7 +375,15 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   const [activeExam, setActiveExam] = useState(initialExam);
   const [examinations, setExaminations] = useState<any[]>([initialExam]);
 
-  const [mode, setMode] = useState<'findings' | 'treatment'>('findings');
+  const [mode, setMode] = useState<'findings' | 'treatment' | 'pricing'>('findings');
+  const [procedureList, setProcedureList] = useState<any[]>([]);
+  const [pricingSearch, setPricingSearch] = useState('');
+  const [pricingCategory, setPricingCategory] = useState<string>('all');
+  const [editingPriceId, setEditingPriceId] = useState<number | null>(null);
+  const [editingFee, setEditingFee] = useState<string>('');
+  const [editingDuration, setEditingDuration] = useState<string>('');
+  const [priceUpdateSuccess, setPriceUpdateSuccess] = useState<number | null>(null);
+
   const [activePlan, setActivePlan] = useState<any>(null);
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>(initialProcedures);
@@ -308,6 +418,11 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   };
 
   React.useEffect(() => {
+    // Fetch procedure catalog
+    axios.get('/api/procedure-codes').then(res => {
+      setProcedureList(res.data);
+    }).catch(err => console.error('Failed to load procedure codes', err));
+
     // Fetch historical examinations
     axios.get(`/api/patients/${patient.id}/examinations`).then(res => {
       setExaminations(res.data);
@@ -468,134 +583,135 @@ const Test3DOdontogramInner: React.FC<Props> = ({
 
   const currentRecord = selectedTooth ? teethRecords[selectedTooth] : undefined;
   const currentCondition: ToothCondition = currentRecord?.condition || 'healthy';
+  const currentStatus: 'existing' | 'needs_treatment' | 'watch' = (currentRecord?.status as any) || 'existing';
+  const currentClinicalDetails: Record<string, any> = currentRecord?.clinical_details || {};
   const currentNote = currentRecord?.notes || '';
   const currentSurfaces = currentRecord?.surfaces || {};
   const currentMedicalDetails = parseMedicalDetails(currentNote);
 
-  const handleMedicalDetailChange = async (field: keyof MedicalDetails, value: string) => {
-    if (!selectedTooth) return;
+  const saveToothFinding = async (
+    toothNum: string,
+    condition: ToothCondition,
+    status: 'existing' | 'needs_treatment' | 'watch',
+    clinicalDetails: Record<string, any>,
+    surfaces: ToothSurfaces,
+    notes: string
+  ) => {
     const previousState = { ...teethRecords };
-    const updatedDetails = { ...currentMedicalDetails, [field]: value };
-    const newNote = formatMedicalDetails(updatedDetails);
-    const updatedRecord = { ...currentRecord, condition: currentCondition, notes: newNote };
+    const updatedRecord: ToothRecord = {
+      ...currentRecord,
+      condition,
+      status,
+      clinical_details: clinicalDetails,
+      surfaces,
+      notes,
+    };
 
     setTeethRecords((prev) => ({
       ...prev,
-      [selectedTooth]: updatedRecord,
+      [toothNum]: updatedRecord,
     }));
 
     setSavingStatus('saving');
 
     try {
       await axios.post(`/api/examinations/${activeExam.id}/findings`, {
-        tooth_number: selectedTooth,
-        condition: currentCondition,
-        notes: newNote,
-        surfaces: currentSurfaces,
+        tooth_number: toothNum,
+        condition,
+        status,
+        clinical_details: clinicalDetails,
+        surfaces,
+        notes,
       });
       setSavingStatus('saved');
-      notifyParentWindow(selectedTooth, currentCondition);
+      notifyParentWindow(toothNum, condition);
       setTimeout(() => setSavingStatus('idle'), 2000);
     } catch (err) {
-      console.error('Failed to update medical details:', err);
+      console.error('Failed to update tooth finding:', err);
       setTeethRecords(previousState);
       setSavingStatus('error');
     }
   };
 
-  const handleConditionSelect = async (condition: ToothCondition) => {
+  const handleStatusChange = (status: 'existing' | 'needs_treatment' | 'watch') => {
     if (!selectedTooth) return;
+    saveToothFinding(selectedTooth, currentCondition, status, currentClinicalDetails, currentSurfaces, currentNote);
+  };
 
-    // Optimistic UI Update
-    const previousState = { ...teethRecords };
-    const updatedRecord = {
-      ...currentRecord,
-      condition: condition,
-    };
-    
-    setTeethRecords((prev) => ({
-      ...prev,
-      [selectedTooth]: updatedRecord,
-    }));
+  const handleConditionSelect = (condition: ToothCondition) => {
+    if (!selectedTooth) return;
+    saveToothFinding(selectedTooth, condition, currentStatus, currentClinicalDetails, currentSurfaces, currentNote);
+  };
 
-    setSavingStatus('saving');
+  const handleClinicalDetailFieldChange = (key: string, value: string) => {
+    if (!selectedTooth) return;
+    const updated = { ...currentClinicalDetails, [key]: value };
+    saveToothFinding(selectedTooth, currentCondition, currentStatus, updated, currentSurfaces, currentNote);
+  };
 
-    try {
-      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
-        tooth_number: selectedTooth,
-        condition: condition,
-        notes: currentNote,
-        surfaces: currentSurfaces,
-      });
-      setSavingStatus('saved');
-      notifyParentWindow(selectedTooth, condition);
-      setTimeout(() => setSavingStatus('idle'), 2000);
-    } catch (err) {
-      console.error('Failed to update tooth condition:', err);
-      setTeethRecords(previousState); // Rollback on error
-      setSavingStatus('error');
-    }
+  const handleMedicalDetailChange = async (field: keyof MedicalDetails, value: string) => {
+    if (!selectedTooth) return;
+    const updatedDetails = { ...currentMedicalDetails, [field]: value };
+    const newNote = formatMedicalDetails(updatedDetails);
+    saveToothFinding(selectedTooth, currentCondition, currentStatus, currentClinicalDetails, currentSurfaces, newNote);
   };
 
   const handleNoteSave = async (newNote: string) => {
     if (!selectedTooth) return;
-
-    const updatedRecord = { ...currentRecord, condition: currentCondition, notes: newNote };
-    setTeethRecords((prev) => ({
-      ...prev,
-      [selectedTooth]: updatedRecord,
-    }));
-    
-    setSavingStatus('saving');
-
-    try {
-      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
-        tooth_number: selectedTooth,
-        condition: currentCondition,
-        notes: newNote,
-        surfaces: currentSurfaces,
-      });
-      setSavingStatus('saved');
-      notifyParentWindow(selectedTooth, currentCondition);
-      setTimeout(() => setSavingStatus('idle'), 2000);
-    } catch (err) {
-      console.error('Failed to update tooth note:', err);
-      setSavingStatus('error');
-    }
+    saveToothFinding(selectedTooth, currentCondition, currentStatus, currentClinicalDetails, currentSurfaces, newNote);
   };
 
   const handleSurfaceSelect = async (surface: keyof ToothSurfaces, condition: SurfaceCondition) => {
     if (!selectedTooth) return;
-
-    // Toggle logic: if clicking the same condition, clear it (healthy)
     const currentSurfaceCondition = currentSurfaces[surface];
     const newCondition = currentSurfaceCondition === condition ? 'healthy' : condition;
-
     const newSurfaces = { ...currentSurfaces, [surface]: newCondition };
-    const updatedRecord = { ...currentRecord, condition: currentCondition, surfaces: newSurfaces };
+    saveToothFinding(selectedTooth, currentCondition, currentStatus, currentClinicalDetails, newSurfaces, currentNote);
+  };
 
-    setTeethRecords((prev) => ({
-      ...prev,
-      [selectedTooth]: updatedRecord,
-    }));
-    
-    setSavingStatus('saving');
+  const handleStartEditPrice = (proc: any) => {
+    setEditingPriceId(proc.id);
+    setEditingFee(String(proc.standard_fee));
+    setEditingDuration(String(proc.estimated_duration_minutes || ''));
+  };
 
+  const handleSavePrice = async (procId: number) => {
+    const feeNum = parseFloat(editingFee);
+    if (isNaN(feeNum) || feeNum < 0) return;
     try {
-      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
-        tooth_number: selectedTooth,
-        condition: currentCondition,
-        notes: currentNote,
-        surfaces: newSurfaces,
+      await axios.patch(`/api/procedure-codes/${procId}`, {
+        standard_fee: feeNum,
+        estimated_duration_minutes: editingDuration ? parseInt(editingDuration) : undefined,
       });
-      setSavingStatus('saved');
-      notifyParentWindow(selectedTooth, currentCondition);
-      setTimeout(() => setSavingStatus('idle'), 2000);
+      setProcedureList((prev) =>
+        prev.map((p) =>
+          p.id === procId
+            ? {
+                ...p,
+                standard_fee: feeNum,
+                estimated_duration_minutes: editingDuration ? parseInt(editingDuration) : p.estimated_duration_minutes,
+              }
+            : p
+        )
+      );
+      setEditingPriceId(null);
+      setPriceUpdateSuccess(procId);
+      setTimeout(() => setPriceUpdateSuccess(null), 2500);
     } catch (err) {
-      console.error('Failed to update tooth surface:', err);
-      setSavingStatus('error');
+      console.error('Failed to update fee', err);
     }
   };
+
+  const filteredProcedures = procedureList.filter((p) => {
+    const matchCat = pricingCategory === 'all' || p.category?.name === pricingCategory;
+    const q = pricingSearch.toLowerCase().trim();
+    const matchQ =
+      !q ||
+      p.code.toLowerCase().includes(q) ||
+      p.title.toLowerCase().includes(q) ||
+      (p.category?.name && p.category.name.toLowerCase().includes(q));
+    return matchCat && matchQ;
+  });
 
   const handleSurfaceClick3D = (toothNumber: string, surfaceKey: ToothSurfaceKey) => {
     setSelectedTooth(toothNumber);
@@ -642,15 +758,15 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         
         {/* Hovering Action Button */}
         <div className="absolute bottom-6 right-6 z-10">
-          <button 
-            onClick={() => {
-              window.top?.open(`/patients/${patient.id}/odontogram-details`, '_blank');
-            }}
+          <a 
+            href={`/patients/${patient.id}/odontogram-details`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 px-5 py-3 bg-slate-900/90 hover:bg-slate-800 text-white font-bold rounded-xl shadow-2xl border border-slate-700 backdrop-blur-md transition-all hover:scale-105 active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             Open Clinical Details
-          </button>
+          </a>
         </div>
         
         {/* Clean Mode Double Click Modal */}
@@ -812,18 +928,27 @@ const Test3DOdontogramInner: React.FC<Props> = ({
             <span className="text-xs text-slate-400">
               Patient File: <strong className="text-slate-200">{patient.file_number}</strong>
             </span>
-            <div className="ml-4 flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <div className="ml-4 flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
               <button
                 onClick={() => setMode('findings')}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'findings' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'findings' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                Chart Findings
+                <span>🦷</span>
+                <span>Chart Findings</span>
               </button>
               <button
                 onClick={() => setMode('treatment')}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${mode === 'treatment' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'treatment' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                Plan Treatment
+                <span>📋</span>
+                <span>Plan Treatment</span>
+              </button>
+              <button
+                onClick={() => setMode('pricing')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${mode === 'pricing' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                <span>🏷️</span>
+                <span>Procedure Pricing & Settings</span>
               </button>
             </div>
           </div>
@@ -850,9 +975,17 @@ const Test3DOdontogramInner: React.FC<Props> = ({
               </button>
             </div>
 
+            <button
+              onClick={() => setViewMode('clean')}
+              className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 flex items-center gap-1.5 ml-auto"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Clean 3D
+            </button>
+
             <button 
               onClick={() => window.close()}
-              className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 flex items-center gap-1.5 ml-auto"
+              className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors font-medium border border-slate-700 flex items-center gap-1.5"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               Close Fullscreen
@@ -1023,11 +1156,178 @@ const Test3DOdontogramInner: React.FC<Props> = ({
             {/* Clinical Dropdown Command Center */}
             <div className="mt-5">
               <label className="block text-xs font-semibold uppercase text-slate-400 mb-3">
-                {mode === 'findings' ? 'Clinical Findings & Medical Details' : 'Propose Treatment Procedure'}
+                {mode === 'findings'
+                  ? 'Clinical Findings & Technical Parameters'
+                  : mode === 'treatment'
+                  ? 'Propose Treatment Procedure'
+                  : 'Fee Schedule & Pricing Settings'}
               </label>
 
-              {mode === 'findings' ? (
+              {mode === 'pricing' ? (
                 <div className="flex flex-col gap-3.5">
+                  <div className="bg-amber-950/20 border border-amber-900/40 p-3 rounded-xl flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🏷️</span>
+                        <span>Procedure Fee Customizer</span>
+                      </span>
+                      <a
+                        href="/admin/1/procedure-codes"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                      >
+                        Back-Office Catalog ↗
+                      </a>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Customize standard fees and durations. Updates immediately sync to chairside treatment proposals and invoicing.
+                    </p>
+                    <div className="relative mt-1">
+                      <input
+                        type="text"
+                        value={pricingSearch}
+                        onChange={(e) => setPricingSearch(e.target.value)}
+                        placeholder="Search code (e.g. D2330) or title..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setPricingCategory('all')}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${pricingCategory === 'all' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
+                      >
+                        All ({procedureList.length})
+                      </button>
+                      {Array.from(new Set(procedureList.map((p) => p.category?.name).filter(Boolean))).map((catName: any) => (
+                        <button
+                          key={catName}
+                          type="button"
+                          onClick={() => setPricingCategory(catName)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition-colors ${pricingCategory === catName ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
+                        >
+                          {catName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 pr-1">
+                    {filteredProcedures.map((proc: any) => {
+                      const isEditing = editingPriceId === proc.id;
+                      const isSuccess = priceUpdateSuccess === proc.id;
+                      return (
+                        <div
+                          key={proc.id}
+                          className={`p-2.5 rounded-xl border transition-all ${isSuccess ? 'bg-emerald-950/50 border-emerald-500/70' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'}`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="px-1.5 py-0.5 rounded font-mono font-bold text-[11px] bg-slate-800 text-amber-300 border border-slate-700">
+                                  {proc.code}
+                                </span>
+                                <span className="text-[10px] text-slate-400 truncate">
+                                  {proc.category?.name || 'General'}
+                                </span>
+                              </div>
+                              <div className="text-xs font-semibold text-slate-200 mt-1 line-clamp-2">
+                                {proc.title}
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              {isEditing ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-slate-400">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={editingFee}
+                                    onChange={(e) => setEditingFee(e.target.value)}
+                                    className="w-16 bg-slate-900 border border-amber-500 rounded px-1.5 py-0.5 text-xs text-white font-bold focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSavePrice(proc.id)}
+                                    className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingPriceId(null)}
+                                    className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px]"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 justify-end">
+                                  <div className="text-sm font-extrabold text-emerald-400">
+                                    ${Number(proc.standard_fee).toFixed(2)}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditPrice(proc)}
+                                    className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 text-[11px] transition-colors"
+                                    title="Edit Price"
+                                  >
+                                    ✏️
+                                  </button>
+                                </div>
+                              )}
+                              <div className="text-[10px] text-slate-400 mt-0.5">
+                                Est. {proc.estimated_duration_minutes || 30} mins
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : mode === 'findings' ? (
+                <div className="flex flex-col gap-3.5">
+                  {/* Clinical Status & Decision Radio */}
+                  <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                      Clinical Status & Decision
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-lg border border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange('existing')}
+                        disabled={!selectedTooth}
+                        className={`py-1.5 px-2 rounded text-xs font-bold transition-all text-center disabled:opacity-50 ${currentStatus === 'existing' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        Existing
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange('needs_treatment')}
+                        disabled={!selectedTooth}
+                        className={`py-1.5 px-2 rounded text-xs font-bold transition-all text-center disabled:opacity-50 ${currentStatus === 'needs_treatment' ? 'bg-rose-600 text-white shadow animate-pulse' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        ⚠️ Needs Care
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange('watch')}
+                        disabled={!selectedTooth}
+                        className={`py-1.5 px-2 rounded text-xs font-bold transition-all text-center disabled:opacity-50 ${currentStatus === 'watch' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+                      >
+                        👁️ Watch
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1.5">
+                      {currentStatus === 'existing' && '✓ Past clinical history in mouth (unbilled baseline).'}
+                      {currentStatus === 'needs_treatment' && '⚠️ Active pathology requiring treatment -> auto-adds to Treatment Plan & appears in 360 history.'}
+                      {currentStatus === 'watch' && '👁️ Watch and monitor at next recall exam.'}
+                    </p>
+                  </div>
+
                   {/* 1. Primary Condition Dropdown */}
                   <div>
                     <label className="block text-xs font-semibold uppercase text-slate-400 mb-1.5">
@@ -1046,6 +1346,196 @@ const Test3DOdontogramInner: React.FC<Props> = ({
                       ))}
                     </select>
                   </div>
+
+                  {/* Deep Clinical Inspector for Active Caries */}
+                  {selectedTooth && currentCondition === 'active_caries' && (
+                    <div className="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3 flex flex-col gap-2.5">
+                      <div className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🔍</span>
+                        <span>Caries Depth & G.V. Black Class</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Caries Depth</label>
+                          <select
+                            value={currentClinicalDetails.caries_depth || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('caries_depth', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500 cursor-pointer"
+                          >
+                            {CARIES_DEPTH_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">G.V. Black Class</label>
+                          <select
+                            value={currentClinicalDetails.caries_class || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('caries_class', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-rose-500 cursor-pointer"
+                          >
+                            {CARIES_CLASS_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deep Clinical Inspector for Crown */}
+                  {selectedTooth && currentCondition === 'crown' && (
+                    <div className="bg-amber-950/20 border border-amber-900/40 rounded-xl p-3 flex flex-col gap-2.5">
+                      <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>👑</span>
+                        <span>Crown Material & Margin Fit</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Material</label>
+                          <select
+                            value={currentClinicalDetails.crown_material || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('crown_material', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                          >
+                            {CROWN_MATERIAL_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Margin Fit</label>
+                          <select
+                            value={currentClinicalDetails.crown_margin_fit || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('crown_margin_fit', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                          >
+                            {CROWN_MARGIN_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deep Clinical Inspector for Root Canal */}
+                  {selectedTooth && currentCondition === 'root_canal' && (
+                    <div className="bg-purple-950/20 border border-purple-900/40 rounded-xl p-3 flex flex-col gap-2.5">
+                      <div className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>⚡</span>
+                        <span>Endo Pulp & Canal Configuration</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Pulp Diagnosis</label>
+                          <select
+                            value={currentClinicalDetails.pulp_diagnosis || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('pulp_diagnosis', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                          >
+                            {PULP_DIAGNOSIS_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Canals Count</label>
+                          <select
+                            value={currentClinicalDetails.canals_count || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('canals_count', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                          >
+                            {CANALS_COUNT_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Periapical Diagnosis</label>
+                        <select
+                          value={currentClinicalDetails.periapical_diagnosis || ''}
+                          onChange={(e) => handleClinicalDetailFieldChange('periapical_diagnosis', e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                        >
+                          {PERIAPICAL_DIAGNOSIS_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deep Clinical Inspector for Implant */}
+                  {selectedTooth && currentCondition === 'implant' && (
+                    <div className="bg-cyan-950/20 border border-cyan-900/40 rounded-xl p-3 flex flex-col gap-2.5">
+                      <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🔩</span>
+                        <span>Implant Brand & Dimensions</span>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Fixture Brand</label>
+                        <select
+                          value={currentClinicalDetails.implant_brand || ''}
+                          onChange={(e) => handleClinicalDetailFieldChange('implant_brand', e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                        >
+                          {IMPLANT_BRAND_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Diameter</label>
+                          <select
+                            value={currentClinicalDetails.implant_diameter || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('implant_diameter', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                          >
+                            {IMPLANT_DIAMETER_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Length</label>
+                          <select
+                            value={currentClinicalDetails.implant_length || ''}
+                            onChange={(e) => handleClinicalDetailFieldChange('implant_length', e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                          >
+                            {IMPLANT_LENGTH_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deep Clinical Inspector for Missing Tooth */}
+                  {selectedTooth && currentCondition === 'missing' && (
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col gap-2.5">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🚫</span>
+                        <span>Extraction Indication</span>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-400 mb-1">Reason</label>
+                        <select
+                          value={currentClinicalDetails.extraction_reason || ''}
+                          onChange={(e) => handleClinicalDetailFieldChange('extraction_reason', e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-slate-500 cursor-pointer"
+                        >
+                          {EXTRACTION_REASON_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
                   {/* 2. Medical Diagnosis Dropdown */}
                   <div>

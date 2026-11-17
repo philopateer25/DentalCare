@@ -21,15 +21,15 @@
              init() {
                  window.addEventListener('message', (e) => {
                      if (e.data && (e.data.type === 'DENTAL_ODONTOGRAM_UPDATED' || e.data.type === 'TOOTH_FINDING_SAVED')) {
-                         $wire.$refresh();
+                         $wire.refreshData();
                      }
                  });
                  window.addEventListener('focus', () => {
-                     $wire.$refresh();
+                     $wire.refreshData();
                  });
              }
          }"
-         x-on:refresh-patient-360.window="$wire.$refresh()">
+         x-on:refresh-patient-360.window="$wire.refreshData()">
 
         {{-- 1. EXECUTIVE HEADER & CLINICAL STATS BAR --}}
         <div style="background: linear-gradient(135deg, #022c22 0%, #064e3b 45%, #0f172a 100%); color: #ffffff;"

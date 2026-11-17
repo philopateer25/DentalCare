@@ -12,6 +12,8 @@ class DoctorCommission extends Model
     use HasFactory;
 
     protected $fillable = [
+        'practice_id',
+        'payroll_slip_id',
         'doctor_id',
         'payment_id',
         'treatment_procedure_id',
@@ -31,6 +33,17 @@ class DoctorCommission extends Model
         'settled_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (DoctorCommission $commission) {
+            if (empty($commission->practice_id)) {
+                $commission->practice_id = \Filament\Facades\Filament::getTenant()?->id 
+                    ?? $commission->payment?->practice_id 
+                    ?? $commission->doctor?->practice_id;
+            }
+        });
+    }
+
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
@@ -41,16 +54,14 @@ class DoctorCommission extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function practice(): HasOneThrough
+    public function practice(): BelongsTo
     {
-        return $this->hasOneThrough(
-            Practice::class,
-            Payment::class,
-            'id',
-            'id',
-            'payment_id',
-            'practice_id'
-        );
+        return $this->belongsTo(Practice::class);
+    }
+
+    public function payrollSlip(): BelongsTo
+    {
+        return $this->belongsTo(PayrollSlip::class);
     }
 
     public function procedure(): BelongsTo

@@ -13,9 +13,11 @@ done
 echo "Database is up. Running migrations..."
 php artisan migrate --force
 
-# We don't seed here by default in production to avoid resetting data, 
-# but for initial deployment/testing we can uncomment this:
-# php artisan db:seed --force
+echo "Compiling and optimizing caches for high performance..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan filament:cache-components || true
 
 echo "Starting PHP-FPM..."
 exec php-fpm

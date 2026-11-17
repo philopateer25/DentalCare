@@ -19,20 +19,20 @@ class PayrollSlipResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Staff & HR Management';
+    protected static ?string $navigationGroup = 'Finance & Treasury';
 
-    protected static ?string $navigationLabel = 'Payroll & Payslips';
+    protected static ?string $navigationLabel = 'Staff & Doctor Payroll';
 
     protected static ?string $modelLabel = 'Payslip';
 
-    protected static ?string $pluralModelLabel = 'Monthly Staff Payroll Slips';
+    protected static ?string $pluralModelLabel = 'Monthly Payroll Slips (Staff & Doctors)';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
 
     public static function canAccess(): bool
     {
         $tenant = \Filament\Facades\Filament::getTenant();
-        if ($tenant && !\App\Services\FeatureManager::isEnabled('payroll', $tenant)) {
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('payroll', $tenant) && !\App\Services\FeatureManager::isEnabled('staff', $tenant)) {
             return false;
         }
 
@@ -52,17 +52,47 @@ class PayrollSlipResource extends Resource
                             ->dehydrated()
                             ->placeholder('Auto-generated (e.g. PAY-2026-08-0001)'),
                         Forms\Components\Select::make('staff_member_id')
-                            ->label('Staff Member')
-                            ->relationship('staffMember', 'first_name')
+                            ->label('Staff Member / Doctor')
+                            ->relationship('staffMember', 'first_name', function ($query) {
+                                $practiceId = \Filament\Facades\Filament::getTenant()?->id;
+                                StaffMember::syncDoctorsForPractice($practiceId);
+                                if ($practiceId) {
+                                    $query->where('practice_id', $practiceId);
+                                }
+                                return $query->orderBy('first_name');
+                            })
                             ->getOptionLabelFromRecordUsing(fn (StaffMember $record) => "{$record->first_name} {$record->last_name} ({$record->role})")
                             ->searchable()
                             ->preload()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 if ($staff = StaffMember::find($state)) {
-                                    $set('base_salary', $staff->base_salary);
-                                    $set('net_salary', $staff->base_salary);
+                                    $base = (float)$staff->base_salary;
+                                    $set('base_salary', $base);
+
+                                    $bonus = (float)$get('bonus_amount');
+                                    // If employee is linked to a doctor user, automatically pull accrued doctor commissions
+                                    if ($staff->user_id) {
+                                        $accruedCommissions = (float)\App\Models\DoctorCommission::where('doctor_id', $staff->user_id)
+                                            ->where('status', 'accrued')
+                                            ->whereNull('payroll_slip_id')
+                                            ->sum('commission_amount');
+                                        if ($accruedCommissions > 0) {
+                                            $bonus = $accruedCommissions;
+                                            $set('bonus_amount', $bonus);
+                                        }
+                                    }
+
+                                    $set('net_salary', PayrollSlip::calculateNet(
+                                        $base,
+                                        (float)$get('overtime_amount'),
+                                        $bonus,
+                                        (float)$get('allowance_amount'),
+                                        (float)$get('tax_deduction'),
+                                        (float)$get('insurance_deduction'),
+                                        (float)$get('other_deductions')
+                                    ));
                                 }
                             }),
                         Forms\Components\Select::make('pay_period_month')
@@ -112,7 +142,8 @@ class PayrollSlipResource extends Resource
                                 ))
                             ),
                         Forms\Components\TextInput::make('bonus_amount')
-                            ->label('Performance Bonus')
+                            ->label('Commissions & Performance Bonus')
+                            ->helperText('Auto-loads doctor procedure commissions or custom bonuses.')
                             ->numeric()
                             ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)

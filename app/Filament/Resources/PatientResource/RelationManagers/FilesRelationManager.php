@@ -22,12 +22,19 @@ class FilesRelationManager extends RelationManager
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Select::make('type')
-                    ->options([
-                        'xray' => 'X-Ray',
-                        'document' => 'Document',
-                        'photo' => 'Photo',
-                        'other' => 'Other',
-                    ])
+                    ->options(function () {
+                        $practice = \Filament\Facades\Filament::getTenant();
+                        $hasXray = ($practice?->xray_limit ?? 1) > 0;
+                        $options = [
+                            'document' => 'Document',
+                            'photo' => 'Photo',
+                            'other' => 'Other',
+                        ];
+                        if ($hasXray) {
+                            $options = ['xray' => 'X-Ray'] + $options;
+                        }
+                        return $options;
+                    })
                     ->required(),
                 Forms\Components\FileUpload::make('file_path')
                     ->label('File')

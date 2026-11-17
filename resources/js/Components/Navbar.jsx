@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Stethoscope, Lock, ExternalLink, ArrowRight, Menu } from 'lucide-react';
 import Button from './Button';
 import Badge from './Badge';
@@ -9,6 +9,8 @@ import { useLocale } from '../Contexts/LocaleContext';
 
 export default function Navbar({ auth, appName = 'DentalCare', onMenuClick }) {
     const { t } = useLocale();
+    const { props } = usePage();
+    const features = props?.features || [];
 
     return (
         <header className="relative z-20 border-b border-neutral-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/70 backdrop-blur-xl sticky top-0 transition-colors">
@@ -46,7 +48,9 @@ export default function Navbar({ auth, appName = 'DentalCare', onMenuClick }) {
                     <Link href="/dashboard" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Dashboard')}</Link>
                     <Link href="/patients" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Patients')}</Link>
                     <Link href="/operations" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Operations')}</Link>
-                    <Link href="/finance" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Finance')}</Link>
+                    {features.includes('finance') && (
+                        <Link href="/finance" className="hover:text-black dark:hover:text-teal-300 transition-colors">{t('Finance')}</Link>
+                    )}
                 </nav>
 
                 {/* Right Action Buttons */}

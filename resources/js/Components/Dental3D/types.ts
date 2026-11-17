@@ -119,6 +119,8 @@ export interface ToothRecord {
   condition: ToothCondition; // The main condition
   surfaces?: ToothSurfaces;
   notes?: string;
+  status?: 'existing' | 'needs_treatment' | 'watch';
+  clinical_details?: Record<string, any>;
 }
 
 export interface PatientInfo {

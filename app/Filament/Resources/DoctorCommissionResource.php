@@ -22,7 +22,7 @@ class DoctorCommissionResource extends Resource
 
     protected static ?string $navigationGroup = 'Finance & Treasury';
 
-    protected static ?string $navigationLabel = 'Doctor Payroll & Splits';
+    protected static ?string $navigationLabel = 'Doctor Commission Ledgers';
 
     protected static ?string $modelLabel = 'Doctor Commission';
 
@@ -36,13 +36,21 @@ class DoctorCommissionResource extends Resource
         return parent::canAccess();
     }
 
-    protected static ?string $pluralModelLabel = 'Doctor Payroll & Commission Ledgers';
+    protected static ?string $pluralModelLabel = 'Doctor Commission Ledgers (Procedure Splits)';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query = parent::getEloquentQuery();
+        $tenantId = \Filament\Facades\Filament::getTenant()?->id;
+        if ($tenantId) {
+            $query->where(function ($q) use ($tenantId) {
+                $q->where('doctor_commissions.practice_id', $tenantId)
+                  ->orWhereHas('payment', fn ($p) => $p->where('practice_id', $tenantId))
+                  ->orWhereHas('doctor', fn ($d) => $d->where('practice_id', $tenantId));
+            });
+        }
         $user = auth()->user();
 
         if ($user && $user->hasRole('doctor') && !$user->hasAnyRole(['clinic_admin', 'super_admin', 'developer'])) {
@@ -60,15 +68,36 @@ class DoctorCommissionResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('doctor_id')
                             ->label('Doctor / Associate')
-                            ->relationship('doctor', 'name', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
+                            ->relationship('doctor', 'name', fn ($query) => 
+                                $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                                    ->whereHas('roles', fn ($q) => $q->where('name', 'doctor'))
+                            )
                             ->searchable()
+                            ->preload()
                             ->required(),
                         Forms\Components\Select::make('payment_id')
-                            ->label('Linked Payment Transaction')
-                            ->relationship('payment', 'id', fn ($query) => $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id))
-                            ->getOptionLabelFromRecordUsing(fn (Payment $record) => "Payment #{$record->id} - \${$record->amount} ({$record->patient?->first_name} {$record->patient?->last_name})")
+                            ->label('Linked Payment Transaction (Optional)')
+                            ->relationship('payment', 'id', fn ($query) => 
+                                $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                                    ->latest()
+                            )
+                            ->getOptionLabelFromRecordUsing(fn (Payment $record) => "Payment #{$record->id} - " . CurrencyHelper::format($record->amount) . " (" . ($record->patient ? "{$record->patient->first_name} {$record->patient->last_name}" : "Ref: {$record->payment_reference}") . ")")
                             ->searchable()
-                            ->required(),
+                            ->preload()
+                            ->nullable()
+                            ->placeholder('Standalone commission or select payment...')
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if ($state) {
+                                    $payment = Payment::find($state);
+                                    if ($payment && empty($get('gross_amount'))) {
+                                        $set('gross_amount', (float)$payment->amount);
+                                        $pct = (float)($get('commission_percentage') ?? 40);
+                                        $lab = (float)($get('lab_deduction_amount') ?? 0);
+                                        $set('commission_amount', DoctorCommission::calculateCommission((float)$payment->amount, $lab, $pct));
+                                    }
+                                }
+                            }),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Commission Calculations & Lab Split')
@@ -163,6 +192,12 @@ class DoctorCommissionResource extends Resource
                         'settled' => 'success',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('payrollSlip.payslip_number')
+                    ->label('Settled Via')
+                    ->badge()
+                    ->color('primary')
+                    ->placeholder('Direct / Standalone')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('settled_at')
                     ->label('Paid On')
                     ->date()

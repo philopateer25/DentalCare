@@ -154,7 +154,7 @@ class OperationTable
                 ->label('Send Post-Op Checkup')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
-                // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false)
                 ->action(function (Appointment $record) {
                     $practice = \Filament\Facades\Filament::getTenant();
                     $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';

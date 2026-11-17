@@ -23,6 +23,22 @@ class Operatory extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Operatory $operatory) {
+            $branch = $operatory->branch ?? Branch::find($operatory->branch_id);
+            $practice = $branch?->practice;
+            if ($practice && $practice->chair_limit > 0) {
+                $currentChairs = static::whereHas('branch', fn ($q) => $q->where('practice_id', $practice->id))->count();
+                if ($currentChairs >= $practice->chair_limit) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'name' => "Clinic chair limit reached ({$practice->chair_limit}/{$practice->chair_limit}). Please contact software support to upgrade your chair capacity.",
+                    ]);
+                }
+            }
+        });
+    }
+
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);

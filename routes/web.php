@@ -52,17 +52,24 @@ Route::middleware(['auth', 'onboarding'])->group(function () {
         $invoices = \App\Models\Invoice::where('practice_id', $tenantId)->with(['patient'])->latest()->take(15)->get();
         $payments = \App\Models\Payment::where('practice_id', $tenantId)->with(['patient', 'invoice'])->latest()->take(15)->get();
         $installmentPlans = \App\Models\InstallmentPlan::whereHas('invoice', fn ($q) => $q->where('practice_id', $tenantId))->with(['invoice.patient'])->latest()->take(15)->get();
-        $doctorCommissions = \App\Models\DoctorCommission::whereHas('payment', fn ($q) => $q->where('practice_id', $tenantId))->with(['doctor', 'payment.patient'])->latest()->take(15)->get();
+        $doctorCommissions = \App\Models\DoctorCommission::where(function ($q) use ($tenantId) {
+            $q->where('practice_id', $tenantId)
+              ->orWhereHas('payment', fn ($p) => $p->where('practice_id', $tenantId));
+        })->with(['doctor', 'payment.patient'])->latest()->take(15)->get();
         $expenses = \App\Models\ClinicExpense::where('practice_id', $tenantId)->latest()->take(15)->get();
 
         $currentCurrency = \App\Services\CurrencyHelper::currentCurrency();
         $currencySymbol = \App\Services\CurrencyHelper::symbol($currentCurrency);
+        $financeService = app(\App\Services\Widgets\FinanceWidgetService::class);
 
         $stats = [
             'totalProduction' => (float) \App\Models\Invoice::where('practice_id', $tenantId)->where('status', '!=', 'cancelled')->sum('total_amount'),
             'totalCollections' => (float) \App\Models\Payment::where('practice_id', $tenantId)->sum('amount'),
             'totalOutstandingAR' => (float) \App\Models\Invoice::where('practice_id', $tenantId)->where('status', '!=', 'cancelled')->sum('balance_due'),
-            'totalExpenses' => (float) \App\Models\ClinicExpense::where('practice_id', $tenantId)->sum('amount'),
+            'totalExpenses' => $financeService->getTotalExpenses($tenantId),
+            'clinicExpenses' => $financeService->getTotalClinicExpenses($tenantId),
+            'payrollExpenses' => $financeService->getTotalPayrollExpenses($tenantId),
+            'commissionExpenses' => $financeService->getTotalCommissionExpenses($tenantId),
             'currency' => $currentCurrency,
             'currencySymbol' => $currencySymbol,
         ];
@@ -133,6 +140,36 @@ Route::get('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api
 Route::post('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'store']);
 Route::get('/api/patients/{patient}/treatment-plans/active', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'getActivePlan']);
 Route::post('/api/treatment-plans/{plan}/procedures', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'addProcedure']);
+
+// Procedure Codes & Fee Schedule API
+Route::get('/api/procedure-codes', function () {
+    return \App\Models\ProcedureCode::with('category')->orderBy('code')->get();
+});
+Route::patch('/api/procedure-codes/{procedureCode}', function (\App\Models\ProcedureCode $procedureCode, \Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'standard_fee' => 'required|numeric|min:0',
+        'estimated_duration_minutes' => 'nullable|integer|min:1',
+    ]);
+    $procedureCode->update($validated);
+    return response()->json([
+        'success' => true,
+        'procedure' => $procedureCode->fresh('category'),
+    ]);
+});
+Route::post('/api/procedure-codes', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'code' => 'required|string|unique:procedure_codes,code',
+        'title' => 'required|string',
+        'standard_fee' => 'required|numeric|min:0',
+        'category_id' => 'required|exists:procedure_categories,id',
+        'estimated_duration_minutes' => 'nullable|integer|min:1',
+    ]);
+    $code = \App\Models\ProcedureCode::create($validated);
+    return response()->json([
+        'success' => true,
+        'procedure' => $code->load('category'),
+    ]);
+});
 Route::patch('/api/procedures/{procedure}/complete', function (\App\Models\TreatmentProcedure $procedure, \Illuminate\Http\Request $request) {
     if (auth()->check() && auth()->user()->practice_id) {
         abort_unless($procedure->phase?->plan?->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');

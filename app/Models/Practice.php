@@ -33,6 +33,9 @@ class Practice extends Model
         'is_active',
         'license_key',
         'license_status',
+        'package_tier',
+        'chair_limit',
+        'xray_limit',
         'features',
         'onboarding_completed_at',
         'onboarding_step',
@@ -40,6 +43,8 @@ class Practice extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'chair_limit' => 'integer',
+        'xray_limit' => 'integer',
         'features' => 'array',
         'onboarding_completed_at' => 'datetime',
         'onboarding_step' => 'integer',
@@ -84,6 +89,15 @@ class Practice extends Model
 
         // Current flat-array format: ['feature_key', ...]
         return in_array($feature, $features, true);
+    }
+
+    /**
+     * Get all enabled feature keys for this practice.
+     */
+    public function getEnabledFeatures(): array
+    {
+        $allFeatures = array_keys(\App\Services\FeatureManager::FEATURES);
+        return array_values(array_filter($allFeatures, fn ($f) => $this->hasFeature($f)));
     }
 
     /**

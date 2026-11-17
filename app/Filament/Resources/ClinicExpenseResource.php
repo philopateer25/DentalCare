@@ -38,7 +38,7 @@ class ClinicExpenseResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Clinic Expenses & Overhead';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

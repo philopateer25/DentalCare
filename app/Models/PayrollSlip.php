@@ -52,6 +52,19 @@ class PayrollSlip extends Model
                 $slip->payslip_number = "PAY-{$slip->pay_period_year}-{$month}-" . str_pad((string) (static::max('id') + 1), 4, '0', STR_PAD_LEFT);
             }
         });
+
+        static::saved(function (PayrollSlip $slip) {
+            if ($slip->status === 'disbursed' && $slip->staffMember?->user_id) {
+                DoctorCommission::where('doctor_id', $slip->staffMember->user_id)
+                    ->where('status', 'accrued')
+                    ->whereNull('payroll_slip_id')
+                    ->update([
+                        'payroll_slip_id' => $slip->id,
+                        'status' => 'settled',
+                        'settled_at' => now(),
+                    ]);
+            }
+        });
     }
 
     public function practice(): BelongsTo
@@ -62,6 +75,11 @@ class PayrollSlip extends Model
     public function staffMember(): BelongsTo
     {
         return $this->belongsTo(StaffMember::class);
+    }
+
+    public function doctorCommissions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DoctorCommission::class);
     }
 
     public static function calculateNet(float $base, float $overtime, float $bonus, float $allowance, float $tax, float $insurance, float $other): float

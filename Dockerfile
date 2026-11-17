@@ -61,8 +61,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
-# Copy entrypoint script
+# Copy entrypoint script and PHP OPcache config
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache-recommended.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Create volume mount point for persistent storage

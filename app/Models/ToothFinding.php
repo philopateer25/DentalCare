@@ -10,6 +10,10 @@ class ToothFinding extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'clinical_details' => 'array',
+    ];
+
     public function examination(): BelongsTo
     {
         return $this->belongsTo(DentalExamination::class, 'dental_examination_id');

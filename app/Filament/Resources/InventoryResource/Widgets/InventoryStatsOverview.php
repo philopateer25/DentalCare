@@ -12,19 +12,26 @@ class InventoryStatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        $totalItems = InventoryItem::count();
+        $tenantId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+
+        $totalItems = InventoryItem::query()
+            ->when($tenantId, fn ($q) => $q->where('practice_id', $tenantId))
+            ->count();
 
         $totalValuation = InventoryBatch::query()
+            ->when($tenantId, fn ($q) => $q->whereHas('inventoryItem', fn ($sq) => $sq->where('practice_id', $tenantId)))
             ->selectRaw('SUM(unit_cost * quantity_remaining) as total_val')
             ->value('total_val') ?? 0;
 
         $expiringCount = InventoryBatch::query()
+            ->when($tenantId, fn ($q) => $q->whereHas('inventoryItem', fn ($sq) => $sq->where('practice_id', $tenantId)))
             ->whereNotNull('expiry_date')
             ->where('quantity_remaining', '>', 0)
             ->where('expiry_date', '<=', now()->addDays(60))
             ->count();
 
         $outOfStockCount = InventoryItem::query()
+            ->when($tenantId, fn ($q) => $q->where('practice_id', $tenantId))
             ->where(function ($query) {
                 $query->whereDoesntHave('batches')
                     ->orWhereRaw('(SELECT COALESCE(SUM(quantity_remaining), 0) FROM inventory_batches WHERE inventory_batches.inventory_item_id = inventory_items.id) <= inventory_items.min_reorder_level');

@@ -92,13 +92,20 @@ class DentalExaminationController extends Controller
             'condition' => 'required|string', // mapping to finding_type
             'notes' => 'nullable|string',
             'surfaces' => 'nullable|array',
+            'status' => 'nullable|string|in:existing,needs_treatment,watch',
+            'clinical_details' => 'nullable|array',
         ]);
+
+        $status = $validated['status'] ?? 'existing';
+        $clinicalDetails = $validated['clinical_details'] ?? null;
 
         // Update or create the main tooth finding
         $toothFinding = $examination->toothFindings()->updateOrCreate(
             ['tooth_number_fdi' => $validated['tooth_number']],
             [
                 'finding_type' => $validated['condition'],
+                'status' => $status,
+                'clinical_details' => $clinicalDetails,
                 'notes' => $validated['notes'] ?? null,
             ]
         );
@@ -119,15 +126,78 @@ class DentalExaminationController extends Controller
 
         // Dual-sync to patient_teeth so both models and 360 profile are updated
         if ($examination->patient) {
-            $examination->patient->teeth()->updateOrCreate(
+            $patient = $examination->patient;
+            $patient->teeth()->updateOrCreate(
                 ['tooth_number' => (string) $validated['tooth_number']],
                 [
                     'condition' => $validated['condition'],
+                    'status' => $status,
+                    'clinical_details' => $clinicalDetails,
                     'notes' => $validated['notes'] ?? null,
                     'surfaces' => $validated['surfaces'] ?? null,
                 ]
             );
-            $examination->patient->touch();
+            $patient->touch();
+
+            // Auto-sync to Treatment Plan if marked "Needs Treatment"
+            if ($status === 'needs_treatment' && in_array($validated['condition'], ['active_caries', 'crown', 'root_canal', 'missing', 'implant', 'composite_filled'])) {
+                $plan = $patient->treatmentPlans()->whereIn('status', ['draft', 'proposed', 'accepted', 'in_progress'])->latest()->first();
+                if (!$plan) {
+                    $plan = $patient->treatmentPlans()->create([
+                        'patient_id' => $patient->id,
+                        'doctor_id' => auth()->id() ?? $patient->doctor_id ?? 1,
+                        'title' => 'Dental Treatment Plan (Odontogram Sync)',
+                        'status' => 'proposed',
+                        'total_amount' => 0,
+                        'discount_amount' => 0,
+                        'net_amount' => 0,
+                    ]);
+                }
+
+                $phase = $plan->phases()->firstOrCreate(
+                    ['sequence' => 1],
+                    ['name' => 'Phase 1 - Restorative & Surgical', 'treatment_plan_id' => $plan->id]
+                );
+
+                $codeStr = match ($validated['condition']) {
+                    'active_caries' => 'D2330',
+                    'crown' => 'D2740',
+                    'root_canal' => 'D3310',
+                    'missing' => 'D7140',
+                    'implant' => 'D6010',
+                    'composite_filled' => 'D2330',
+                    default => 'D2330',
+                };
+
+                $procCode = \App\Models\ProcedureCode::where('code', $codeStr)->first();
+                if ($procCode) {
+                    $existing = $phase->procedures()
+                        ->where('tooth_number_fdi', (int) $validated['tooth_number'])
+                        ->where('procedure_code_id', $procCode->id)
+                        ->where('status', '!=', 'completed')
+                        ->first();
+
+                    if (!$existing) {
+                        $phase->procedures()->create([
+                            'treatment_phase_id' => $phase->id,
+                            'tooth_number_fdi' => (int) $validated['tooth_number'],
+                            'procedure_code_id' => $procCode->id,
+                            'doctor_id' => auth()->id() ?? 1,
+                            'fee' => $procCode->standard_fee,
+                            'discount' => 0,
+                            'net_amount' => $procCode->standard_fee,
+                            'status' => 'planned',
+                            'chairside_notes' => 'Generated from 3D Odontogram: ' . $procCode->title,
+                        ]);
+                        $plan->recalculateTotals();
+                    }
+                }
+            }
+
+            \Illuminate\Support\Facades\Cache::forget("p360_raw_{$patient->id}");
+            \Illuminate\Support\Facades\Cache::forget("p360_teeth_{$patient->id}");
+            \Illuminate\Support\Facades\Cache::forget("p360_roadmap_{$patient->id}");
+            \Illuminate\Support\Facades\Cache::forget("p360_plans_{$patient->id}");
         }
 
         return response()->json($toothFinding->load('surfaceFindings'));

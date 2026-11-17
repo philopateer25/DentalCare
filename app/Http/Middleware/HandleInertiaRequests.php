@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name', 'DentalCare Clinic'),
+            'features' => $request->user()?->practice ? $request->user()->practice->getEnabledFeatures() : array_keys(\App\Services\FeatureManager::FEATURES),
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

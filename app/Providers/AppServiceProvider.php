@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasAnyRole(['developer', 'super_admin']) ? true : null;
         });
 
+        \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
+            $table->searchDebounce('750ms');
+        });
+
         if (class_exists(\Illuminate\Foundation\Console\ServeCommand::class)) {
             \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables = array_merge(
                 \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables,

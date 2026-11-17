@@ -65,8 +65,24 @@ class PracticeResource extends Resource
                             ->default(true),
                     ])->columns(2),
 
-                Forms\Components\Section::make('SaaS Licensing & Features')
+                Forms\Components\Section::make('SaaS Licensing & Tier')
                     ->schema([
+                        Forms\Components\Select::make('package_tier')
+                            ->label('Subscription Tier / Package')
+                            ->options(FeatureManager::getPackageOptions())
+                            ->default('amigo_ultra')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, $state) {
+                                if ($state && $state !== 'custom') {
+                                    $package = FeatureManager::getPackage($state);
+                                    if ($package) {
+                                        $set('chair_limit', $package['chair_limit']);
+                                        $set('xray_limit', $package['xray_limit']);
+                                        $set('features', $package['features']);
+                                    }
+                                }
+                            }),
                         Forms\Components\Select::make('license_status')
                             ->options([
                                 'active' => 'Active',
@@ -80,11 +96,26 @@ class PracticeResource extends Resource
                             ->password()
                             ->revealable()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('chair_limit')
+                            ->label('Max Allowed Chairs (Operatories)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->default(5)
+                            ->required()
+                            ->helperText('amigo: 2 | Pro: 3 (+1/$15) | Ultra: 5 (+1/$20)'),
+                        Forms\Components\TextInput::make('xray_limit')
+                            ->label('Max Allowed X-Ray Workstations')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(3)
+                            ->required()
+                            ->helperText('amigo: 0 | Pro: 1 | Ultra: 3 (+1/$10)'),
                         Forms\Components\CheckboxList::make('features')
-                            ->label('Enabled Features')
+                            ->label('Active Feature Flags (Overrides / Customizations)')
                             ->options(FeatureManager::getOptions())
                             ->columns(3)
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->live(),
                     ])->columns(2),
             ]);
     }
@@ -97,6 +128,25 @@ class PracticeResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('package_tier')
+                    ->label('Tier')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'amigo' => 'Amigo',
+                        'amigo_pro' => 'Amigo Pro',
+                        'amigo_ultra' => 'Amigo Ultra',
+                        default => 'Custom',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'amigo_ultra' => 'success',
+                        'amigo_pro' => 'info',
+                        'amigo' => 'warning',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('chair_limit')
+                    ->label('Chairs')
+                    ->badge()
+                    ->color('gray'),
                 Tables\Columns\TextColumn::make('license_status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {

@@ -21,7 +21,7 @@ class TestPushNotificationWidget extends Widget implements HasActions, HasForms
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['developer', 'super_admin']) ?? false;
+        return false;
     }
 
     public function testPushAction(): Action

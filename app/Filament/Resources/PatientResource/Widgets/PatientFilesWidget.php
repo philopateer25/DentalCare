@@ -81,14 +81,23 @@ class PatientFilesWidget extends BaseWidget
                             ->required()
                             ->columnSpanFull(),
                         Forms\Components\Select::make('type')
-                            ->options([
-                                'xray_panoramic' => 'Panoramic X-Ray',
-                                'xray_periapical' => 'Periapical X-Ray',
-                                'cbct' => 'CBCT Scan',
-                                'intraoral_photo' => 'Intraoral Photo',
-                                'consent_form' => 'Consent Form',
-                                'other' => 'Other',
-                            ])
+                            ->options(function () {
+                                $practice = \Filament\Facades\Filament::getTenant();
+                                $hasXray = ($practice?->xray_limit ?? 1) > 0;
+                                $options = [
+                                    'intraoral_photo' => 'Intraoral Photo',
+                                    'consent_form' => 'Consent Form',
+                                    'other' => 'Other',
+                                ];
+                                if ($hasXray) {
+                                    $options = [
+                                        'xray_panoramic' => 'Panoramic X-Ray',
+                                        'xray_periapical' => 'Periapical X-Ray',
+                                        'cbct' => 'CBCT Scan',
+                                    ] + $options;
+                                }
+                                return $options;
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('title')
                             ->required(),
@@ -109,14 +118,23 @@ class PatientFilesWidget extends BaseWidget
                             ->required()
                             ->columnSpanFull(),
                         Forms\Components\Select::make('type')
-                            ->options([
-                                'xray_panoramic' => 'Panoramic X-Ray',
-                                'xray_periapical' => 'Periapical X-Ray',
-                                'cbct' => 'CBCT Scan',
-                                'intraoral_photo' => 'Intraoral Photo',
-                                'consent_form' => 'Consent Form',
-                                'other' => 'Other',
-                            ])
+                            ->options(function () {
+                                $practice = \Filament\Facades\Filament::getTenant();
+                                $hasXray = ($practice?->xray_limit ?? 1) > 0;
+                                $options = [
+                                    'intraoral_photo' => 'Intraoral Photo',
+                                    'consent_form' => 'Consent Form',
+                                    'other' => 'Other',
+                                ];
+                                if ($hasXray) {
+                                    $options = [
+                                        'xray_panoramic' => 'Panoramic X-Ray',
+                                        'xray_periapical' => 'Periapical X-Ray',
+                                        'cbct' => 'CBCT Scan',
+                                    ] + $options;
+                                }
+                                return $options;
+                            })
                             ->required(),
                         Forms\Components\TextInput::make('title')
                             ->required(),

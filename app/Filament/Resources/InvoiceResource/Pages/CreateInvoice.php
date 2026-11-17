@@ -11,9 +11,21 @@ class CreateInvoice extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['subtotal'] = $data['subtotal'] ?? $data['total_amount'] ?? 0;
-        $data['balance_due'] = max(0, (float)($data['total_amount'] ?? 0) - (float)($data['paid_amount'] ?? 0));
+        $total = (float)($data['total_amount'] ?? 0);
+        $paid = (float)($data['paid_amount'] ?? 0);
+        $data['subtotal'] = $data['subtotal'] ?? $total;
+        $data['balance_due'] = max(0, $total - $paid);
         
+        if (($data['status'] ?? '') !== 'cancelled') {
+            if ($paid >= $total && $total > 0) {
+                $data['status'] = 'paid';
+            } elseif ($paid > 0 && $paid < $total) {
+                $data['status'] = 'partially_paid';
+            } elseif ($paid == 0) {
+                $data['status'] = 'unpaid';
+            }
+        }
+
         return $data;
     }
 

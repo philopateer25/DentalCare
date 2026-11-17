@@ -123,23 +123,47 @@ class InvoiceResource extends Resource
                             ->default(0.00)
                             ->required()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
-                                $set('balance_due', max(0, (float)$state - (float)$get('paid_amount')))
-                            ),
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                $total = (float)$state;
+                                $paid = (float)$get('paid_amount');
+                                $set('balance_due', max(0, $total - $paid));
+                                if ($get('status') !== 'cancelled') {
+                                    if ($paid >= $total && $total > 0) {
+                                        $set('status', 'paid');
+                                    } elseif ($paid > 0 && $paid < $total) {
+                                        $set('status', 'partially_paid');
+                                    } elseif ($paid == 0) {
+                                        $set('status', 'unpaid');
+                                    }
+                                }
+                            }),
                         Forms\Components\TextInput::make('paid_amount')
                             ->label('Total Paid / Collected')
                             ->numeric()
                             ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set, Forms\Get $get) => 
-                                $set('balance_due', max(0, (float)$get('total_amount') - (float)$state))
-                            ),
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                $total = (float)$get('total_amount');
+                                $paid = (float)$state;
+                                $set('balance_due', max(0, $total - $paid));
+                                if ($get('status') !== 'cancelled') {
+                                    if ($paid >= $total && $total > 0) {
+                                        $set('status', 'paid');
+                                    } elseif ($paid > 0 && $paid < $total) {
+                                        $set('status', 'partially_paid');
+                                    } elseif ($paid == 0) {
+                                        $set('status', 'unpaid');
+                                    }
+                                }
+                            }),
                         Forms\Components\TextInput::make('balance_due')
                             ->label('Remaining Balance Due')
                             ->numeric()
                             ->prefix(fn () => CurrencyHelper::symbol())
                             ->default(0.00)
+                            ->disabled()
+                            ->dehydrated()
                             ->required(),
                         Forms\Components\TextInput::make('insurance_covered_amount')
                             ->label('Insurance / TPA Portion')

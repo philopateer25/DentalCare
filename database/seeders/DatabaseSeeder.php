@@ -16,14 +16,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
+        $admin = User::firstOrCreate(
             ['email' => 'admin@dentalcare.com'],
             [
                 'name' => 'Dr. Michael Admin',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'practice_id' => 1,
             ]
         );
+        $admin->update(['practice_id' => 1]);
+        $admin->assignRole('super_admin');
 
         $this->call([
             ClinicDataSeeder::class,

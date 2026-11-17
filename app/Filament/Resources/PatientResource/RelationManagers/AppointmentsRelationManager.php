@@ -58,20 +58,55 @@ class AppointmentsRelationManager extends RelationManager
                             ->label('Room (Operatory)'),
 
                         Forms\Components\Select::make('doctor_id')
-                            ->relationship('doctor', 'name')
+                            ->relationship('doctor', 'name', fn ($query) => 
+                                $query->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                                    ->whereHas('roles', fn ($q) => $q->where('name', 'doctor'))
+                            )
+                            ->searchable()
+                            ->preload()
                             ->required()
                             ->label('Doctor'),
                             
                         Forms\Components\DateTimePicker::make('start_time')
-                            ->required()
-                            ->seconds(false)
-                            ->minutesStep(15),
-                            
-                        Forms\Components\DateTimePicker::make('end_time')
-                            ->required()
+                            ->label('Start Date & Time')
+                            ->native(false)
                             ->seconds(false)
                             ->minutesStep(15)
-                            ->after('start_time'),
+                            ->default(now())
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                if (!$state) return;
+                                $duration = (int) ($get('duration_minutes') ?? 30);
+                                $set('end_time', \Carbon\Carbon::parse($state)->addMinutes($duration)->format('Y-m-d H:i:s'));
+                            })
+                            ->required(),
+
+                        Forms\Components\Select::make('duration_minutes')
+                            ->label('Duration')
+                            ->options([
+                                '15' => '15 minutes',
+                                '30' => '30 minutes (Standard)',
+                                '45' => '45 minutes',
+                                '60' => '1 hour',
+                                '90' => '1.5 hours',
+                                '120' => '2 hours',
+                            ])
+                            ->default('30')
+                            ->dehydrated(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                $start = $get('start_time');
+                                if (!$start) return;
+                                $set('end_time', \Carbon\Carbon::parse($start)->addMinutes((int)$state)->format('Y-m-d H:i:s'));
+                            }),
+                            
+                        Forms\Components\DateTimePicker::make('end_time')
+                            ->label('End Date & Time')
+                            ->native(false)
+                            ->seconds(false)
+                            ->minutesStep(15)
+                            ->default(now()->addMinutes(30))
+                            ->required(),
 
                         Forms\Components\Select::make('status')
                             ->options([
@@ -171,7 +206,7 @@ class AppointmentsRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->modalHeading('Send WhatsApp Reminder')
                     ->modalDescription('Are you sure you want to send a reminder to the patient via WhatsApp?')
-                    // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false)
                     ->action(function (\App\Models\Appointment $record) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
                         
@@ -199,7 +234,7 @@ class AppointmentsRelationManager extends RelationManager
                             ->default("Hello, please remember to avoid eating hot foods for the next 2 hours. Rinse with warm salt water tomorrow.")
                             ->required()
                     ])
-                    // ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false)
                     ->action(function (\App\Models\Appointment $record, array $data) {
                         $phone = $record->patient->whatsapp_number ?? $record->patient->phone;
                         

@@ -5,6 +5,7 @@ namespace App\Services\Widgets;
 use App\Models\DoctorCommission;
 use App\Models\Invoice;
 use App\Models\Payment;
+use DateTimeInterface;
 use Illuminate\Support\Carbon;
 
 class FinanceWidgetService
@@ -22,9 +23,9 @@ class FinanceWidgetService
     /**
      * Get Collections for current month for practice.
      */
-    public function getCollectionsThisMonth(int $practiceId, ?Carbon $date = null): float
+    public function getCollectionsThisMonth(int $practiceId, ?DateTimeInterface $date = null): float
     {
-        $date = $date ?? now();
+        $date = $date ? Carbon::parse($date) : now();
 
         return (float) Payment::where('practice_id', $practiceId)
             ->whereYear('paid_at', $date->year)
@@ -81,5 +82,92 @@ class FinanceWidgetService
             'total_commissions' => $totalCommissions,
             'top_earners' => $topEarners,
         ];
+    }
+
+    /**
+     * Get Total Operating Expenses (Clinic Expenses + Disbursed Payroll + Settled Doctor Commissions).
+     */
+    public function getTotalExpenses(int $practiceId): float
+    {
+        return $this->getTotalClinicExpenses($practiceId) 
+             + $this->getTotalPayrollExpenses($practiceId) 
+             + $this->getTotalCommissionExpenses($practiceId);
+    }
+
+    public function getTotalClinicExpenses(int $practiceId): float
+    {
+        return (float) \App\Models\ClinicExpense::where('practice_id', $practiceId)->sum('amount');
+    }
+
+    public function getTotalPayrollExpenses(int $practiceId): float
+    {
+        return (float) \App\Models\PayrollSlip::where('practice_id', $practiceId)
+            ->where('status', 'disbursed')
+            ->sum('net_salary');
+    }
+
+    public function getTotalCommissionExpenses(int $practiceId): float
+    {
+        return (float) \App\Models\DoctorCommission::where(function ($q) use ($practiceId) {
+                $q->where('practice_id', $practiceId)
+                  ->orWhereHas('payment', fn ($p) => $p->where('practice_id', $practiceId));
+            })
+            ->where('status', 'settled')
+            ->whereNull('payroll_slip_id')
+            ->sum('commission_amount');
+    }
+
+    /**
+     * Get Monthly Operating Expenses for practice (Expenses + Disbursed Payroll + Settled Commissions this month).
+     */
+    public function getMonthlyExpenses(int $practiceId, ?DateTimeInterface $date = null): float
+    {
+        return $this->getMonthlyClinicExpenses($practiceId, $date) 
+             + $this->getMonthlyPayrollExpenses($practiceId, $date) 
+             + $this->getMonthlyCommissionExpenses($practiceId, $date);
+    }
+
+    public function getMonthlyClinicExpenses(int $practiceId, ?DateTimeInterface $date = null): float
+    {
+        $date = $date ? Carbon::parse($date) : now();
+
+        return (float) \App\Models\ClinicExpense::where('practice_id', $practiceId)
+            ->whereYear('expense_date', $date->year)
+            ->whereMonth('expense_date', $date->month)
+            ->sum('amount');
+    }
+
+    public function getMonthlyPayrollExpenses(int $practiceId, ?DateTimeInterface $date = null): float
+    {
+        $date = $date ? Carbon::parse($date) : now();
+
+        return (float) \App\Models\PayrollSlip::where('practice_id', $practiceId)
+            ->where('status', 'disbursed')
+            ->where('pay_period_year', $date->year)
+            ->where('pay_period_month', $date->month)
+            ->sum('net_salary');
+    }
+
+    public function getMonthlyCommissionExpenses(int $practiceId, ?DateTimeInterface $date = null): float
+    {
+        $date = $date ? Carbon::parse($date) : now();
+
+        return (float) \App\Models\DoctorCommission::where(function ($q) use ($practiceId) {
+                $q->where('practice_id', $practiceId)
+                  ->orWhereHas('payment', fn ($p) => $p->where('practice_id', $practiceId));
+            })
+            ->where('status', 'settled')
+            ->whereNull('payroll_slip_id')
+            ->whereYear('settled_at', $date->year)
+            ->whereMonth('settled_at', $date->month)
+            ->sum('commission_amount');
+    }
+
+    /**
+     * Get Monthly Net Operating Profit (Collections - Monthly Expenses).
+     */
+    public function getMonthlyNetProfit(int $practiceId, ?DateTimeInterface $date = null): float
+    {
+        return $this->getCollectionsThisMonth($practiceId, $date) - $this->getMonthlyExpenses($practiceId, $date);
     }
 }

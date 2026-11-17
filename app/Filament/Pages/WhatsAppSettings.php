@@ -15,6 +15,16 @@ class WhatsAppSettings extends Page
     protected static ?string $title = 'WhatsApp Integration';
     protected static bool $shouldRegisterNavigation = false;
 
+    public static function canAccess(): bool
+    {
+        $tenant = Filament::getTenant();
+        if ($tenant && !\App\Services\FeatureManager::isEnabled('whatsapp', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     public ?string $qrCodeBase64 = null;
     public bool $isConnected = false;
 

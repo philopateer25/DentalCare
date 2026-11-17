@@ -81,9 +81,28 @@ class PatientOdontogramController extends Controller
 
             $teethRecords[$finding->tooth_number_fdi] = [
                 'condition' => $finding->finding_type,
+                'status' => $finding->status ?? 'existing',
+                'clinical_details' => $finding->clinical_details,
                 'notes' => $finding->notes,
                 'surfaces' => (object)$surfaces,
             ];
+        }
+
+        // Merge with patient->teeth to capture any patient-level charted findings
+        $patient->load('teeth');
+        foreach ($patient->teeth as $pt) {
+            if (!isset($teethRecords[$pt->tooth_number])) {
+                $teethRecords[$pt->tooth_number] = [
+                    'condition' => $pt->condition,
+                    'status' => $pt->status ?? 'existing',
+                    'clinical_details' => $pt->clinical_details,
+                    'notes' => $pt->notes,
+                    'surfaces' => (object)($pt->surfaces ?? []),
+                ];
+            } else {
+                $teethRecords[$pt->tooth_number]['status'] = $pt->status ?? $teethRecords[$pt->tooth_number]['status'] ?? 'existing';
+                $teethRecords[$pt->tooth_number]['clinical_details'] = $pt->clinical_details ?? $teethRecords[$pt->tooth_number]['clinical_details'] ?? null;
+            }
         }
 
         // Preload clinical procedures across treatment plans
@@ -102,11 +121,14 @@ class PatientOdontogramController extends Controller
             }
         }
 
+        $procedureCategories = \App\Models\ProcedureCategory::with(['procedureCodes' => fn($q) => $q->orderBy('code')])->get();
+
         return Inertia::render('Dental/Test3DOdontogram', [
             'patient' => $patient,
             'examination' => $examination,
             'initialRecords' => $teethRecords,
             'initialProcedures' => $proceduresByTooth,
+            'procedureCategories' => $procedureCategories,
             'initialViewMode' => 'clean',
         ]);
     }
@@ -138,9 +160,27 @@ class PatientOdontogramController extends Controller
 
             $teethRecords[$finding->tooth_number_fdi] = [
                 'condition' => $finding->finding_type,
+                'status' => $finding->status ?? 'existing',
+                'clinical_details' => $finding->clinical_details,
                 'notes' => $finding->notes,
                 'surfaces' => (object)$surfaces,
             ];
+        }
+
+        $patient->load('teeth');
+        foreach ($patient->teeth as $pt) {
+            if (!isset($teethRecords[$pt->tooth_number])) {
+                $teethRecords[$pt->tooth_number] = [
+                    'condition' => $pt->condition,
+                    'status' => $pt->status ?? 'existing',
+                    'clinical_details' => $pt->clinical_details,
+                    'notes' => $pt->notes,
+                    'surfaces' => (object)($pt->surfaces ?? []),
+                ];
+            } else {
+                $teethRecords[$pt->tooth_number]['status'] = $pt->status ?? $teethRecords[$pt->tooth_number]['status'] ?? 'existing';
+                $teethRecords[$pt->tooth_number]['clinical_details'] = $pt->clinical_details ?? $teethRecords[$pt->tooth_number]['clinical_details'] ?? null;
+            }
         }
 
         $patient->load([
@@ -158,11 +198,14 @@ class PatientOdontogramController extends Controller
             }
         }
 
+        $procedureCategories = \App\Models\ProcedureCategory::with(['procedureCodes' => fn($q) => $q->orderBy('code')])->get();
+
         return Inertia::render('Dental/Test3DOdontogram', [
             'patient' => $patient,
             'examination' => $examination,
             'initialRecords' => $teethRecords,
             'initialProcedures' => $proceduresByTooth,
+            'procedureCategories' => $procedureCategories,
             'initialViewMode' => 'detailed',
         ]);
     }
@@ -201,12 +244,19 @@ class PatientOdontogramController extends Controller
             'condition' => 'required|string|in:healthy,active_caries,composite_filled,crown,root_canal,missing,implant,custom',
             'notes' => 'nullable|string',
             'surfaces' => 'nullable|array',
+            'status' => 'nullable|string|in:existing,needs_treatment,watch',
+            'clinical_details' => 'nullable|array',
         ]);
+
+        $status = $validated['status'] ?? 'existing';
+        $clinicalDetails = $validated['clinical_details'] ?? null;
 
         $tooth = $patient->teeth()->updateOrCreate(
             ['tooth_number' => $validated['tooth_number']],
             [
                 'condition' => $validated['condition'],
+                'status' => $status,
+                'clinical_details' => $clinicalDetails,
                 'notes' => $validated['notes'] ?? null,
                 'surfaces' => $validated['surfaces'] ?? null,
             ]
@@ -227,6 +277,8 @@ class PatientOdontogramController extends Controller
             ['tooth_number_fdi' => $validated['tooth_number']],
             [
                 'finding_type' => $validated['condition'],
+                'status' => $status,
+                'clinical_details' => $clinicalDetails,
                 'notes' => $validated['notes'] ?? null,
             ]
         );
@@ -240,6 +292,11 @@ class PatientOdontogramController extends Controller
         }
 
         $patient->touch();
+
+        \Illuminate\Support\Facades\Cache::forget("p360_raw_{$patient->id}");
+        \Illuminate\Support\Facades\Cache::forget("p360_teeth_{$patient->id}");
+        \Illuminate\Support\Facades\Cache::forget("p360_roadmap_{$patient->id}");
+        \Illuminate\Support\Facades\Cache::forget("p360_plans_{$patient->id}");
 
         return response()->json($tooth);
     }

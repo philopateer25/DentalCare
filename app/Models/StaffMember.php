@@ -72,4 +72,41 @@ class StaffMember extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    /**
+     * Automatically ensure all doctor users in the practice have a staff member record
+     * so they appear in payroll slips and HR directories.
+     */
+    public static function syncDoctorsForPractice(?int $practiceId = null): void
+    {
+        $practiceId = $practiceId ?? \Filament\Facades\Filament::getTenant()?->id ?? 1;
+        $doctors = User::role('doctor')
+            ->where(function ($q) use ($practiceId) {
+                $q->where('practice_id', $practiceId)
+                  ->orWhereNull('practice_id');
+            })
+            ->get();
+
+        foreach ($doctors as $doctor) {
+            $exists = static::where('user_id', $doctor->id)->first();
+            if (!$exists) {
+                $cleanName = trim(preg_replace('/^(Dr\.|Dr|Doctor)\s+/i', '', $doctor->name));
+                $parts = explode(' ', $cleanName);
+                $firstName = $parts[0] ?? 'Doctor';
+                $lastName = isset($parts[1]) ? implode(' ', array_slice($parts, 1)) : ('#' . $doctor->id);
+
+                static::create([
+                    'practice_id' => $doctor->practice_id ?? $practiceId,
+                    'user_id' => $doctor->id,
+                    'first_name' => 'Dr. ' . $firstName,
+                    'last_name' => $lastName,
+                    'role' => 'Associate Dentist',
+                    'email' => $doctor->email,
+                    'phone' => $doctor->phone ?? '',
+                    'base_salary' => 0.00,
+                    'is_active' => true,
+                ]);
+            }
+        }
+    }
 }

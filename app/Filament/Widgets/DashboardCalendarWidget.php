@@ -117,40 +117,52 @@ class DashboardCalendarWidget extends BaseWidget
             ->filters([
                 Tables\Filters\SelectFilter::make('time_frame')
                     ->label('Calendar Period')
+                    ->placeholder('All Time (All Records)')
                     ->options([
+                        'all' => 'All Records (Full History & Future)',
                         'today' => 'Today (' . Carbon::today()->format('d M') . ')',
                         'tomorrow' => 'Tomorrow (' . Carbon::tomorrow()->format('d M') . ')',
                         'this_week' => 'This Week',
                         'upcoming' => 'All Upcoming',
                         'past' => 'Past Appointments',
-                        'all' => 'All Records',
                     ])
                     ->default('today')
                     ->query(function (Builder $query, array $data) {
-                        $value = $data['value'] ?? 'today';
+                        $value = $data['value'] ?? null;
+                        if (empty($value) || $value === 'all') {
+                            return $query;
+                        }
+
                         return match ($value) {
                             'today' => $query->whereDate('start_time', Carbon::today()),
                             'tomorrow' => $query->whereDate('start_time', Carbon::tomorrow()),
                             'this_week' => $query->whereBetween('start_time', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]),
                             'upcoming' => $query->where('start_time', '>=', Carbon::now()),
                             'past' => $query->where('start_time', '<', Carbon::now()),
-                            'all' => $query,
-                            default => $query->whereDate('start_time', Carbon::today()),
+                            default => $query,
                         };
                     }),
 
                 Tables\Filters\SelectFilter::make('doctor_id')
                     ->label('Doctor')
-                    ->options(fn () => User::where('practice_id', $practiceId)
+                    ->placeholder('All Doctors')
+                    ->options(fn () => User::where('practice_id', \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                         ->whereHas('roles', fn ($rq) => $rq->where('name', 'doctor'))
                         ->pluck('name', 'id')
                         ->toArray()
                     )
+                    ->query(function (Builder $query, array $data) {
+                        if (! empty($data['value'])) {
+                            $query->where('doctor_id', $data['value']);
+                        }
+                    })
                     ->searchable()
                     ->preload()
                     ->visible(!$isDoctorOnly),
 
                 Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->placeholder('All Statuses')
                     ->options([
                         'booked' => 'Booked',
                         'arrived' => 'Arrived (Waiting)',
@@ -158,7 +170,12 @@ class DashboardCalendarWidget extends BaseWidget
                         'completed' => 'Completed',
                         'cancelled' => 'Cancelled',
                         'no_show' => 'No Show',
-                    ]),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (! empty($data['value'])) {
+                            $query->where('status', $data['value']);
+                        }
+                    }),
             ])
             ->actions([
                 // Quick transition: Booked -> Arrived

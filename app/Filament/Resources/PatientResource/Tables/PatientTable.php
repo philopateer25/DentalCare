@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PatientResource\Tables;
 
 use App\Models\Patient;
 use App\Services\CurrencyHelper;
+use Filament\Facades\Filament;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
@@ -35,7 +36,7 @@ class PatientTable
 
     protected static function practiceId(): ?int
     {
-        return \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+        return Filament::getTenant()?->id ?? auth()->user()?->practice_id;
     }
 
     public static function columns(): array

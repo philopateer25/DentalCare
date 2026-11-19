@@ -8,6 +8,7 @@ use App\Filament\Resources\PatientResource;
 use App\Filament\Support\PatientSnapshot;
 use App\Models\Appointment;
 use App\Models\Invoice;
+use App\Models\Patient;
 use App\Services\CurrencyHelper;
 use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
@@ -30,7 +31,7 @@ class PatientProfileHeaderWidget extends Widget
 
     protected function getViewData(): array
     {
-        /** @var \App\Models\Patient $patient */
+        /** @var Patient $patient */
         $patient = $this->record;
         $practiceId = (int) (Filament::getTenant()?->id ?? auth()->user()?->practice_id);
 

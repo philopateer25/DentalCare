@@ -3,9 +3,11 @@
 namespace App\Filament\Support;
 
 use App\Models\Appointment;
+use App\Models\MedicalHistory;
 use App\Models\Patient;
 use App\Services\CurrencyHelper;
 use Filament\Facades\Filament;
+use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -27,8 +29,8 @@ class PatientSnapshot
         'bisphosphonate_therapy' => ['Bisphosphonate therapy', 'warning'],
     ];
 
-    /** @return \Illuminate\Support\Collection<int, array{label: string, tone: string}> */
-    public static function alerts(?\App\Models\MedicalHistory $history): \Illuminate\Support\Collection
+    /** @return Collection<int, array{label: string, tone: string}> */
+    public static function alerts(?MedicalHistory $history): Collection
     {
         $alerts = collect(self::ALERTS)
             ->filter(fn ($meta, $field) => $history && $history->{$field})

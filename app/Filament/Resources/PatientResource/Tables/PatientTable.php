@@ -22,11 +22,20 @@ class PatientTable
     public static function query(Builder $query): Builder
     {
         return $query
-            ->withMax(['appointments as last_visit_at' => fn ($q) => $q->where('status', 'completed')], 'start_time')
+            ->withMax(['appointments as last_visit_at' => fn ($q) => $q->where('appointments.practice_id', self::practiceId())->where('status', 'completed')], 'start_time')
             ->withMin(['appointments as next_appointment_at' => fn ($q) => $q
+                ->where('appointments.practice_id', self::practiceId())
                 ->where('start_time', '>=', now())
                 ->whereNotIn('status', ['cancelled', 'no_show', 'completed'])], 'start_time')
-            ->withSum(['invoices as balance_total' => fn ($q) => $q->whereNotIn('status', ['cancelled', 'void', 'draft'])], 'balance_due');
+            // Scope aggregates to the current practice: invoices/appointments carry their own practice_id.
+            ->withSum(['invoices as balance_total' => fn ($q) => $q
+                ->where('invoices.practice_id', self::practiceId())
+                ->whereNotIn('status', ['cancelled', 'void', 'draft'])], 'balance_due');
+    }
+
+    protected static function practiceId(): ?int
+    {
+        return \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
     }
 
     public static function columns(): array

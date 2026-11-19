@@ -27,6 +27,21 @@ class PatientSnapshot
         'bisphosphonate_therapy' => ['Bisphosphonate therapy', 'warning'],
     ];
 
+    /** @return \Illuminate\Support\Collection<int, array{label: string, tone: string}> */
+    public static function alerts(?\App\Models\MedicalHistory $history): \Illuminate\Support\Collection
+    {
+        $alerts = collect(self::ALERTS)
+            ->filter(fn ($meta, $field) => $history && $history->{$field})
+            ->map(fn ($meta) => ['label' => $meta[0], 'tone' => $meta[1]])
+            ->values();
+
+        if ($history?->pregnancy_trimester) {
+            $alerts->push(['label' => 'Pregnant ('.$history->pregnancy_trimester.')', 'tone' => 'warning']);
+        }
+
+        return $alerts;
+    }
+
     public static function render(mixed $patientId): ?HtmlString
     {
         if (! $patientId) {
@@ -38,7 +53,7 @@ class PatientSnapshot
         $patient = Patient::query()
             ->where('practice_id', $practiceId)
             ->with('medicalHistory')
-            ->withSum(['invoices as balance_total' => fn ($q) => $q->whereNotIn('status', ['cancelled', 'void', 'draft'])], 'balance_due')
+            ->withSum(['invoices as balance_total' => fn ($q) => $q->where('invoices.practice_id', $practiceId)->whereNotIn('status', ['cancelled', 'void', 'draft'])], 'balance_due')
             ->find($patientId);
 
         if (! $patient) {
@@ -53,14 +68,7 @@ class PatientSnapshot
             ->first(['start_time', 'procedure_name']);
 
         $history = $patient->medicalHistory;
-        $alerts = collect(self::ALERTS)
-            ->filter(fn ($meta, $field) => $history && $history->{$field})
-            ->map(fn ($meta) => ['label' => $meta[0], 'tone' => $meta[1]])
-            ->values();
-
-        if ($history?->pregnancy_trimester) {
-            $alerts->push(['label' => 'Pregnant ('.$history->pregnancy_trimester.')', 'tone' => 'warning']);
-        }
+        $alerts = self::alerts($history);
 
         return new HtmlString(view('filament.components.patient-snapshot', [
             'patient' => $patient,

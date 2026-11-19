@@ -126,3 +126,22 @@ This document captures non-obvious architectural patterns, intentional workaroun
 - **Callers:** the API (`CalendarController`: 422 / 409 + `acknowledge_maintenance`), the React widget, AppointmentResource Create/Edit (Filament confirm modal via `GuardsRoomMaintenance`), the Patient appointments relation manager (callout + checkbox), and the follow-up and WhatsApp-approval actions.
 - **Rationale:** a single rule set stops entry points from drifting apart. A `no_closure` job with no rooms selected warns every room in its branch (for example, central AC that is degraded but not down).
 - **Timezone gotcha:** datetimes are stored as naive app-local values (`Africa/Cairo`). `RoomAvailabilityService::parse()` converts browser ISO/UTC input to the app timezone before querying. Don't compare raw UTC Carbons against these columns.
+
+---
+
+## 13. DOXamigo Theme as Plain CSS Layered Over Filament
+- **Location:** `resources/css/filament-theme.css` (HEAD_END render hook in `AdminPanelProvider`), `resources/views/filament/brand/*`, design source in `design/stitch/` and `design/brand/`.
+- **Pattern:** brand colours go through `->colors()` (primary `#3859a8`, success `#009e83`, danger `#d82c1e`) and `->font('DM Sans')`. All visual restyling is plain CSS targeting Filament's `fi-*` classes plus our own `dx-*` components.
+- **Why not `->viteTheme()`:** Filament v3 themes need Tailwind v3, but this project uses Tailwind v4 for the Inertia app. `viteTheme()` would also replace Filament's compiled CSS.
+- **Custom screens:**
+  - branded login (`App\Filament\Pages\Auth\Login` + `filament.layouts.auth`)
+  - dashboard greeting widget
+  - patient directory columns
+  - stepped appointment form with `PatientSnapshot`
+  - patient profile header widget
+  - maintenance stats and popup
+
+  They change presentation only; authentication, booking guards and tenancy are unchanged.
+- **Gotchas:**
+  - After adding any Livewire/Filament class (pages, widgets, the custom Login), run `docker exec clinic_app php artisan filament:cache-components`. A stale cache makes Livewire reject requests to the new component with **419 Page Expired**.
+  - The container's opcache revalidates every 60s. Run `docker restart clinic_app` to see PHP changes immediately.

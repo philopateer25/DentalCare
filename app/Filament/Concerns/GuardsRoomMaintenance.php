@@ -59,12 +59,17 @@ trait GuardsRoomMaintenance
     public function maintenanceWarningAction(): Action
     {
         return Action::make('maintenanceWarning')
-            ->modalHeading(fn () => 'Something will be missing in '.($this->maintenanceRoomName ?? 'this room'))
-            ->modalDescription('This room stays open, but maintenance is under way during the appointment time.')
+            ->modalHeading('Something will be missing in this room')
+            ->modalDescription('Operatory equipment advisory')
             ->modalIcon('heroicon-o-exclamation-triangle')
-            ->modalIconColor('warning')
-            ->color('warning')
-            ->modalContent(fn () => view('filament.components.maintenance-warning', ['warnings' => $this->maintenanceWarnings]))
+            ->modalIconColor('danger')
+            ->color('danger')
+            ->modalWidth('2xl')
+            ->extraModalWindowAttributes(['class' => 'dx-mw-window'])
+            ->modalContent(fn () => view('filament.components.maintenance-warning', [
+                'warnings' => $this->maintenanceWarnings,
+                'room' => $this->maintenanceRoomName,
+            ]))
             ->modalSubmitActionLabel('Book anyway')
             ->modalCancelActionLabel('Go back')
             ->action(function () {

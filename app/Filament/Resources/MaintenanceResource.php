@@ -360,6 +360,13 @@ class MaintenanceResource extends Resource
             ->emptyStateIcon('heroicon-o-wrench-screwdriver');
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            MaintenanceResource\Widgets\MaintenanceStatsWidget::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [

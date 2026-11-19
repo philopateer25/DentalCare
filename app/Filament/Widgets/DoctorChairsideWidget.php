@@ -2,14 +2,21 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Resources\AppointmentResource;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\PatientResource;
 use App\Filament\Support\PatientSnapshot;
 use App\Models\Appointment;
+use App\Models\FollowUpRequest;
 use App\Services\CurrencyHelper;
+use App\Services\FollowUpRequests;
 use App\Services\WhatsAppLink;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Facades\Filament;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
@@ -19,8 +26,11 @@ use Illuminate\Support\Carbon;
  * with one-click access to everything needed during the visit, plus today's queue.
  * Status changes are limited to the doctor's own appointments in the current clinic.
  */
-class DoctorChairsideWidget extends Widget
+class DoctorChairsideWidget extends Widget implements HasActions, HasForms
 {
+    use InteractsWithActions;
+    use InteractsWithForms;
+
     protected static string $view = 'filament.widgets.doctor-chairside';
 
     protected static ?int $sort = -5;
@@ -85,6 +95,64 @@ class DoctorChairsideWidget extends Widget
             ->send();
     }
 
+    /**
+     * Doctor asks reception to book a follow-up (shows up live on the reception dashboard).
+     * Arguments: appointment (the visit it follows).
+     */
+    public function requestFollowUpAction(): Action
+    {
+        return Action::make('requestFollowUp')
+            ->label(__('Request follow-up'))
+            ->modalHeading(__('Request a follow-up from reception'))
+            ->modalDescription(__('Reception sees this on their dashboard right away and books the appointment.'))
+            ->modalSubmitActionLabel(__('Send to reception'))
+            ->modalWidth('lg')
+            ->form([
+                Forms\Components\ToggleButtons::make('timeframe')
+                    ->label(__('When'))
+                    ->options(collect(FollowUpRequest::TIMEFRAMES)->map(fn ($t) => __($t[0]))->all())
+                    ->default('2_weeks')
+                    ->inline()
+                    ->live()
+                    ->required(),
+                Forms\Components\DatePicker::make('preferred_date')
+                    ->label(__('Date'))
+                    ->native(false)
+                    ->minDate(today())
+                    ->visible(fn (Forms\Get $get) => $get('timeframe') === 'date')
+                    ->required(fn (Forms\Get $get) => $get('timeframe') === 'date'),
+                Forms\Components\ToggleButtons::make('duration_minutes')
+                    ->label(__('Visit length'))
+                    ->options(['15' => '15m', '30' => '30m', '45' => '45m', '60' => '60m', '90' => '90m'])
+                    ->default('30')
+                    ->inline()
+                    ->required(),
+                Forms\Components\TextInput::make('procedure_name')
+                    ->label(__('For'))
+                    ->placeholder(__('e.g. Suture removal, crown fitting'))
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('notes')
+                    ->label(__('Note to reception'))
+                    ->rows(2)
+                    ->maxLength(1000),
+                Forms\Components\Toggle::make('urgent')->label(__('Urgent')),
+            ])
+            ->action(function (array $data, array $arguments) {
+                $appointment = Appointment::where('practice_id', $this->practiceId())
+                    ->where('doctor_id', auth()->id())
+                    ->find($arguments['appointment'] ?? 0);
+                abort_unless($appointment, 403);
+
+                app(FollowUpRequests::class)->request(auth()->user(), $data + [
+                    'patient_id' => $appointment->patient_id,
+                    'source_appointment_id' => $appointment->id,
+                    'procedure_name' => $data['procedure_name'] ?? null,
+                ]);
+
+                Notification::make()->title(__('Sent to reception'))->body(__('You will be notified when it is booked.'))->success()->send();
+            });
+    }
+
     protected function getViewData(): array
     {
         $today = $this->todayQuery()->get();
@@ -112,7 +180,6 @@ class DoctorChairsideWidget extends Widget
                 ['label' => __('Prescription'), 'icon' => 'heroicon-o-beaker', 'url' => $view.'?activeRelationManager='.self::TAB_PRESCRIPTIONS],
                 ['label' => __('Patient file'), 'icon' => 'heroicon-o-user', 'url' => $view],
                 ['label' => __('New invoice'), 'icon' => 'heroicon-o-document-text', 'url' => InvoiceResource::getUrl('create')],
-                ['label' => __('Book follow-up'), 'icon' => 'heroicon-o-calendar-days', 'url' => AppointmentResource::getUrl('create')],
                 (Filament::getTenant()?->hasFeature('whatsapp') ?? false) && ($wa = WhatsAppLink::forPatient($patient, 'post_op_checkup'))
                     ? ['label' => __('WhatsApp'), 'icon' => 'heroicon-o-chat-bubble-left-right', 'url' => $wa, 'external' => true]
                     : null,
@@ -127,7 +194,16 @@ class DoctorChairsideWidget extends Widget
             ];
         }
 
+        $requests = FollowUpRequest::where('practice_id', $this->practiceId())
+            ->where('doctor_id', auth()->id())
+            ->where(fn ($q) => $q->where('status', FollowUpRequest::STATUS_PENDING)->orWhere('handled_at', '>=', now()->subDay()))
+            ->with(['patient:id,first_name,last_name', 'bookedAppointment:id,start_time'])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         return [
+            'requests' => $requests,
             'current' => $current,
             'patient' => $patientInfo,
             'tools' => $tools,

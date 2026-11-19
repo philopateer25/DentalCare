@@ -44,6 +44,10 @@
                             <span>{{ $tool['label'] }}</span>
                         </a>
                     @endforeach
+                    <button type="button" class="dx-tool" wire:click="mountAction('requestFollowUp', { appointment: {{ $current->id }} })">
+                        <x-filament::icon icon="heroicon-o-calendar-days" class="h-6 w-6" />
+                        <span>{{ __('Request follow-up') }}</span>
+                    </button>
                 </div>
             @else
                 <div class="dx-empty-note">
@@ -55,6 +59,24 @@
 
         {{-- Today's queue --}}
         <section class="dx-card dx-chair-queue">
+            @if ($requests->isNotEmpty())
+                {{-- Refreshes every 10s so the doctor sees when reception books it. --}}
+                <div wire:poll.10s class="dx-fu-mine">
+                    <p class="dx-tile-label">{{ __('My follow-up requests') }}</p>
+                    @foreach ($requests as $r)
+                        <div class="dx-fu-mine-row">
+                            <span>{{ trim($r->patient?->first_name.' '.$r->patient?->last_name) }} · {{ __($r->timeframeLabel()) }}</span>
+                            @if ($r->status === 'booked')
+                                <span class="dx-chip dx-chip-success">{{ __('Booked') }} {{ $r->bookedAppointment?->start_time?->format('D j M, h:i A') }}</span>
+                            @elseif ($r->status === 'cancelled')
+                                <span class="dx-chip dx-chip-warning" title="{{ $r->handled_note }}">{{ __('Not booked') }}</span>
+                            @else
+                                <span class="dx-chip dx-chip-primary">{{ __('Waiting for reception') }}</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
             <header class="dx-card-head">
                 <span class="dx-card-icon"><x-filament::icon icon="heroicon-o-queue-list" class="h-5 w-5" /></span>
                 <div>
@@ -87,4 +109,6 @@
             @endif
         </section>
     </div>
+
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

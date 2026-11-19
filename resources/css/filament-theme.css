@@ -737,3 +737,30 @@
     .dx-chair-status { width: 100%; }
     .dx-chair-status .dx-btn { flex: 1; justify-content: center; }
 }
+
+/* ================= Follow-up requests (doctor → reception) ================= */
+.dx-chip-success { background: #d1fae5; color: #065f46; }
+.dark .dx-chip-success { background: #064e3b; color: #a7f3d0; }
+.dx-fu { gap: 0.85rem; }
+.dx-fu-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.dx-fu-list li {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.8rem 0.9rem; border-radius: var(--dx-radius); background: var(--dx-tint); box-shadow: inset 3px 0 0 var(--dx-blue);
+}
+.dx-fu-list li.is-urgent { box-shadow: inset 3px 0 0 var(--dx-red); background: color-mix(in srgb, #ffdad6 45%, var(--dx-card)); }
+.dark .dx-fu-list li.is-urgent { background: #3a1416; }
+.dx-fu-list li.is-new { animation: dx-fu-flash 1.6s ease-out 2; }
+@keyframes dx-fu-flash { 0% { box-shadow: inset 3px 0 0 var(--dx-blue), 0 0 0 3px color-mix(in srgb, var(--dx-blue) 35%, transparent); } }
+.dx-fu-main { flex: 1 1 18rem; min-width: 0; }
+.dx-fu-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.dx-fu-patient { font-size: 15px; font-weight: 700; color: var(--dx-text); }
+.dx-fu-patient:hover { color: var(--dx-blue); }
+.dx-fu-when { font-size: 12px; font-weight: 700; color: var(--dx-blue-deep); }
+.dark .dx-fu-when { color: #b2c5ff; }
+.dx-fu-meta { margin-top: 0.15rem; font-size: 12px; color: var(--dx-text-muted); }
+.dx-fu-note { margin-top: 0.3rem; font-size: 12px; font-style: italic; color: var(--dx-text); }
+.dx-fu-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.dx-fu-recent { display: flex; flex-direction: column; gap: 0.2rem; font-size: 12px; color: var(--dx-text-muted); }
+.dx-fu-mine { margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.dx-fu-mine-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.35rem; font-size: 12px; color: var(--dx-text); }
+@media (max-width: 640px) { .dx-fu-actions { width: 100%; } .dx-fu-actions .dx-btn { flex: 1; justify-content: center; } }

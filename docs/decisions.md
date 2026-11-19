@@ -244,3 +244,16 @@ This document captures non-obvious architectural patterns, intentional workaroun
   - Today's queue with Seat / Complete. Status changes are limited to the doctor's own appointments and to valid transitions.
 - **Prescriptions:** relation managers on a View page are read-only by default in Filament, so the tab hid Create. It now opens for doctors and admins. Prescriptions have no `practice_id` column, so the print route checks the patient's practice; it used to 403 for everyone.
 - **Backups:** the schedule was already daily at 02:00. The 23 files came from the backup test writing into real storage, which is now sandboxed. Retention is 14 backups / 14 days (`BACKUP_MAX_COUNT`, `BACKUP_RETENTION_DAYS`), enforced after every backup.
+
+---
+
+## 20. Doctor → Reception Follow-up Requests
+- **Location:** `App\Models\FollowUpRequest` (table `follow_up_requests`), `App\Services\FollowUpRequests`, `DoctorChairsideWidget::requestFollowUpAction()`, `FollowUpRequestsWidget` (reception dashboard).
+- **Flow:**
+  1. From the chairside panel, the doctor sends "Request follow-up" with a timeframe (ASAP … 6 months or a date), visit length, purpose, note and an urgent flag.
+  2. Reception gets a bell notification, and the request appears on their dashboard within seconds; the widget uses `wire:poll.5s`, so there's no refresh.
+  3. Reception chooses "Book", with a form pre-filled from the request (suggested date 10:00, doctor, the visit's room). It uses the same `RoomAvailabilityService` rules (closures and clashes block; missing equipment warns). The request becomes `booked` and links the new `type=follow_up` appointment to the original visit.
+  4. Alternatively, reception chooses "Can't book" and gives a reason.
+  5. Either way, the doctor is notified. Their panel shows each request's status, refreshing every 10 s.
+- **Why polling, not websockets:** there's no broadcast server (Reverb/Pusher) in the stack. Polling a single indexed query is reliable and cheap, and needs no extra service.
+- **Access:** doctors only for their own appointments; reception roles = secretary, clinic_admin, super_admin; everything is scoped by `practice_id`.

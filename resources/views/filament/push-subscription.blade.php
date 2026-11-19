@@ -53,7 +53,7 @@
                             return subscription;
                         }
                         
-                        const vapidPublicKey = "{{ env('VAPID_PUBLIC_KEY') }}";
+                        const vapidPublicKey = "{{ config('services.vapid.public_key') ?? env('VAPID_PUBLIC_KEY') }}";
                         const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
                         
                         return registration.pushManager.subscribe({

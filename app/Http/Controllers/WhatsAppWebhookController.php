@@ -77,8 +77,8 @@ class WhatsAppWebhookController extends Controller
                 $audioMimeType = $audioMsg['mimetype'] ?? 'audio/ogg';
             } elseif (!empty($audioMsg)) {
                 // If base64 wasn't in the webhook, manually fetch it from Evolution API
-                $apiUrl = env('EVOLUTION_API_URL', 'http://evolution_api:8080');
-                $apiKey = env('EVOLUTION_API_KEY', '');
+                $apiUrl = config('services.evolution.url') ?? env('EVOLUTION_API_URL', 'http://evolution_api:8080');
+                $apiKey = config('services.evolution.key') ?? env('EVOLUTION_API_KEY', '');
                 
                 try {
                     $mediaResponse = Http::timeout(30)->withHeaders([

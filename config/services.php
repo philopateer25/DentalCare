@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    // Read through config() so `php artisan config:cache` works (env() returns null when cached).
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
+    'evolution' => [
+        'url' => env('EVOLUTION_API_URL', 'http://evolution_api:8080'),
+        'key' => env('EVOLUTION_API_KEY', ''),
+    ],
+
+    'vapid' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+    ],
+
 ];

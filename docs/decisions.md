@@ -221,3 +221,26 @@ This document captures non-obvious architectural patterns, intentional workaroun
 - **Where:** appointments table, calendar drawer, invoices (balance), prescriptions, operations (post-op), patient profile menu and the Chart workspace.
 - **Not changed:** automated sends (`TreatmentProcedureObserver`, `SendPostOpCheckupJob`, the WhatsApp bot/webhook) still use `WhatsAppService`.
 - **3D tab:** the patient profile's 3D tab is now a native React preview (`ChartPreview`, no iframe). The old odontogram page keeps only its clean 3D view, which the 360 widget uses for single-tooth viewing; its detailed editing screen was removed (replaced by the Chart workspace).
+
+---
+
+## 18. Local Docker Performance (Windows Bind Mount)
+- **Finding:** the project folder is bind-mounted from Windows into `clinic_app`. Measured inside the container, the same `/up` request took about 30 ms from a container-local copy versus about 245 ms through the mount. SQL was not the bottleneck: 19 queries took 47 ms on a ~700 ms page.
+- **Changes:**
+  - `storage/framework` (compiled views, framework cache) is a named Docker volume, `clinic_framework`.
+  - Config, route and event caches go to that volume via `APP_CONFIG_CACHE`, `APP_ROUTES_CACHE` and `APP_EVENTS_CACHE` in `docker-compose.yml`. **Never** put them in `bootstrap/cache`: that folder is shared with the host, and host-side `php artisan test` would load the container's cached config.
+  - `opcache.validate_timestamps=0`: PHP no longer re-checks code files on the slow mount. **After changing PHP code, `.env`, config or routes, run:**
+    `docker exec clinic_app sh docker/optimize.sh && docker restart clinic_nginx`
+  - Filament SPA mode (`->spa()`): menu clicks swap page content. The calendar and chart bundles load on every page and mount only where their element exists.
+  - `env()` reads outside config files (Gemini, Evolution API, VAPID) now go through `config('services.*')`, with `env()` kept as a fallback, so config caching is safe.
+  - The Maintenance nav badge is counted once per request (`once()`).
+- **Result:** login TTFB went from about 850 ms to about 330 ms, and menu clicks from about 2 s to 0.55–1 s.
+- **Remaining fix (needs a user decision):** move the project into the WSL2 filesystem (or deploy without a bind mount, as production does). Expected another ~5–8× cut in server time.
+
+## 19. Doctor Chairside Panel, Prescriptions, Backups
+- **Chairside panel:** `DoctorChairsideWidget` (doctors only, top of the dashboard).
+  - It shows the patient in the chair, or else the one waiting, or else the next visit today: alerts, balance, procedure.
+  - One-click tools: dental chart, gum chart, treatment plan, prescription, patient file, invoice, follow-up, WhatsApp.
+  - Today's queue with Seat / Complete. Status changes are limited to the doctor's own appointments and to valid transitions.
+- **Prescriptions:** relation managers on a View page are read-only by default in Filament, so the tab hid Create. It now opens for doctors and admins. Prescriptions have no `practice_id` column, so the print route checks the patient's practice; it used to 403 for everyone.
+- **Backups:** the schedule was already daily at 02:00. The 23 files came from the backup test writing into real storage, which is now sandboxed. Retention is 14 backups / 14 days (`BACKUP_MAX_COUNT`, `BACKUP_RETENTION_DAYS`), enforced after every backup.

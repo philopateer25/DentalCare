@@ -46,10 +46,11 @@ class MaintenanceResource extends Resource
             return null;
         }
 
-        $count = MaintenanceRecord::where('practice_id', $tenantId)
+        // Filament asks for the badge several times per page render; count once per request.
+        $count = once(fn () => MaintenanceRecord::where('practice_id', $tenantId)
             ->active()
             ->where('ends_at', '>', now())
-            ->count();
+            ->count());
 
         return $count > 0 ? (string) $count : null;
     }

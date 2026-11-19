@@ -189,7 +189,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/prescriptions/{prescription}/print', function (\App\Models\Prescription $prescription) {
-    abort_unless($prescription->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
+    // Prescriptions have no practice_id column; ownership comes from the patient.
+    abort_unless($prescription->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
     return view('prescriptions.print', compact('prescription'));
 })->middleware('auth')->name('prescriptions.print');
 

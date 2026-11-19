@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->tenant(\App\Models\Practice::class)
             ->login(\App\Filament\Pages\Auth\Login::class)
+            // SPA mode: menu clicks swap the page content instead of reloading everything.
+            ->spa()
             ->brandName('DOXamigo')
             ->brandLogo(fn () => view('filament.brand.logo'))
             ->brandLogoHeight('2.25rem')
@@ -84,11 +86,7 @@ class AdminPanelProvider extends PanelProvider
                     return ($vite->reactRefresh()?->toHtml() ?? '')
                         .$vite(['resources/css/chart-workspace.css', 'resources/js/filament/chart-workspace.jsx'])->toHtml();
                 },
-                // Chart workspace page + the patient profile (its "3D Mouth Chart" tab mounts a preview)
-                scopes: [
-                    \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::class,
-                    \App\Filament\Resources\PatientResource\Pages\ViewPatient::class,
-                ],
+                // Loaded on every page (SPA navigation): mounts only where a chart element exists.
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::FOOTER,
@@ -103,7 +101,8 @@ class AdminPanelProvider extends PanelProvider
                     return ($vite->reactRefresh()?->toHtml() ?? '')
                         .$vite(['resources/css/filament-calendar.css', 'resources/js/filament/appointments-calendar.jsx'])->toHtml();
                 },
-                scopes: \Filament\Pages\Dashboard::class,
+                // Loaded on every page (SPA navigation does not re-run page-scoped <head> hooks);
+                // the bundle only mounts where its element exists.
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,

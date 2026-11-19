@@ -9,7 +9,7 @@ class GeminiService
 {
     public static function parseAppointmentRequest(string $text, ?string $audioBase64 = null, ?string $audioMimeType = null): ?array
     {
-        $apiKey = env('GEMINI_API_KEY');
+        $apiKey = config('services.gemini.key') ?? env('GEMINI_API_KEY');
         if (!$apiKey) {
             Log::error('Gemini API key missing');
             return null;

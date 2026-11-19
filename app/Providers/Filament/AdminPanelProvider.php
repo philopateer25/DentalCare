@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->tenant(\App\Models\Practice::class)
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName('DOXamigo')
             ->brandLogo(fn () => view('filament.brand.logo'))
             ->brandLogoHeight('2.25rem')

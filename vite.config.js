@@ -7,7 +7,13 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.jsx'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.jsx',
+                // React calendar mounted inside Filament (AppointmentsCalendarWidget)
+                'resources/css/filament-calendar.css',
+                'resources/js/filament/appointments-calendar.jsx',
+            ],
             refresh: true,
         }),
         react(),

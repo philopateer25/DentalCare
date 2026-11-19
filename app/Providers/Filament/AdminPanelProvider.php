@@ -60,6 +60,22 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => '<link rel="manifest" href="/manifest.json">'
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // React + FullCalendar bundle for AppointmentsCalendarWidget (dashboard only)
+                function (): string {
+                    $vite = app(\Illuminate\Foundation\Vite::class);
+
+                    return ($vite->reactRefresh()?->toHtml() ?? '')
+                        .$vite(['resources/css/filament-calendar.css', 'resources/js/filament/appointments-calendar.jsx'])->toHtml();
+                },
+                scopes: \Filament\Pages\Dashboard::class,
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // Dark-mode text for maintenance callouts (MaintenanceBookingFields)
+                fn (): string => '<style>.dark .dc-callout[data-tone=danger]{color:rgb(var(--danger-300))!important}.dark .dc-callout[data-tone=warning]{color:rgb(var(--warning-300))!important}</style>'
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

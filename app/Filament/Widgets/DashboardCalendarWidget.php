@@ -19,9 +19,16 @@ class DashboardCalendarWidget extends BaseWidget
     protected static ?int $sort = 2;
     protected int | string | array $columnSpan = 'full';
 
+    /**
+     * Superseded on the dashboard by the React/FullCalendar AppointmentsCalendarWidget
+     * (its List view covers this table). Kept for reference / easy rollback:
+     * restore the role check below to show it again.
+     */
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'secretary', 'doctor']) ?? false;
+        return false;
+
+        // return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'secretary', 'doctor']) ?? false;
     }
 
     public function getTableHeading(): string

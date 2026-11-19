@@ -51,6 +51,7 @@ class AppointmentResource extends Resource
                                 $query->when($tenantId, fn ($q) => $q->whereHas('branch', fn ($bq) => $bq->where('practice_id', $tenantId)));
                             })
                             ->preload()
+                            ->live()
                             ->required(),
                         Forms\Components\Select::make('status')
                             ->options([
@@ -110,7 +111,11 @@ class AppointmentResource extends Resource
                             ->seconds(false)
                             ->minutesStep(15)
                             ->default(now()->addMinutes(30))
+                            ->live(onBlur: true)
                             ->required(),
+
+                        // Live preview of room maintenance; the save itself is guarded by a pop-up / closure error.
+                        \App\Filament\Support\MaintenanceBookingFields::notice(),
 
                         Forms\Components\Textarea::make('chief_complaint')
                             ->label('Chief Complaint')

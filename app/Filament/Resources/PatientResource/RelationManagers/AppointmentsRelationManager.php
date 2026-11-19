@@ -55,6 +55,8 @@ class AppointmentsRelationManager extends RelationManager
                         Forms\Components\Select::make('operatory_id')
                             ->relationship('operatory', 'name')
                             ->required()
+                            ->live()
+                            ->rules([\App\Filament\Support\MaintenanceBookingFields::closureRule()])
                             ->label('Room (Operatory)'),
 
                         Forms\Components\Select::make('doctor_id')
@@ -119,6 +121,11 @@ class AppointmentsRelationManager extends RelationManager
                             ])
                             ->default('booked')
                             ->required(),
+
+                        // Room maintenance: closure callout (blocked by the operatory rule) or
+                        // "something will be missing" warning that must be acknowledged.
+                        \App\Filament\Support\MaintenanceBookingFields::notice(),
+                        \App\Filament\Support\MaintenanceBookingFields::acknowledgement(),
 
                         Forms\Components\TextInput::make('consultation_fee')
                             ->numeric()

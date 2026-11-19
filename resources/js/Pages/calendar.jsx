@@ -86,8 +86,8 @@ export default function DetailedCalendar({ auth }) {
         fetchCalendarData();
     }, [currentDate, selectedDoctor, selectedOperatory, selectedStatus]);
 
-    const handleCreateSubmit = async (e) => {
-        e.preventDefault();
+    const handleCreateSubmit = async (e, acknowledgeMaintenance = false) => {
+        e?.preventDefault?.();
         setCreateError('');
 
         try {
@@ -98,10 +98,22 @@ export default function DetailedCalendar({ auth }) {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 },
-                body: JSON.stringify(createData),
+                body: JSON.stringify({ ...createData, acknowledge_maintenance: acknowledgeMaintenance }),
             });
 
             const data = await res.json();
+
+            // Room is operational but equipment is missing: confirm, then resend.
+            if (res.status === 409 && data.requires_acknowledgement) {
+                const items = (data.warnings || [])
+                    .map((w) => `• ${w.unavailable_items || w.equipment_name || w.title} (until ${w.ends_at_label})`)
+                    .join('\n');
+                if (window.confirm(`Something will be missing in this room:\n\n${items}\n\nBook anyway?`)) {
+                    return handleCreateSubmit(null, true);
+                }
+                setCreateError(data.message);
+                return;
+            }
 
             if (!res.ok) {
                 setCreateError(data.message || 'Error creating appointment');

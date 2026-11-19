@@ -129,6 +129,18 @@ class OperationTable
                         throw new Halt();
                     }
 
+                    // Room maintenance: closures block, partial outages warn but proceed
+                    $availability = app(\App\Services\Scheduling\RoomAvailabilityService::class);
+                    $assessment = $availability->assess((int) $record->practice_id, (int) $data['operatory_id'], $startTime, $endTime);
+                    if ($closure = $availability->closureMessage($assessment)) {
+                        Notification::make()->danger()->title('Room closed for maintenance')->body($closure)->send();
+
+                        throw new Halt();
+                    }
+                    if ($warning = $availability->warningMessage($assessment)) {
+                        Notification::make()->warning()->title('Something will be missing in this room')->body($warning)->persistent()->send();
+                    }
+
                     // Create the follow up appointment
                     Appointment::create([
                         'practice_id' => $record->practice_id,

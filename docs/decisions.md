@@ -191,3 +191,15 @@ This document captures non-obvious architectural patterns, intentional workaroun
 - **Light mode:** the 2D view is the default on devices reporting ≤ 2 GB memory; the choice is remembered per browser.
 - **Retired:** `/patients/{id}/odontogram-details` redirects to the workspace. The fee schedule is no longer editable from the chart, and `/api/procedure-codes` writes are admin-only.
 - **Tailwind:** the CSS imports Tailwind v4 *utilities only* (no preflight) with `source(none)` and explicit `@source` paths, plus a `dark` variant bound to Filament's `.dark` class.
+
+---
+
+## 16. Gum (Periodontal) Chart & CSS Layering Gotcha
+- **Gum chart:**
+  - Code: `Api\PerioChartController` and `resources/js/filament/workspace/PerioChart.tsx`, shown in the Chart workspace under "Gum chart".
+  - It uses the existing `perio_chartings` table, extended with suppuration, mobility, furcation and `dental_examination_id`.
+  - Sites are stored in the order **DB, B, MB, DL, L, ML**.
+  - GM is relative to the CEJ (negative = recession). CAL = PD − GM is computed, never stored.
+  - Older charts are read-only for comparison. Entry uses a keypad that auto-advances along a standard probing path.
+- **Tailwind utilities must be unlayered inside Filament:** Filament's compiled CSS is unlayered and resets `button` backgrounds. Layered CSS always loses to unlayered CSS regardless of specificity, so coloured buttons rendered white-on-white. `chart-workspace.css` therefore imports `tailwindcss/utilities.css` **without** `layer(utilities)`.
+- **Calendar status text** uses `--c-text`: a darker shade of each status colour in light mode and a lighter one in dark mode. Raw amber on a tinted background was about 2:1 contrast.

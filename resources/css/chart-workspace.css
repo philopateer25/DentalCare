@@ -5,7 +5,9 @@
  * Filament toggles dark mode with the `.dark` class, so the dark variant follows it.
  */
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities) source(none);
+/* Unlayered on purpose: Filament's (unlayered) base styles reset button backgrounds, and
+   layered utilities always lose to unlayered CSS. Unlayered, they win by load order. */
+@import "tailwindcss/utilities.css" source(none);
 
 @source "../js/filament/workspace";
 @source "../js/Components/Dental3D";

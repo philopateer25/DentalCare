@@ -148,6 +148,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/patients/{patient}/chart-workspace', [\App\Http\Controllers\Api\ChartWorkspaceController::class, 'show']);
     Route::get('/patients/{patient}/chart/print', [\App\Http\Controllers\ChartPrintController::class, 'show'])->name('patient.chart.print');
 
+    // 6-site periodontal (gum) chart
+    Route::get('/api/patients/{patient}/perio', [\App\Http\Controllers\Api\PerioChartController::class, 'index']);
+    Route::post('/api/patients/{patient}/perio', [\App\Http\Controllers\Api\PerioChartController::class, 'store']);
+    Route::put('/api/perio/{chart}', [\App\Http\Controllers\Api\PerioChartController::class, 'update']);
+
     // Procedure Codes & Fee Schedule API
     Route::get('/api/procedure-codes', function () {
         return \App\Models\ProcedureCode::with('category')->orderBy('code')->get();

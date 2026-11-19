@@ -10,6 +10,7 @@ import {
 import { http, errorMessage, type ChartRecord, type Status, type Suggestion, type WorkspaceData } from './api';
 import ToothMap from './ToothMap';
 import SurfaceDiagram, { SURFACE_OPTIONS } from './SurfaceDiagram';
+import PerioChart from './PerioChart';
 
 const Viewer3DPanel = React.lazy(() => import('./Viewer3DPanel'));
 
@@ -81,6 +82,7 @@ export default function ChartWorkspace({ config }: { config: any }) {
   const [viewExamId, setViewExamId] = useState<number | null>(null);
   const [selected, setSelected] = useState<string>(() => new URLSearchParams(location.search).get('tooth') || '11');
   const [tab, setTab] = useState<Tab>('findings');
+  const [view, setView] = useState<'teeth' | 'perio'>(() => (new URLSearchParams(location.search).get('view') === 'perio' ? 'perio' : 'teeth'));
   const [mode2d, setMode2d] = useState<boolean>(() => !config.has3d || prefers2D());
   const [brush, setBrush] = useState('active_caries');
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -307,10 +309,18 @@ export default function ChartWorkspace({ config }: { config: any }) {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+              {([['teeth', 'Teeth'], ['perio', 'Gum chart']] as const).map(([v, l]) => (
+                <button key={v} type="button" onClick={() => setView(v)}
+                  className={`min-h-[34px] rounded-md px-3 text-xs font-bold ${view === v ? 'bg-white text-brand-deep shadow dark:bg-slate-950 dark:text-indigo-200' : 'text-slate-600 dark:text-slate-300'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
             <span className={`text-xs font-semibold ${saving === 'error' ? 'text-brand-red' : saving === 'saving' ? 'text-slate-500' : 'text-brand-teal'}`}>
               {saving === 'saving' ? 'Saving…' : saving === 'error' ? 'Not saved' : saving === 'saved' ? '✓ Saved' : ''}
             </span>
-            {config.has3d && (
+            {config.has3d && view === 'teeth' && (
               <button type="button" onClick={toggle2d} className="min-h-[40px] rounded-lg bg-slate-100 px-3 text-xs font-bold text-brand-deep hover:bg-slate-200 dark:bg-slate-800 dark:text-indigo-200">
                 {mode2d ? '3D view' : '2D view (light)'}
               </button>
@@ -347,8 +357,14 @@ export default function ChartWorkspace({ config }: { config: any }) {
         {message && <p className="mt-2 text-xs font-semibold text-brand-red">{message}</p>}
       </div>
 
+      {view === 'perio' && (
+        <div className={`${card} p-4`}>
+          <PerioChart patientId={config.patientId} records={records} />
+        </div>
+      )}
+
       {/* ===== Body ===== */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <div className={`grid gap-4 lg:grid-cols-[minmax(0,1fr)_400px] ${view === 'perio' ? 'hidden' : ''}`}>
         {/* Chart */}
         <div className="flex min-w-0 flex-col gap-4">
           <div className={`${card} flex flex-wrap gap-1.5 p-3`}>

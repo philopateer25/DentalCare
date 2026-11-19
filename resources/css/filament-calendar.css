@@ -200,6 +200,10 @@
 .dc-calendar .fc-direction-rtl .dc-ev { box-shadow: inset -3px 0 0 var(--c); }
 .dc-calendar .fc .dc-ev:hover { box-shadow: inset 3px 0 0 var(--c), 0 6px 16px -8px color-mix(in srgb, var(--c) 70%, transparent); z-index: 5; }
 .dc-calendar .fc .dc-ev--arrived { --c: #f59e0b; }
+/* Status colours are for bars/tints; text uses a darker (light mode) or lighter (dark mode)
+   shade so it stays readable on the tinted background (e.g. amber was 2:1 contrast). */
+.dc-calendar, .dc-calendar * { --c-text: color-mix(in srgb, var(--c, #64748b) 60%, #111827); }
+.dark .dc-calendar, .dark .dc-calendar * { --c-text: color-mix(in srgb, var(--c, #94a3b8) 70%, #ffffff); }
 .dc-calendar .fc .dc-ev--in_chair { --c: #f43f5e; }
 .dc-calendar .fc .dc-ev--completed { --c: #10b981; }
 .dc-calendar .fc .dc-ev--cancelled, .dc-calendar .fc .dc-ev--no_show { --c: #94a3b8; opacity: .7; }
@@ -212,12 +216,12 @@
 
 .dc-ev-body { padding: 4px 7px; color: var(--dc-text); line-height: 1.25; overflow: hidden; height: 100%; }
 .dc-ev-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
-.dc-ev-time { font-size: .68rem; font-weight: 700; color: var(--c, var(--dc-muted)); white-space: nowrap; }
+.dc-ev-time { font-size: .68rem; font-weight: 700; color: var(--c-text, var(--dc-muted)); white-space: nowrap; }
 .dc-ev-name { font-weight: 700; font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dc-ev-meta { font-size: .7rem; color: var(--dc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dc-status-pill {
     font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px;
-    color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); white-space: nowrap;
+    color: var(--c-text, var(--c)); background: color-mix(in srgb, var(--c) 16%, transparent); white-space: nowrap;
 }
 .dc-ev-month { display: flex; align-items: center; gap: 5px; overflow: hidden; color: var(--dc-text); font-size: .75rem; }
 .dc-ev-month .dc-ev-time { color: var(--dc-muted); font-weight: 600; }
@@ -226,7 +230,7 @@
 .dc-chip { padding: 2px 8px; border-radius: 6px; font-size: .72rem; font-weight: 600; background: rgba(var(--gray-400), .16); }
 .dc-status {
     display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: .72rem; font-weight: 700;
-    color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent);
+    color: var(--c-text, var(--c)); background: color-mix(in srgb, var(--c) 14%, transparent);
 }
 .dc-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
 .dc-calendar .fc .fc-list-day-cushion { background: var(--dc-surface); }

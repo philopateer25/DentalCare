@@ -22,7 +22,9 @@ class AppointmentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Appointment Details')
+                // Layout follows design/stitch/03-appointment-form: four numbered steps.
+                Forms\Components\Section::make('Patient details')
+                    ->extraAttributes(['class' => 'dx-step dx-step-first'])
                     ->schema([
                         Forms\Components\Select::make('patient_id')
                             ->label('Patient')
@@ -33,40 +35,17 @@ class AppointmentResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->first_name} {$record->last_name} ({$record->file_number})")
                             ->searchable(['first_name', 'last_name', 'file_number'])
                             ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('doctor_id')
-                            ->label('Doctor')
-                            ->relationship('doctor', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
-                                $tenantId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
-                                $query->when($tenantId, fn ($q) => $q->where('practice_id', $tenantId))
-                                    ->whereHas('roles', fn ($q) => $q->where('name', 'doctor'));
-                            })
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('operatory_id')
-                            ->label('Room (Operatory)')
-                            ->relationship('operatory', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
-                                $tenantId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
-                                $query->when($tenantId, fn ($q) => $q->whereHas('branch', fn ($bq) => $bq->where('practice_id', $tenantId)));
-                            })
-                            ->preload()
                             ->live()
+                            ->prefixIcon('heroicon-o-user')
                             ->required(),
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'booked' => 'Booked',
-                                'arrived' => 'Arrived',
-                                'in_chair' => 'In Chair',
-                                'completed' => 'Completed',
-                                'no_show' => 'No Show',
-                                'cancelled' => 'Cancelled',
-                            ])
-                            ->default('booked')
-                            ->required(),
-                    ])->columns(2),
+                        Forms\Components\Placeholder::make('patient_snapshot')
+                            ->hiddenLabel()
+                            ->visible(fn (Forms\Get $get) => filled($get('patient_id')))
+                            ->content(fn (Forms\Get $get) => \App\Filament\Support\PatientSnapshot::render($get('patient_id'))),
+                    ]),
 
-                Forms\Components\Section::make('Timing & Clinical Notes')
+                Forms\Components\Section::make('Schedule & duration')
+                    ->extraAttributes(['class' => 'dx-step'])
                     ->schema([
                         Forms\Components\DateTimePicker::make('start_time')
                             ->label('Start Date & Time')
@@ -74,6 +53,7 @@ class AppointmentResource extends Resource
                             ->seconds(false)
                             ->minutesStep(15)
                             ->default(now())
+                            ->prefixIcon('heroicon-o-calendar-days')
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 if (!$state) return;
@@ -84,16 +64,18 @@ class AppointmentResource extends Resource
                             })
                             ->required(),
 
-                        Forms\Components\Select::make('duration_minutes')
+                        Forms\Components\ToggleButtons::make('duration_minutes')
                             ->label('Visit Duration')
                             ->options([
-                                '15' => '15 minutes',
-                                '30' => '30 minutes (Standard)',
-                                '45' => '45 minutes',
-                                '60' => '1 hour',
-                                '90' => '1.5 hours',
-                                '120' => '2 hours',
+                                '15' => '15m',
+                                '30' => '30m',
+                                '45' => '45m',
+                                '60' => '60m',
+                                '90' => '90m',
+                                '120' => '2h',
                             ])
+                            ->inline()
+                            ->grouped()
                             ->default('30')
                             ->dehydrated(false)
                             ->live()
@@ -111,20 +93,71 @@ class AppointmentResource extends Resource
                             ->seconds(false)
                             ->minutesStep(15)
                             ->default(now()->addMinutes(30))
+                            ->prefixIcon('heroicon-o-clock')
+                            ->after('start_time')
                             ->live(onBlur: true)
+                            ->required(),
+                    ])->columns(3),
+
+                Forms\Components\Section::make('Doctor & room assignment')
+                    ->extraAttributes(['class' => 'dx-step'])
+                    ->schema([
+                        Forms\Components\Select::make('doctor_id')
+                            ->label('Doctor')
+                            ->relationship('doctor', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                                $tenantId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+                                $query->when($tenantId, fn ($q) => $q->where('practice_id', $tenantId))
+                                    ->whereHas('roles', fn ($q) => $q->where('name', 'doctor'));
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->prefixIcon('heroicon-o-user-circle')
+                            ->required(),
+                        Forms\Components\Select::make('operatory_id')
+                            ->label('Room (Operatory)')
+                            ->relationship('operatory', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                                $tenantId = \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id;
+                                $query->when($tenantId, fn ($q) => $q->whereHas('branch', fn ($bq) => $bq->where('practice_id', $tenantId)));
+                            })
+                            ->preload()
+                            ->live()
+                            ->prefixIcon('heroicon-o-building-office')
+                            ->required(),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'booked' => 'Booked',
+                                'arrived' => 'Arrived',
+                                'in_chair' => 'In Chair',
+                                'completed' => 'Completed',
+                                'no_show' => 'No Show',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->default('booked')
                             ->required(),
 
                         // Live preview of room maintenance; the save itself is guarded by a pop-up / closure error.
                         \App\Filament\Support\MaintenanceBookingFields::notice(),
+                    ])->columns(3),
 
+                Forms\Components\Section::make('Clinical procedure & notes')
+                    ->extraAttributes(['class' => 'dx-step'])
+                    ->schema([
+                        Forms\Components\TextInput::make('procedure_name')
+                            ->label('Primary procedure')
+                            ->placeholder('e.g. Crown preparation - tooth #14')
+                            ->prefixIcon('heroicon-o-wrench')
+                            ->maxLength(255)
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('chief_complaint')
                             ->label('Chief Complaint')
                             ->placeholder('e.g. Tooth sensitivity to cold, routine checkup...')
+                            ->rows(3)
                             ->columnSpanFull(),
                         Forms\Components\Textarea::make('notes')
                             ->label('Clinical Notes')
+                            ->rows(3)
                             ->columnSpanFull(),
-                    ])->columns(3),
+                    ]),
             ]);
     }
 

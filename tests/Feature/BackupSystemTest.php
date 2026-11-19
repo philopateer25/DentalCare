@@ -54,7 +54,7 @@ class BackupSystemTest extends TestCase
         $this->assertFileExists($targetDir . '/manifest.json');
 
         $manifest = json_decode(file_get_contents($targetDir . '/manifest.json'), true);
-        $this->assertEquals('DentalCare', $manifest['app_name']);
+        $this->assertEquals(config('app.name'), $manifest['app_name']);
         $this->assertTrue($manifest['encrypted']);
 
         // Clean up

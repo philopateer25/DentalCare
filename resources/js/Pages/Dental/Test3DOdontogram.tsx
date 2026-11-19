@@ -756,8 +756,8 @@ const Test3DOdontogramInner: React.FC<Props> = ({
           cleanMode={true}
         />
         
-        {/* Hovering Action Button */}
-        <div className="absolute bottom-6 right-6 z-10">
+        {/* Hovering Action Button (hidden when embedded in the Filament tab, which shows its own button) */}
+        <div className={`absolute bottom-6 right-6 z-10 ${new URLSearchParams(window.location.search).get('embed') === '1' ? 'hidden' : ''}`}>
           <a 
             href={`/patients/${patient.id}/odontogram-details`}
             target="_blank"

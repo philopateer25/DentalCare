@@ -159,7 +159,7 @@
             @if ($invoices->isEmpty())
                 <div class="dx-empty-note">{{ __('No invoices yet.') }}</div>
             @else
-                <table class="dx-mini-table">
+                <div class="dx-table-scroll"><table class="dx-mini-table">
                     <thead><tr><th>{{ __('Invoice') }}</th><th>{{ __('Date') }}</th><th class="dx-num">{{ __('Total') }}</th><th class="dx-num">{{ __('Due') }}</th><th>{{ __('Status') }}</th></tr></thead>
                     <tbody>
                         @foreach ($invoices as $invoice)
@@ -172,7 +172,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @endif
         </section>
     </div>

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 class LiveReceptionQueueWidget extends BaseWidget
 {
     protected static ?int $sort = 2; // right after the calendar (ties sort by class name)
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 'full';
     protected static ?string $heading = 'Live Reception Queue';
 
     public static function canView(): bool

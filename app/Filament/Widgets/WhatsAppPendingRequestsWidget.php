@@ -25,8 +25,9 @@ class WhatsAppPendingRequestsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        // Shown beside the live reception queue (design/stitch/01-dashboard).
-        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'secretary']) ?? false;
+        // Removed from the dashboard: WhatsApp now works by opening WhatsApp Web with a
+        // prefilled template (staff just press send). Class kept; return the role check to restore.
+        return false;
     }
 
     public function table(Table $table): Table

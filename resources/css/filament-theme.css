@@ -603,3 +603,78 @@
 .dx-mw-note { display: flex; gap: 0.6rem; padding: 0.85rem 1rem; border-radius: var(--dx-radius); background: #e2e7ff; color: #1b418f; font-size: 12px; }
 .dark .dx-mw-note { background: #1d2a48; color: #dae2ff; }
 .dx-mw-note svg { flex-shrink: 0; }
+
+/* ================= 3D mouth chart tab ================= */
+.dx-3d { display: flex; flex-direction: column; gap: 0.75rem; }
+.dx-3d-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.dx-3d-title { display: flex; align-items: flex-start; gap: 0.6rem; color: var(--dx-blue); }
+.dx-3d-title strong { display: block; font-size: 15px; color: var(--dx-text); }
+.dx-3d-title span { display: block; font-size: 12px; color: var(--dx-text-muted); }
+.dx-3d-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.dx-3d-frame { position: relative; height: clamp(420px, 65vh, 760px); border-radius: var(--dx-radius); overflow: hidden; background: #020617; }
+.dx-3d-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+.dx-3d-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; color: #94a3b8; }
+.dx-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.dx-table-scroll .dx-mini-table { min-width: 34rem; }
+
+/* ================= Mobile (≤ 640px) ================= */
+@media (max-width: 640px) {
+    .fi-header-heading, .dx-greeting-title, .dx-profile-name, .dx-login-title, .dx-login-card-head h2 { font-size: 21px !important; line-height: 28px !important; }
+
+    /* Dashboard greeting */
+    .dx-greeting-actions { width: 100%; }
+    .dx-greeting-actions .dx-btn { flex: 1 1 0; justify-content: center; }
+
+    /* Buttons: comfortable touch targets */
+    .dx-btn { height: 2.75rem; }
+
+    /* Patient profile */
+    .dx-profile { padding: 1rem; }
+    .dx-profile-id { flex-direction: column; align-items: flex-start; flex-basis: 100%; }
+    .dx-profile-photo { width: 4.5rem; height: 4.5rem; font-size: 24px; border-radius: 0.85rem; }
+    .dx-profile-side { flex-basis: 100%; }
+    .dx-balance { flex-wrap: wrap; }
+    .dx-balance-life { margin-inline-start: 0; text-align: start; width: 100%; padding-inline-start: 3.25rem; }
+    .dx-profile-actions { justify-content: stretch; }
+    .dx-profile-actions .dx-btn { flex: 1 1 calc(50% - 0.25rem); justify-content: center; }
+    .dx-profile-actions .dx-btn:last-child:nth-child(odd) { flex-basis: 100%; }
+    .dx-card { padding: 1rem; }
+    .dx-card-head h3 { font-size: 16px; }
+    .dx-card-head { flex-wrap: wrap; }
+    .dx-visit-when strong { font-size: 16px; }
+
+    /* Booking snapshot */
+    .dx-snapshot-head { align-items: flex-start; }
+    .dx-snapshot-tiles { grid-template-columns: 1fr; }
+
+    /* 3D tab */
+    .dx-3d-actions { width: 100%; }
+    .dx-3d-actions .dx-btn { flex: 1 1 0; justify-content: center; }
+    .dx-3d-frame { height: 70vh; min-height: 380px; }
+
+    /* Login */
+    .dx-auth-main { padding: 1rem; }
+    .dx-login-showcase, .dx-login-card { padding: 1.25rem; }
+    .dx-login-ring { display: none; }
+    .dx-auth-header-inner { padding: 0.65rem 1rem; }
+    .dx-auth-header .dx-logo-text-main { font-size: 1.2rem; }
+    .dx-auth-footer-row { justify-content: center; text-align: center; }
+
+    /* Footer + sticky form actions */
+    .dx-footer-row { justify-content: center; padding: 0.5rem 1rem; }
+    .fi-form-actions { bottom: 0.5rem; padding: 0.5rem; }
+    .fi-form-actions .fi-btn { flex: 1 1 auto; }
+
+    /* Maintenance popup */
+    .dx-mw-item-head strong { flex-basis: 100%; }
+
+    /* Watermark is decoration only */
+    .fi-main-ctn::after { width: 240px; height: 130px; right: 0.5rem; }
+}
+/* Login: show the sign-in card first on phones */
+@media (max-width: 1023px) {
+    .dx-login-card-wrap { order: -1; }
+    .dx-login-features { display: none; }
+}
+/* Grid/flex children must be allowed to shrink below their content width (tables scroll inside). */
+.dx-profile-grid > *, .dx-profile-id, .dx-profile-main, .dx-snapshot-tiles > *, .dx-login > * { min-width: 0; }

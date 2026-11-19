@@ -203,3 +203,21 @@ This document captures non-obvious architectural patterns, intentional workaroun
   - Older charts are read-only for comparison. Entry uses a keypad that auto-advances along a standard probing path.
 - **Tailwind utilities must be unlayered inside Filament:** Filament's compiled CSS is unlayered and resets `button` backgrounds. Layered CSS always loses to unlayered CSS regardless of specificity, so coloured buttons rendered white-on-white. `chart-workspace.css` therefore imports `tailwindcss/utilities.css` **without** `layer(utilities)`.
 - **Calendar status text** uses `--c-text`: a darker shade of each status colour in light mode and a lighter one in dark mode. Raw amber on a tinted background was about 2:1 contrast.
+
+---
+
+## 17. Manual WhatsApp = WhatsApp Web with a Ready Message
+- **Location:** `app/Services/WhatsAppLink.php`.
+- **Pattern:** manual WhatsApp actions open `https://wa.me/{phone}?text=…`, which opens WhatsApp Web on desktop and the app on phones. Staff review the message and press send; the server sends nothing.
+- **Templates:**
+  - Appointment confirmation and reminder
+  - Post-op check-up
+  - Balance reminder
+  - Prescription
+  - Dental chart summary (staff attach the exported PDF)
+  - General message
+
+  English and Arabic are selected by the current locale. Phone numbers use the Egyptian normalisation from `PatientVoiceNoteController::normalizePhoneNumber()`.
+- **Where:** appointments table, calendar drawer, invoices (balance), prescriptions, operations (post-op), patient profile menu and the Chart workspace.
+- **Not changed:** automated sends (`TreatmentProcedureObserver`, `SendPostOpCheckupJob`, the WhatsApp bot/webhook) still use `WhatsAppService`.
+- **3D tab:** the patient profile's 3D tab is now a native React preview (`ChartPreview`, no iframe). The old odontogram page keeps only its clean 3D view, which the 360 widget uses for single-tooth viewing; its detailed editing screen was removed (replaced by the Chart workspace).

@@ -678,3 +678,22 @@
 }
 /* Grid/flex children must be allowed to shrink below their content width (tables scroll inside). */
 .dx-profile-grid > *, .dx-profile-id, .dx-profile-main, .dx-snapshot-tiles > *, .dx-login > * { min-width: 0; }
+
+/* ================= Small dropdown menu (<details>) ================= */
+.dx-menu { position: relative; }
+.dx-menu > summary { list-style: none; cursor: pointer; }
+.dx-menu > summary::-webkit-details-marker { display: none; }
+.dx-menu-panel {
+    position: absolute; z-index: 30; inset-inline-end: 0; top: calc(100% + 0.35rem); min-width: 12rem;
+    padding: 0.35rem; border-radius: var(--dx-radius-sm); background: var(--dx-card);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+.dx-menu-panel a { display: flex; align-items: center; min-height: 2.5rem; padding: 0 0.75rem; border-radius: 0.4rem; font-size: 13px; font-weight: 500; color: var(--dx-text); }
+.dx-menu-panel a:hover { background: var(--dx-tint); }
+/* Phones: the WhatsApp menu spans the action row so it never opens off-screen (LTR or RTL). */
+@media (max-width: 640px) {
+    .dx-profile-actions { position: relative; }
+    .dx-profile-actions .dx-menu { position: static; flex: 1 1 calc(50% - 0.25rem); }
+    .dx-profile-actions .dx-menu > summary { width: 100%; justify-content: center; }
+    .dx-profile-actions .dx-menu-panel { inset-inline: 0; min-width: 0; }
+}

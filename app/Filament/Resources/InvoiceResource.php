@@ -263,6 +263,18 @@ class InvoiceResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('wa_balance')
+                    ->label('WhatsApp reminder')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success')
+                    ->visible(fn (\App\Models\Invoice $record) => (float) $record->balance_due > 0
+                        && (\Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false))
+                    ->url(fn (\App\Models\Invoice $record) => $record->patient
+                        ? \App\Services\WhatsAppLink::forPatient($record->patient, 'balance_reminder', [
+                            'balance' => \App\Services\CurrencyHelper::format((float) $record->balance_due),
+                        ])
+                        : null)
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

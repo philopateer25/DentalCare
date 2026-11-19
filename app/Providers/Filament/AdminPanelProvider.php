@@ -84,7 +84,11 @@ class AdminPanelProvider extends PanelProvider
                     return ($vite->reactRefresh()?->toHtml() ?? '')
                         .$vite(['resources/css/chart-workspace.css', 'resources/js/filament/chart-workspace.jsx'])->toHtml();
                 },
-                scopes: \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::class,
+                // Chart workspace page + the patient profile (its "3D Mouth Chart" tab mounts a preview)
+                scopes: [
+                    \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::class,
+                    \App\Filament\Resources\PatientResource\Pages\ViewPatient::class,
+                ],
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::FOOTER,

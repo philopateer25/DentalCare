@@ -153,7 +153,7 @@ class OperationTable
                         'end_time' => $endTime,
                         'type' => 'follow_up',
                         'parent_appointment_id' => $record->id,
-                        'status' => 'scheduled',
+                        'status' => 'booked', // 'scheduled' is not a valid appointment status
                         'notes' => $data['notes'] ?? 'Follow-up appointment.',
                     ]);
 
@@ -163,37 +163,15 @@ class OperationTable
                         ->send();
                 }),
             Tables\Actions\Action::make('send_whatsapp_checkup')
-                ->label('Send Post-Op Checkup')
+                ->label('Post-op check-up')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
                 ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false)
-                ->action(function (Appointment $record) {
-                    $practice = \Filament\Facades\Filament::getTenant();
-                    $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
-                    
-                    $phone = $record->patient->phone ?? $record->patient->phone_number ?? '';
-                    
-                    if(empty($phone)) {
-                        Notification::make()
-                            ->danger()
-                            ->title('Missing Phone Number')
-                            ->body('This patient does not have a phone number on file.')
-                            ->send();
-                        return;
-                    }
-                    
-                    $clinicName = $practice ? $practice->name : 'our clinic';
-                    $patientName = $record->patient->first_name ?? 'there';
-                    
-                    $message = "Hello {$patientName}, this is {$clinicName}. We are checking in to see how you are feeling after your recent dental procedure. Please reply to this message if you have any questions or concerns!";
-                    
-                    \App\Jobs\SendWhatsAppMessageJob::dispatch($instanceName, $phone, $message);
-                    
-                    Notification::make()
-                        ->success()
-                        ->title('WhatsApp check-up queued!')
-                        ->send();
-                }),
+                // Opens WhatsApp with the check-up message; staff press send.
+                ->url(fn (Appointment $record) => $record->patient
+                    ? \App\Services\WhatsAppLink::forPatient($record->patient, 'post_op_checkup')
+                    : null)
+                ->openUrlInNewTab(),
             Tables\Actions\ViewAction::make(),
         ];
     }

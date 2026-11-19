@@ -30,3 +30,9 @@
 }
 .dxw-root { -webkit-tap-highlight-color: transparent; }
 .dxw-root button { touch-action: manipulation; }
+
+/* 3D viewer toolbar (shared Dental3DViewer component): finger-sized buttons on touch screens.
+   Its own buttons are 25–30px, which is too small for chairside tablets (44px guideline). */
+@media (pointer: coarse) {
+    .dxw-viewer button { min-height: 44px; min-width: 44px; }
+}

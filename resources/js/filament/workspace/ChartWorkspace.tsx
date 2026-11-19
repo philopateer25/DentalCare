@@ -328,6 +328,12 @@ export default function ChartWorkspace({ config }: { config: any }) {
             <a href={config.printUrl} target="_blank" rel="noopener" className="flex min-h-[40px] items-center rounded-lg bg-brand-deep px-3 text-xs font-bold text-white hover:bg-brand">
               Export PDF
             </a>
+            {config.whatsappUrl && (
+              <a href={config.whatsappUrl} target="_blank" rel="noopener" title="Opens WhatsApp with a message; attach the exported PDF and send"
+                className="flex min-h-[40px] items-center rounded-lg bg-brand-teal px-3 text-xs font-bold text-white hover:opacity-90">
+                WhatsApp
+              </a>
+            )}
           </div>
         </div>
 
@@ -382,7 +388,7 @@ export default function ChartWorkspace({ config }: { config: any }) {
           </div>
 
           {!mode2d && (
-            <div className={`${card} relative h-[58vh] min-h-[380px] overflow-hidden !bg-slate-950`}>
+            <div className={`${card} dxw-viewer relative h-[58vh] min-h-[380px] overflow-hidden !bg-slate-950`}>
               <Suspense fallback={<div className="grid h-full place-items-center text-sm text-slate-400">Loading 3D engine…</div>}>
                 <Viewer3DPanel
                   teethRecords={viewer3dRecords}

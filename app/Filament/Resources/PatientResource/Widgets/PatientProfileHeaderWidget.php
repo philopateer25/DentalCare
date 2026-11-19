@@ -71,7 +71,19 @@ class PatientProfileHeaderWidget extends Widget
         $balance = (float) (clone $openInvoices)->sum('balance_due');
         $lifetime = (float) (clone $openInvoices)->sum('total_amount');
 
-        $phone = preg_replace('/\D+/', '', (string) ($patient->whatsapp_number ?: $patient->phone));
+        $whatsapp = [];
+        if ((Filament::getTenant()?->hasFeature('whatsapp') ?? false) && \App\Services\WhatsAppLink::phone($patient->whatsapp_number ?: $patient->phone)) {
+            $whatsapp['General message'] = \App\Services\WhatsAppLink::forPatient($patient, 'greeting');
+            if ($upcoming) {
+                $whatsapp['Appointment reminder'] = \App\Services\WhatsAppLink::forAppointment($upcoming, 'appointment_reminder');
+            }
+            if ($balance > 0) {
+                $whatsapp['Balance reminder'] = \App\Services\WhatsAppLink::forPatient($patient, 'balance_reminder', ['balance' => CurrencyHelper::format($balance)]);
+            }
+            if ($previous) {
+                $whatsapp['Post-op check-up'] = \App\Services\WhatsAppLink::forPatient($patient, 'post_op_checkup');
+            }
+        }
 
         return [
             'patient' => $patient,
@@ -90,7 +102,7 @@ class PatientProfileHeaderWidget extends Widget
             'chartUrl' => \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::canUseChart()
                 ? PatientResource::getUrl('chart', ['record' => $patient]) : null,
             'appointmentUrl' => $upcoming ? AppointmentResource::getUrl('edit', ['record' => $upcoming]) : null,
-            'whatsappUrl' => $phone ? 'https://wa.me/'.$phone : null,
+            'whatsapp' => array_filter($whatsapp),
         ];
     }
 }

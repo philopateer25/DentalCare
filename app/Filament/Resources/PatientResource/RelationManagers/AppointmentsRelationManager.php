@@ -53,7 +53,11 @@ class AppointmentsRelationManager extends RelationManager
                         //     ->label('Branch'),
 
                         Forms\Components\Select::make('operatory_id')
-                            ->relationship('operatory', 'name')
+                            // Only this clinic's rooms (the list used to include every clinic's rooms).
+                            ->relationship('operatory', 'name', fn ($query) => $query->whereHas(
+                                'branch',
+                                fn ($b) => $b->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                            ))
                             ->required()
                             ->live()
                             ->rules([\App\Filament\Support\MaintenanceBookingFields::closureRule()])

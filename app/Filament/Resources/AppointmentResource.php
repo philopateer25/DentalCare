@@ -251,6 +251,23 @@ class AppointmentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                // WhatsApp opens with a ready message; staff press send (nothing is sent by the server).
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('wa_confirm')
+                        ->label('Send confirmation')
+                        ->url(fn (\App\Models\Appointment $record) => \App\Services\WhatsAppLink::forAppointment($record, 'appointment_confirmation'))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('wa_remind')
+                        ->label('Send reminder')
+                        ->url(fn (\App\Models\Appointment $record) => \App\Services\WhatsAppLink::forAppointment($record, 'appointment_reminder'))
+                        ->openUrlInNewTab(),
+                ])
+                    ->label('WhatsApp')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('success')
+                    ->button()
+                    ->size('sm')
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

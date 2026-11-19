@@ -60,6 +60,9 @@ class ChartWorkspace extends Page
             'pricingUrl' => class_exists(ProcedureCodeResource::class) ? ProcedureCodeResource::getUrl('index') : null,
             'has3d' => (bool) ($tenant?->hasFeature('3d_model') ?? false),
             'modelUrl' => '/models/Dentition_Permanent_Full_V2.1.glb',
+            'whatsappUrl' => ($tenant?->hasFeature('whatsapp') ?? false)
+                ? \App\Services\WhatsAppLink::forPatient($this->record, 'chart_summary')
+                : null,
         ];
     }
 }

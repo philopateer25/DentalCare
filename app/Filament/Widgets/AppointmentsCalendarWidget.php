@@ -189,6 +189,10 @@ class AppointmentsCalendarWidget extends Widget
                     'patientName' => $a->patient?->full_name,
                     'fileNumber' => $a->patient?->file_number,
                     'phone' => $a->patient?->phone,
+                    'whatsapp' => (Filament::getTenant()?->hasFeature('whatsapp') ?? false) ? [
+                        'confirm' => \App\Services\WhatsAppLink::forAppointment($a, 'appointment_confirmation'),
+                        'remind' => \App\Services\WhatsAppLink::forAppointment($a, 'appointment_reminder'),
+                    ] : null,
                     'doctorId' => $a->doctor_id,
                     'doctorName' => $a->doctor?->name,
                     'operatoryId' => $a->operatory_id,

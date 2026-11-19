@@ -109,46 +109,10 @@ class PrescriptionsRelationManager extends RelationManager
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->label('WhatsApp')
-                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
-                    ->requiresConfirmation()
-                    ->action(function (\App\Models\Prescription $record) {
-                        $patientName = $record->patient->full_name;
-                        $doctorName = $record->doctor->name ?? 'Doctor';
-                        $clinicName = \App\Models\Practice::find(1)->name ?? 'Dental Clinic';
-                        
-                        $message = "🏥 *{$clinicName} - Prescription*\n";
-                        $message .= "👨‍⚕️ Dr. {$doctorName}\n\n";
-                        $message .= "💊 *Medication:* {$record->medication_name} {$record->dosage}\n";
-                        $message .= "⏱ *Frequency:* {$record->frequency}\n";
-                        $message .= "📅 *Duration:* {$record->duration}\n";
-                        if ($record->instructions) {
-                            $message .= "📝 *Instructions:* {$record->instructions}\n";
-                        }
-                        $message .= "\nGet well soon!";
-                        
-                        $phone = $record->patient->phone ?? '';
-                        if (empty($phone)) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Patient has no phone number.')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        $success = \App\Services\WhatsAppService::sendMessage($phone, $message);
-
-                        if ($success) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Prescription sent via WhatsApp!')
-                                ->success()
-                                ->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Failed to send WhatsApp message.')
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                    ->visible(fn () => \Filament\Facades\Filament::getTenant()?->hasFeature('whatsapp') ?? false)
+                    // Opens WhatsApp with the prescription written out; staff press send.
+                    ->url(fn (\App\Models\Prescription $record) => \App\Services\WhatsAppLink::forPrescription($record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

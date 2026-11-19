@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, DoorClosed, ExternalLink, FileText, Pencil, Phone, Stethoscope, User, X } from 'lucide-react';
+import { Clock, DoorClosed, ExternalLink, FileText, MessageCircle, Pencil, Phone, Stethoscope, User, X } from 'lucide-react';
 import { STATUS_META, TRANSITION_LABELS, formatTime } from './utils';
 
 export default function EventDrawer({ event, config, wire, onClose, onChanged }) {
@@ -68,6 +68,16 @@ export default function EventDrawer({ event, config, wire, onClose, onChanged })
                     <a className="dc-btn dc-btn-ghost" href={url(config.urls.patientView, p.patientId)}>
                         <User size={16} /> Open patient <ExternalLink size={13} />
                     </a>
+                    {p.whatsapp?.confirm && (
+                        <a className="dc-btn dc-btn-ghost" href={p.whatsapp.confirm} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle size={16} /> WhatsApp confirmation
+                        </a>
+                    )}
+                    {p.whatsapp?.remind && (
+                        <a className="dc-btn dc-btn-ghost" href={p.whatsapp.remind} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle size={16} /> WhatsApp reminder
+                        </a>
+                    )}
                     {canManage && (
                         <a className="dc-btn dc-btn-ghost" href={url(config.urls.appointmentEdit, p.appointmentId)}>
                             <Pencil size={16} /> Edit appointment

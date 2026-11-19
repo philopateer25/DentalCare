@@ -71,8 +71,16 @@
                     <a href="{{ $chartUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-squares-2x2" class="h-4 w-4" /> {{ __('Dental chart') }}</a>
                 @endif
                 <a href="{{ $invoiceUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-document-text" class="h-4 w-4" /> {{ __('New invoice') }}</a>
-                @if ($whatsappUrl)
-                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="dx-btn dx-btn-teal"><x-filament::icon icon="heroicon-o-chat-bubble-left-right" class="h-4 w-4" /> WhatsApp</a>
+                @if (! empty($whatsapp))
+                    {{-- Opens WhatsApp with a ready message; staff press send. --}}
+                    <details class="dx-menu">
+                        <summary class="dx-btn dx-btn-teal"><x-filament::icon icon="heroicon-o-chat-bubble-left-right" class="h-4 w-4" /> WhatsApp ▾</summary>
+                        <div class="dx-menu-panel">
+                            @foreach ($whatsapp as $label => $link)
+                                <a href="{{ $link }}" target="_blank" rel="noopener">{{ __($label) }}</a>
+                            @endforeach
+                        </div>
+                    </details>
                 @endif
                 <a href="{{ $editUrl }}" class="dx-btn dx-btn-tint" title="{{ __('Edit patient') }}"><x-filament::icon icon="heroicon-o-pencil-square" class="h-4 w-4" /></a>
             </div>

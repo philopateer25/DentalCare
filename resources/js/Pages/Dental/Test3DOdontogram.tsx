@@ -3,6 +3,7 @@ import axios from 'axios';
 import Dental3DViewer, { ArchMode, CameraPreset } from '../../Components/Dental3D/Dental3DViewer';
 import { SingleToothViewer } from '../../Components/Dental3D/SingleToothViewer';
 import VoiceNoteModal from '../../Components/Dental3D/VoiceNoteModal';
+import ChartOverlay from '../../Components/Dental3D/ChartOverlay';
 import { Mic, Eye, EyeOff, Crosshair, Camera } from 'lucide-react';
 import {
   CONDITION_COLORS,
@@ -374,6 +375,9 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   const [viewMode, setViewMode] = useState<'clean' | 'detailed'>(initialViewMode);
   
   const [activeExam, setActiveExam] = useState(initialExam);
+  // The exam currently being charted: the one the server opened, or one created in this session.
+  // Other exams in the timeline are shown read-only.
+  const [currentExamId, setCurrentExamId] = useState<number>(initialExam?.id);
   const [examinations, setExaminations] = useState<any[]>([initialExam]);
 
   const [mode, setMode] = useState<'findings' | 'treatment' | 'pricing'>('findings');
@@ -574,6 +578,11 @@ const Test3DOdontogramInner: React.FC<Props> = ({
           [toothNumber]: procs.map(p => p.id === procedureId ? { ...p, status: 'completed' } : p)
         };
       });
+      axios.get(`/api/patients/${patient.id}/treatment-plans`).then((plansRes) => {
+        setAllPlans(plansRes.data);
+        const current = plansRes.data.find((pl: any) => pl.id === activePlan?.id) || plansRes.data[0] || null;
+        setActivePlan(current);
+      }).catch(() => {});
       setSavingStatus('saved');
       notifyParentWindow(toothNumber);
       setTimeout(() => setSavingStatus('idle'), 2000);
@@ -602,6 +611,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       const res = await axios.post(`/api/patients/${patient.id}/examinations`, { type: 'periodic' });
       setExaminations([res.data, ...examinations]);
       setActiveExam(res.data);
+      setCurrentExamId(res.data.id);
       // The new exam starts from the previous chart (carried forward server-side).
       const chart = await axios.get(`/api/examinations/${res.data.id}/odontogram`);
       setTeethRecords(chart.data && !Array.isArray(chart.data) ? chart.data : {});
@@ -789,74 +799,28 @@ const Test3DOdontogramInner: React.FC<Props> = ({
           cleanMode={true}
         />
         
-        {/* Phase 1 overlay: chart summary + legend (top-right) and selected-tooth card. */}
-        {(() => {
-          const records = Object.values(teethRecords);
-          const needsCare = records.filter((r) => r.status === 'needs_treatment').length;
-          const watch = records.filter((r) => r.status === 'watch').length;
-          const allProcs = Object.values(plannedProcedures).flat() as any[];
-          const openProcs = allProcs.filter((p) => p.status !== 'completed').length;
-          const chips = (Object.keys(CONDITION_COLORS) as ToothCondition[])
-            .filter((c) => c !== 'healthy' && (conditionCounts[c] || 0) > 0)
-            .map((c) => ({ key: c, label: CONDITION_LABELS[c]?.label || c, count: conditionCounts[c] || 0, color: CONDITION_COLORS[c] }));
-          const rec = selectedTooth ? teethRecords[selectedTooth] : undefined;
-          const cond: ToothCondition = (rec?.condition as ToothCondition) || 'healthy';
-          const procs = (selectedTooth ? plannedProcedures[selectedTooth] : []) || [];
-          const statusLabel = rec?.status === 'needs_treatment' ? 'Needs treatment' : rec?.status === 'watch' ? 'Watch' : 'Existing';
-          const statusClass = rec?.status === 'needs_treatment' ? 'bg-rose-600/90' : rec?.status === 'watch' ? 'bg-amber-600/90' : 'bg-emerald-700/90';
-          return (
-            <>
-              <div className="absolute top-3 right-3 z-10 flex max-w-[60%] flex-wrap justify-end gap-1.5 pointer-events-none max-sm:top-auto max-sm:bottom-[5.5rem] max-sm:right-2 max-sm:max-w-[95%]">
-                {needsCare > 0 && <span className="rounded-full bg-rose-600/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{needsCare} need treatment</span>}
-                {watch > 0 && <span className="rounded-full bg-amber-600/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{watch} watch</span>}
-                {openProcs > 0 && <span className="rounded-full bg-sky-700/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{openProcs} planned</span>}
-                {chips.map((c) => (
-                  <span key={c.key} className="flex items-center gap-1.5 rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-semibold text-slate-100 shadow backdrop-blur">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-                    {c.count} {c.label}
-                  </span>
-                ))}
-                {chips.length === 0 && needsCare === 0 && <span className="rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-semibold text-slate-300 shadow">No findings charted</span>}
-              </div>
-
-              {selectedTooth && (
-                <div className="absolute left-3 top-[5.5rem] z-10 w-64 rounded-xl border border-slate-700/70 bg-slate-900/90 p-3 text-slate-100 shadow-2xl backdrop-blur max-sm:left-2 max-sm:right-2 max-sm:top-auto max-sm:bottom-[8rem] max-sm:w-auto">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: CONDITION_COLORS[cond] }} />
-                      <span className="text-sm font-bold">Tooth #{selectedTooth}</span>
-                    </div>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${statusClass}`}>{statusLabel}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-300">{CONDITION_LABELS[cond]?.label || cond}</p>
-                  {procs.length > 0 ? (
-                    <ul className="mt-2 space-y-1">
-                      {procs.slice(0, 4).map((p: any) => (
-                        <li key={p.id} className="flex items-center justify-between gap-2 text-[11px]">
-                          <span className="truncate text-slate-200">{p.procedure_code?.code} {p.procedure_code?.title}</span>
-                          <span className={`shrink-0 rounded px-1.5 py-0.5 font-bold ${p.status === 'completed' ? 'bg-emerald-800 text-emerald-100' : 'bg-sky-800 text-sky-100'}`}>
-                            {p.status === 'completed' ? 'Done' : 'Planned'}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-[11px] text-slate-400">No procedures planned for this tooth.</p>
-                  )}
-                  {rec?.notes && <p className="mt-2 line-clamp-2 text-[11px] text-slate-400">{rec.notes}</p>}
-                  <a
-                    href={`/patients/${patient.id}/odontogram-details?tooth=${selectedTooth}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 flex min-h-[40px] items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500"
-                  >
-                    Chart / plan this tooth
-                  </a>
-                </div>
-              )}
-            </>
-          );
-        })()}
+        {/* Phase 1 + 2 overlay: summary/legend, tooth quick actions, exam timeline, plan panel. */}
+        <ChartOverlay
+          patientId={patient.id}
+          teethRecords={teethRecords}
+          plannedProcedures={plannedProcedures}
+          selectedTooth={selectedTooth}
+          procedureList={procedureList}
+          activePlan={activePlan}
+          examinations={examinations}
+          activeExam={activeExam}
+          currentExamId={currentExamId}
+          suggestion={suggestion}
+          planError={planError}
+          savingStatus={savingStatus}
+          onSetCondition={handleConditionSelect}
+          onSetStatus={handleStatusChange}
+          onAddProcedure={(code, tooth) => handleTreatmentSelect(code, undefined, tooth)}
+          onComplete={handleTreatmentComplete}
+          onVoiceNote={(tooth, proc) => handleOpenVoiceNote(tooth, proc)}
+          onExamChange={handleExamChange}
+          onDismissSuggestion={() => setSuggestion(null)}
+        />
 
         {/* Hovering Action Button (hidden when embedded in the Filament tab, which shows its own button) */}
         <div className={`absolute bottom-6 right-6 z-10 ${new URLSearchParams(window.location.search).get('embed') === '1' ? 'hidden' : ''}`}>

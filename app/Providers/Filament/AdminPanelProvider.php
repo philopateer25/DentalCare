@@ -76,6 +76,17 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => app(\Illuminate\Foundation\Vite::class)(['resources/css/filament-theme.css'])->toHtml()
             )
             ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // React Chart workspace bundle (Patients -> Chart page only)
+                function (): string {
+                    $vite = app(\Illuminate\Foundation\Vite::class);
+
+                    return ($vite->reactRefresh()?->toHtml() ?? '')
+                        .$vite(['resources/css/chart-workspace.css', 'resources/js/filament/chart-workspace.jsx'])->toHtml();
+                },
+                scopes: \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::class,
+            )
+            ->renderHook(
                 \Filament\View\PanelsRenderHook::FOOTER,
                 fn () => view('filament.brand.footer')
             )

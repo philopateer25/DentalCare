@@ -1,7 +1,7 @@
 @php
     $patientId = $getRecord()->id;
     $embedUrl = route('patient.odontogram', $patientId);
-    $detailsUrl = route('patient.odontogram.details', $patientId);
+    $detailsUrl = \App\Filament\Resources\PatientResource::getUrl('chart', ['record' => $patientId]);
 @endphp
 
 {{--
@@ -28,9 +28,9 @@
                 <x-filament::icon icon="heroicon-o-arrows-pointing-out" class="h-4 w-4" />
                 {{ __('Full screen') }}
             </a>
-            <a href="{{ $detailsUrl }}" target="_blank" rel="noopener" class="dx-btn dx-btn-primary">
+            <a href="{{ $detailsUrl }}" class="dx-btn dx-btn-primary">
                 <x-filament::icon icon="heroicon-o-pencil-square" class="h-4 w-4" />
-                {{ __('Open clinical details') }}
+                {{ __('Open dental chart') }}
             </a>
         </div>
     </div>

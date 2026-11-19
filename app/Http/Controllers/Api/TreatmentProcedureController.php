@@ -46,7 +46,8 @@ class TreatmentProcedureController extends Controller
             }
 
             $title = $procedure->procedureCode?->title ?: 'Clinical treatment';
-            $condition = OdontogramRules::conditionAfterProcedure($procedure->procedureCode?->code);
+            $code = $procedure->procedureCode?->code;
+            $condition = OdontogramRules::conditionAfterProcedure($code);
             $line = 'Completed '.now()->format('Y-m-d').': '.$title;
 
             // Patient-level chart: update condition when the procedure changes it, clear "needs treatment",
@@ -57,10 +58,11 @@ class TreatmentProcedureController extends Controller
             }
             $pt->condition ??= 'healthy';
             $pt->status = 'existing';
+            $pt->surfaces = OdontogramRules::surfacesAfterProcedure($code, (array) ($pt->surfaces ?? []));
             $pt->notes = trim(($pt->notes ? $pt->notes."\n" : '').$line);
             $pt->save();
 
-            $exam = $patient->examinations()->latest('examined_at')->latest('id')->first()
+            $exam = $patient->examinations()->latest('id')->first()
                 ?? $patient->examinations()->create([
                     'doctor_id' => auth()->id(),
                     'type' => 'treatment',
@@ -78,6 +80,14 @@ class TreatmentProcedureController extends Controller
             $finding->status = 'existing';
             $finding->notes = trim(($finding->notes ? $finding->notes."\n" : '').$line);
             $finding->save();
+
+            // Restorations turn carious surfaces into the restoring material.
+            foreach ($finding->surfaceFindings as $surface) {
+                $after = OdontogramRules::surfacesAfterProcedure($code, [$surface->surface => $surface->finding_type]);
+                if ($after[$surface->surface] !== $surface->finding_type) {
+                    $surface->update(['finding_type' => $after[$surface->surface]]);
+                }
+            }
 
             $patient->touch();
             foreach (['raw', 'teeth', 'roadmap', 'plans'] as $key) {

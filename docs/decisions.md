@@ -163,3 +163,31 @@ This document captures non-obvious architectural patterns, intentional workaroun
   - A new examination carries forward the previous exam's findings.
   - Unknown procedure codes and invalid FDI numbers are rejected (422).
 - **Security:** all chart/exam/plan/fee APIs and the 3D pages require `auth`. The fallback auto-login and the "Demo Patient" creation in `PatientOdontogramController` were removed.
+
+---
+
+## 15. Chart Workspace (replaces the standalone odontogram details page)
+- **Location:**
+  - Page: `PatientResource\Pages\ChartWorkspace` at `/admin/{tenant}/patients/{id}/chart`.
+  - React: `resources/js/filament/workspace/*`, mounted by `resources/js/filament/chart-workspace.jsx`.
+  - CSS: `resources/css/chart-workspace.css`.
+  - Data: `Api\ChartWorkspaceController`.
+  - Printing: `ChartPrintController` + `resources/views/chart/print.blade.php`.
+- **Pattern:** React mounted directly in Filament (like the calendar, no iframe). One JSON request loads the workspace. Writes reuse the finding / plan / procedure APIs, so `OdontogramRules` stays the single source of clinical logic.
+- **Layout:**
+  - Header: patient, alerts, exam timeline, save state, Export PDF, 2D/3D switch.
+  - Chart: summary chips, the 3D view (lazy-loaded; three.js is only fetched in 3D mode), and the FDI tooth map.
+  - Inspector tabs:
+    - Findings: status, condition, a 5-surface diagram, and condition-specific fields.
+    - Diagnosis: structured fields.
+    - Treatment: procedures, add, plan totals.
+    - History: the tooth across exams.
+- **Logic:**
+  - Edits are debounced per tooth (700 ms), so several quick changes become one request.
+  - A carious or restored surface upgrades a *healthy* tooth's condition; conditions are never downgraded automatically.
+  - Diagnosis, severity, urgency and mobility live in `clinical_details`. Legacy `[Dx: …]` tags or JSON in notes are read via `OdontogramRules::normaliseRecord()` and stored structured on the next save.
+  - Completing a restoration converts carious surfaces (`surfacesAfterProcedure`).
+  - The "current exam" is always the newest by id. Older exams are read-only.
+- **Light mode:** the 2D view is the default on devices reporting ≤ 2 GB memory; the choice is remembered per browser.
+- **Retired:** `/patients/{id}/odontogram-details` redirects to the workspace. The fee schedule is no longer editable from the chart, and `/api/procedure-codes` writes are admin-only.
+- **Tailwind:** the CSS imports Tailwind v4 *utilities only* (no preflight) with `source(none)` and explicit `@source` paths, plus a `dark` variant bound to Filament's `.dark` class.

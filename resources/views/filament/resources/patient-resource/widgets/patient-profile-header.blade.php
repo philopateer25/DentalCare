@@ -67,6 +67,9 @@
             </div>
             <div class="dx-profile-actions">
                 <a href="{{ $bookUrl }}" class="dx-btn dx-btn-primary"><x-filament::icon icon="heroicon-o-calendar-days" class="h-4 w-4" /> {{ __('Book appointment') }}</a>
+                @if ($chartUrl)
+                    <a href="{{ $chartUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-squares-2x2" class="h-4 w-4" /> {{ __('Dental chart') }}</a>
+                @endif
                 <a href="{{ $invoiceUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-document-text" class="h-4 w-4" /> {{ __('New invoice') }}</a>
                 @if ($whatsappUrl)
                     <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="dx-btn dx-btn-teal"><x-filament::icon icon="heroicon-o-chat-bubble-left-right" class="h-4 w-4" /> WhatsApp</a>

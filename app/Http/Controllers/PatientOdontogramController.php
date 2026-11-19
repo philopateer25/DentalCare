@@ -37,7 +37,7 @@ class PatientOdontogramController extends Controller
         $patient = $this->authorizePatientAccess($patient);
 
         // Get or create the latest examination
-        $examination = $patient->examinations()->latest('examined_at')->first();
+        $examination = $patient->examinations()->latest('id')->first();
         if (!$examination) {
             $examination = $patient->examinations()->create([
                 'doctor_id' => auth()->id(),
@@ -111,12 +111,20 @@ class PatientOdontogramController extends Controller
     /**
      * Display the Fullscreen Detailed Odontogram.
      */
-    public function showDetails(?Patient $patient = null): Response
+    public function showDetails(?Patient $patient = null): \Symfony\Component\HttpFoundation\Response
     {
         $patient = $this->authorizePatientAccess($patient);
 
+        // Retired: the standalone details page is replaced by the Chart workspace in Filament.
+        $url = \App\Filament\Resources\PatientResource::getUrl('chart', ['record' => $patient], panel: 'admin', tenant: $patient->practice);
+        if ($tooth = request('tooth')) {
+            $url .= '?tooth='.urlencode((string) $tooth);
+        }
+
+        return redirect()->to($url);
+
         // Get or create the latest examination
-        $examination = $patient->examinations()->latest('examined_at')->first();
+        $examination = $patient->examinations()->latest('id')->first();
         if (!$examination) {
             $examination = $patient->examinations()->create([
                 'doctor_id' => auth()->id(),
@@ -237,7 +245,7 @@ class PatientOdontogramController extends Controller
             ]
         );
 
-        $latestExam = $patient->examinations()->latest('examined_at')->first();
+        $latestExam = $patient->examinations()->latest('id')->first();
         if (!$latestExam) {
             $latestExam = $patient->examinations()->create([
                 'doctor_id' => auth()->id() ?? 1,

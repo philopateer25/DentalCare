@@ -87,6 +87,8 @@ class PatientProfileHeaderWidget extends Widget
             'invoiceUrl' => InvoiceResource::getUrl('create'),
             'invoicesUrl' => InvoiceResource::getUrl('index'),
             'editUrl' => PatientResource::getUrl('edit', ['record' => $patient]),
+            'chartUrl' => \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::canUseChart()
+                ? PatientResource::getUrl('chart', ['record' => $patient]) : null,
             'appointmentUrl' => $upcoming ? AppointmentResource::getUrl('edit', ['record' => $upcoming]) : null,
             'whatsappUrl' => $phone ? 'https://wa.me/'.$phone : null,
         ];

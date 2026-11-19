@@ -176,6 +176,7 @@ class PatientResource extends Resource
             'create' => Pages\CreatePatient::route('/create'),
             'view' => Pages\ViewPatient::route('/{record}'),
             'edit' => Pages\EditPatient::route('/{record}/edit'),
+            'chart' => Pages\ChartWorkspace::route('/{record}/chart'),
         ];
     }
 }

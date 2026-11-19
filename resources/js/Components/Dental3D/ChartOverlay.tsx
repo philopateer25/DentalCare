@@ -239,11 +239,10 @@ export default function ChartOverlay(props: Props) {
 
           <a
             href={`/patients/${props.patientId}/odontogram-details?tooth=${selectedTooth}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            target="_top"
             className="mt-3 flex min-h-[40px] items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500"
           >
-            Full clinical details (surfaces, perio, notes)
+            Open dental chart (surfaces, diagnosis, history)
           </a>
         </div>
       )}

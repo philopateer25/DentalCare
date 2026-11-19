@@ -144,11 +144,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/patients/{patient}/treatment-plans/active', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'getActivePlan']);
     Route::post('/api/treatment-plans/{plan}/procedures', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'addProcedure']);
 
+    // Chart workspace (Filament: Patients -> Chart) and its printable summary
+    Route::get('/api/patients/{patient}/chart-workspace', [\App\Http\Controllers\Api\ChartWorkspaceController::class, 'show']);
+    Route::get('/patients/{patient}/chart/print', [\App\Http\Controllers\ChartPrintController::class, 'show'])->name('patient.chart.print');
+
     // Procedure Codes & Fee Schedule API
     Route::get('/api/procedure-codes', function () {
         return \App\Models\ProcedureCode::with('category')->orderBy('code')->get();
     });
     Route::patch('/api/procedure-codes/{procedureCode}', function (\App\Models\ProcedureCode $procedureCode, \Illuminate\Http\Request $request) {
+        // The fee schedule is clinic-wide: only admins may change it (it used to be editable by any user).
+        abort_unless(auth()->user()->hasAnyRole(['clinic_admin', 'super_admin', 'developer']), 403, 'Only clinic admins can change the fee schedule.');
         $validated = $request->validate([
             'standard_fee' => 'required|numeric|min:0',
             'estimated_duration_minutes' => 'nullable|integer|min:1',
@@ -160,6 +166,7 @@ Route::middleware('auth')->group(function () {
         ]);
     });
     Route::post('/api/procedure-codes', function (\Illuminate\Http\Request $request) {
+        abort_unless(auth()->user()->hasAnyRole(['clinic_admin', 'super_admin', 'developer']), 403, 'Only clinic admins can change the fee schedule.');
         $validated = $request->validate([
             'code' => 'required|string|unique:procedure_codes,code',
             'title' => 'required|string',

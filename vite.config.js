@@ -14,6 +14,9 @@ export default defineConfig({
                 'resources/css/filament-calendar.css',
                 'resources/css/filament-theme.css',
                 'resources/js/filament/appointments-calendar.jsx',
+                // Chart workspace (Patients -> Chart)
+                'resources/css/chart-workspace.css',
+                'resources/js/filament/chart-workspace.jsx',
             ],
             refresh: true,
         }),

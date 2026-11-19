@@ -107,6 +107,80 @@ class OdontogramRules
         return null;
     }
 
+    public const DIAGNOSIS_FIELDS = ['diagnosis', 'severity', 'urgency', 'mobility'];
+
+    /**
+     * Normalise a stored tooth record for the chart workspace.
+     *
+     * The legacy chart wrote diagnosis/severity/urgency/mobility into the free-text notes,
+     * either as JSON or as "[Dx: …] [Severity: …]" tags. Those values move into
+     * clinical_details and are stripped from the notes; they are persisted structured
+     * on the next save of that tooth.
+     *
+     * @return array{notes: ?string, clinical_details: array<string, mixed>}
+     */
+    public static function normaliseRecord(?string $notes, mixed $clinicalDetails): array
+    {
+        $details = is_array($clinicalDetails) ? $clinicalDetails : [];
+        $notes = $notes !== null ? trim($notes) : null;
+
+        if ($notes) {
+            $json = json_decode($notes, true);
+            if (is_array($json) && array_intersect(array_keys($json), self::DIAGNOSIS_FIELDS)) {
+                foreach (self::DIAGNOSIS_FIELDS as $field) {
+                    if (! empty($json[$field]) && empty($details[$field])) {
+                        $details[$field] = $json[$field];
+                    }
+                }
+                $notes = isset($json['notes']) && is_string($json['notes']) ? $json['notes'] : null;
+            } else {
+                $tags = ['diagnosis' => 'Dx', 'severity' => 'Severity', 'urgency' => 'Urgency', 'mobility' => 'Mobility'];
+                foreach ($tags as $field => $tag) {
+                    if (preg_match('/\['.$tag.':\s*([^\]]+)\]/i', $notes, $m)) {
+                        if (empty($details[$field])) {
+                            $details[$field] = trim($m[1]);
+                        }
+                        $notes = trim(preg_replace('/\['.$tag.':\s*[^\]]+\]/i', '', $notes));
+                    }
+                }
+            }
+        }
+
+        return ['notes' => $notes !== '' ? $notes : null, 'clinical_details' => $details];
+    }
+
+    /**
+     * Surfaces after a procedure is completed: a restoration turns carious surfaces into the
+     * restoring material; an extraction clears them. Other procedures leave surfaces unchanged.
+     *
+     * @param  array<string, string>  $surfaces
+     * @return array<string, string>
+     */
+    public static function surfacesAfterProcedure(?string $code, array $surfaces): array
+    {
+        $code = strtoupper(trim((string) $code));
+        if (! preg_match('/^D(\d{4})$/', $code, $m)) {
+            return $surfaces;
+        }
+        $n = (int) $m[1];
+
+        $material = match (true) {
+            $n >= 2140 && $n <= 2161 => 'amalgam',
+            ($n >= 2330 && $n <= 2394) || ($n >= 2510 && $n <= 2664) => 'composite_filled',
+            default => null,
+        };
+
+        if ($material) {
+            return array_map(fn ($v) => $v === 'active_caries' ? $material : $v, $surfaces);
+        }
+
+        if (self::conditionAfterProcedure($code) === 'missing') {
+            return array_map(fn () => 'healthy', $surfaces);
+        }
+
+        return $surfaces;
+    }
+
     /**
      * Tooth condition after a procedure is completed, decided by CDT code range.
      * Returns null when the procedure does not change the charted condition

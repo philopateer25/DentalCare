@@ -42,7 +42,7 @@ class DentalExaminationController extends Controller
         ]);
 
         $previous = $patient->examinations()->with('toothFindings.surfaceFindings')
-            ->latest('examined_at')->latest('id')->first();
+            ->latest('id')->first();
 
         $examination = $patient->examinations()->create([
             'doctor_id' => auth()->id(),
@@ -79,6 +79,17 @@ class DentalExaminationController extends Controller
     public function show(DentalExamination $examination)
     {
         $this->authorizeExamination($examination);
+
+        // The Chart workspace asks for the normalised shape (structured diagnosis).
+        if (request()->boolean('normalised')) {
+            // The newest exam also shows teeth charted only at patient level (older data),
+            // matching what the workspace shows on first load.
+            $patient = $examination->patient;
+            $isCurrent = $patient && $patient->examinations()->max('id') === $examination->id;
+
+            return response()->json((object) \App\Http\Controllers\Api\ChartWorkspaceController::records($examination, $isCurrent ? $patient : null));
+        }
+
         // Load findings with their surface findings
         $examination->load('toothFindings.surfaceFindings');
 

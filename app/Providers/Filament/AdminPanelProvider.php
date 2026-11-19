@@ -28,9 +28,19 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->tenant(\App\Models\Practice::class)
             ->login()
-            ->brandName('DentalCare Management')
+            ->brandName('DOXamigo')
+            ->brandLogo(fn () => view('filament.brand.logo'))
+            ->brandLogoHeight('2.25rem')
+            ->favicon(asset('images/icon-512x512.png'))
+            ->font('DM Sans')
+            // DOXamigo brand kit: blue #3859a8, teal #009e83, red #d82c1e
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => Color::hex('#3859a8'),
+                'success' => Color::hex('#009e83'),
+                'danger' => Color::hex('#d82c1e'),
+                'warning' => Color::Amber,
+                'info' => Color::Sky,
+                'gray' => Color::Slate,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -59,6 +69,15 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => '<link rel="manifest" href="/manifest.json">'
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // DOXamigo theme layered over Filament's CSS (plain CSS, see docs/decisions.md #13)
+                fn (): string => app(\Illuminate\Foundation\Vite::class)(['resources/css/filament-theme.css'])->toHtml()
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::FOOTER,
+                fn () => view('filament.brand.footer')
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,

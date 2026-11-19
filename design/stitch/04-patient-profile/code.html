@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "outline": "#747782",
+          "secondary-fixed": "#80f7d8",
+          "surface-tint": "#3a5baa",
+          "primary-fixed-dim": "#b2c5ff",
+          "on-primary-fixed-variant": "#1e4291",
+          "on-tertiary-fixed": "#410000",
+          "primary": "#1b418f",
+          "tertiary-container": "#ba120a",
+          "on-surface-variant": "#444651",
+          "on-tertiary": "#ffffff",
+          "surface-container-high": "#e2e7ff",
+          "outline-variant": "#c4c6d3",
+          "surface-container-low": "#f2f3ff",
+          "surface-dim": "#d2d9f4",
+          "on-secondary-fixed": "#002019",
+          "error": "#ba1a1a",
+          "inverse-surface": "#283044",
+          "tertiary-fixed-dim": "#ffb4a8",
+          "inverse-on-surface": "#eef0ff",
+          "secondary-fixed-dim": "#61dbbd",
+          "on-error-container": "#93000a",
+          "background": "#faf8ff",
+          "on-error": "#ffffff",
+          "on-primary-fixed": "#001848",
+          "on-secondary-fixed-variant": "#005142",
+          "primary-fixed": "#dae2ff",
+          "on-primary": "#ffffff",
+          "on-surface": "#131b2e",
+          "tertiary": "#900001",
+          "on-secondary": "#ffffff",
+          "on-primary-container": "#c8d5ff",
+          "on-secondary-container": "#00705c",
+          "inverse-primary": "#b2c5ff",
+          "on-tertiary-fixed-variant": "#930001",
+          "on-tertiary-container": "#ffcac1",
+          "surface": "#faf8ff",
+          "primary-container": "#3859a8",
+          "surface-container": "#eaedff",
+          "on-background": "#131b2e",
+          "surface-bright": "#faf8ff",
+          "tertiary-fixed": "#ffdad4",
+          "error-container": "#ffdad6",
+          "surface-variant": "#dae2fd",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-highest": "#dae2fd",
+          "secondary": "#006b58",
+          "secondary-container": "#7df5d5"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-md": "0.75rem",
+          "space-xs": "0.25rem",
+          "margin": "1.5rem",
+          "space-lg": "1rem",
+          "margin-mobile": "1rem",
+          "gutter-compact": "0.5rem",
+          "space-xl": "1.5rem",
+          "space-sm": "0.5rem",
+          "gutter": "1rem"
+        },
+        "fontFamily": {
+          "body-lg": ["DM Sans"],
+          "body-sm": ["DM Sans"],
+          "headline-md": ["DM Sans"],
+          "headline-sm": ["DM Sans"],
+          "label-md": ["DM Sans"],
+          "body-md": ["DM Sans"],
+          "label-sm": ["DM Sans"],
+          "headline-lg": ["DM Sans"],
+          "label-lg": ["DM Sans"]
+        },
+        "fontSize": {
+          "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+          "headline-md": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600"}],
+          "headline-sm": ["15px", {"lineHeight": "20px", "fontWeight": "600"}],
+          "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+          "body-md": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+          "headline-lg": ["25px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+          "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface text-on-surface font-body-md text-body-md antialiased min-h-screen"><aside class="fixed left-0 top-0 h-screen w-60 bg-surface-container-lowest z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between bg-surface-container-lowest sticky top-0 z-10"><div class="flex items-center gap-space-sm"><img alt="DOXamigo Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrDhbJEGGNY0jog5Z_Jkm-LCsE_XH75zBkcBhUwQcc7l4c2SN8pLsWQdWhxyJhnnsMvtpK-tSZd5rMX-meBxYG1nrY-VWkUcLL2dc0PMiQAhWaQqX8-YYf4SDU_wzkZ3IkxDOaxS0Ar79Vht_PTV74YDdr1wYUXE4nLvlRqDfnpUA41of8QHaf6MLqBSMACdQhY0qD0kRxDXMLRsbPD516D_cDT8X2mhNL_8E2O9HpyrHw"/><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight">DOXamigo</span><span class="font-label-sm text-label-sm text-on-surface-variant">Dental Cloud</span></div></div><button class="p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Collapse navigation rail" type="button"><span class="material-symbols-outlined text-[18px]">menu_open</span></button></div><div class="h-[2px] w-full bg-gradient-to-r from-primary via-secondary to-tertiary opacity-80"></div><nav class="px-space-sm py-space-md flex flex-col gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-xs pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Overview</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="font-label-lg text-label-lg">Overview</span></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Clinical &amp; Patients</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="patients" href="#"><span class="font-label-lg text-label-lg">Patients Directory</span><span class="px-space-xs py-[2px] rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm">1,420</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all pl-space-xl" data-path="patient-profile" href="#"><span class="font-label-lg text-label-lg">Patient Profile</span><span class="px-space-xs py-[2px] rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">Active</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="odontogram-charting" href="#"><span class="font-label-lg text-label-lg">Odontogram &amp; Chart</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="treatment-plans" href="#"><span class="font-label-lg text-label-lg">Treatment Plans</span><span class="px-space-xs py-[2px] rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">18</span></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Scheduling</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="appointment-calendar" href="#"><span class="font-label-lg text-label-lg">Appointments</span><span class="px-space-xs py-[2px] rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">42</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="operatory-schedule" href="#"><span class="font-label-lg text-label-lg">Operatory Chairs</span></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Finance</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="billing-invoices" href="#"><span class="font-label-lg text-label-lg">Invoices &amp; Billing</span><span class="px-space-xs py-[2px] rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm">7 Due</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="insurance-claims" href="#"><span class="font-label-lg text-label-lg">Insurance Claims</span></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Clinic Operations</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="inventory" href="#"><span class="font-label-lg text-label-lg">Supplies Inventory</span></a><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="staff-management" href="#"><span class="font-label-lg text-label-lg">Doctors &amp; Staff</span></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">Settings</span></div><a class="group flex items-center justify-between px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="clinic-settings" href="#"><span class="font-label-lg text-label-lg">System &amp; Branches</span></a></nav></div><div class="p-space-md bg-surface-container-low mx-space-sm mb-space-md rounded-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm font-semibold text-on-surface">Server Online</span></div><span class="font-label-sm text-label-sm text-outline">v2.8.4</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">Downtown Center synced just now</p></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-16 bg-surface/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-margin flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-1 max-w-2xl"><div class="relative flex items-center"><button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container-high hover:text-on-surface text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px] text-primary">domain</span><span class="font-label-lg text-label-lg font-semibold truncate max-w-[190px]">Downtown Dental Center - Main Clinic</span><span class="material-symbols-outlined text-[16px] text-outline">expand_more</span></button></div><div class="relative flex-1"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span><input class="w-full h-9 pl-9 pr-space-md rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search patients, records, doctors, invoices..." type="text"/></div></div><div class="flex items-center gap-space-sm"><button class="relative p-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" title="Notifications" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tertiary-container ring-2 ring-surface"></span></button><button class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md font-semibold" title="Switch Theme" type="button"><span class="material-symbols-outlined text-[18px]">light_mode</span><span class="hidden lg:inline">Light</span></button><button class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-md text-label-md font-semibold" title="Toggle Arabic / RTL Layout" type="button"><span class="material-symbols-outlined text-[18px]">translate</span><span>العربية / EN</span></button><div class="h-5 w-[1px] bg-outline-variant mx-space-xs"></div><div class="flex items-center gap-space-sm pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEZDxnow1qESDQ4YsDZl54Bj6EznK3dZrqdIcyybtPTytfT_yTlmoIGO6xCzkgon_Rzl1txtPn6_aLONVL54yxFXP9Ci-vrc2yapLo4XV5hjlfEMaow8xnV1Bg6wJVJ6EfVFrRNUAJZtxU3_kJE4aXDHdo_ZaZMBPm__vcspvlJ7a5WN9LjykewQ6p0rd4YptHvFCjPQx3WUCERndLKC1RUZ4C-m_9R9TmiyTymyiO"/><div class="hidden xl:flex flex-col"><span class="font-label-lg text-label-lg font-semibold text-on-surface leading-tight">Sarah Jenkins</span><span class="font-label-sm text-label-sm text-outline">Clinic Admin</span></div><button class="p-space-xs rounded text-outline hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">expand_more</span></button></div></div></div></header><main class="w-full pt-16 min-h-[calc(100vh-48px)] bg-surface"><div class="flex flex-col w-full">
+<!-- Breadcrumb Bar -->
+<div class="w-full px-margin py-space-sm bg-surface-container-low flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm text-outline">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[15px]">people</span>
+<span>Patients Directory</span>
+</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-semibold text-on-surface">Omar Qasim</span>
+<span class="px-space-xs py-[1px] rounded bg-surface-container-high text-primary font-mono text-[10px] font-bold">#P-9840</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-secondary bg-secondary-fixed/50 px-2 py-0.5 rounded-full font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+        Synchronized Chairside
+      </span>
+<span class="font-body-sm text-body-sm text-outline">Last visit: 12 Oct 2024</span>
+</div>
+</div>
+<!-- Main View Area -->
+<div class="w-full max-w-[1600px] mx-auto p-margin flex flex-col gap-space-lg">
+<!-- 1. PATIENT HEADER CARD -->
+<section class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm relative overflow-hidden">
+<!-- Top Brand Ribbon -->
+<div class="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary via-secondary to-tertiary"></div>
+<div class="flex flex-col xl:flex-row gap-space-lg items-start justify-between">
+<!-- Patient Identity & Meta Block -->
+<div class="flex flex-col sm:flex-row gap-space-lg items-start flex-1 min-w-0">
+<!-- Avatar with Status Ring -->
+<div class="relative shrink-0">
+<img class="w-24 h-24 rounded-2xl object-cover shadow-sm bg-surface-container" data-alt="Editorial close-up portrait of Omar Qasim, a professional 34-year-old Middle Eastern male with a friendly and warm smile, subtle clinical backdrop with soft natural daylight studio lighting, wearing a navy collared linen shirt, photorealistic medical portraiture in clinical palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSDmpfopjm19_TelfeGtGwDwxoh9zVsiTSzDYOTUg9E7nGggzaxbqGaSqcX5g1gg30s0HUGmn2TSLCdEyUXIv3JyO1weWs74TVvOFwyItZbt3VlEQRFS1SniQV4el19aU9E0Q83h5yMZm5UqniA8uD7rXvqRwxTG6spKkbaoX_NSGOppLibkacVV4kEso0R7VZWcWJ-gADg5hmhI1cRf_Q3LVBLCWvW0PhUouv-AV1"/>
+<span class="absolute -bottom-1.5 -right-1.5 bg-secondary text-on-secondary text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-0.5" title="Active Patient">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-container-lowest animate-ping"></span>
+              ACTIVE
+            </span>
+</div>
+<!-- Demographic & Vital Specs -->
+<div class="flex flex-col gap-space-xs min-w-0 flex-1">
+<div class="flex flex-wrap items-center gap-space-xs">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Omar Qasim</h1>
+<div class="inline-flex items-center gap-1 bg-surface-container-high px-2 py-0.5 rounded text-primary font-mono text-body-sm font-semibold">
+<span>#P-9840</span>
+<button class="hover:text-primary-container transition-colors" onclick="navigator.clipboard.writeText('P-9840')" title="Copy File Number">
+<span class="material-symbols-outlined text-[13px]">content_copy</span>
+</button>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold">VIP Patient</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">Orthodontics</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Recall Oct</span>
+</div>
+<!-- Demographics Data String -->
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1 font-body-sm text-body-sm text-outline">
+<span class="flex items-center gap-1 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[15px] text-outline">badge</span>
+                Male, 34 yrs (14 Aug 1990)
+              </span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary">water_drop</span>
+                Blood: <strong class="text-on-surface font-semibold">O+</strong>
+</span>
+<span>•</span>
+<span class="font-mono">Civil ID: 784-1990-128491-3</span>
+<span>•</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">translate</span>
+                Arabic &amp; English
+              </span>
+</div>
+<!-- Contacts & Insurance Bar -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm pt-space-xs mt-1 bg-surface-container-low p-space-sm rounded-lg">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px] text-secondary">verified</span>
+<a class="text-on-surface font-semibold hover:text-primary font-mono" href="tel:+971503429811">+971 50 342 9811</a>
+<span class="text-outline text-[11px]">• Mobile</span>
+</div>
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px] text-outline">mail</span>
+<a class="text-on-surface hover:text-primary truncate" href="mailto:omar.qasim@outlook.com">omar.qasim@outlook.com</a>
+</div>
+</div>
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-space-xs font-body-sm text-body-sm">
+<span class="flex items-center gap-1 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[15px] text-primary">health_and_safety</span>
+                    Daman Enhanced Care
+                  </span>
+<span class="font-label-sm text-label-sm font-bold text-secondary bg-secondary-fixed/50 px-1.5 rounded">80% Plan</span>
+</div>
+<div class="flex items-center justify-between text-outline font-body-sm text-body-sm font-mono">
+<span>Policy: #DXB-88301</span>
+<span class="text-on-surface-variant font-sans">Attending: <strong>Dr. M. Vance</strong></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Financial Callout & Action Controls -->
+<div class="flex flex-col sm:flex-row xl:flex-col items-stretch xl:items-end justify-between gap-space-md w-full xl:w-80 shrink-0">
+<!-- Balance Warning Callout -->
+<div class="w-full bg-error-container/60 p-space-md rounded-xl flex items-center justify-between gap-space-sm">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-tertiary-container text-on-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">priority_high</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase font-bold text-tertiary tracking-wider">Balance Due Overdue</span>
+<span class="font-headline-md text-headline-md text-tertiary font-bold leading-tight">$450.00</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">#INV-2024-884 • 28 days pending</span>
+</div>
+</div>
+<div class="flex flex-col items-end text-right">
+<span class="font-label-sm text-label-sm text-outline">Lifetime Spend</span>
+<span class="font-label-lg text-label-lg font-bold text-on-surface font-mono">$4,280.00</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex flex-wrap items-center gap-space-xs w-full xl:justify-end">
+<button class="flex-1 sm:flex-initial h-9 px-space-md rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[17px]">calendar_month</span>
+<span>Book Appointment</span>
+</button>
+<button class="flex-1 sm:flex-initial h-9 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-lg text-label-lg font-semibold flex items-center justify-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-[17px] text-primary">receipt_long</span>
+<span>New Invoice</span>
+</button>
+<a class="h-9 px-3 rounded-lg bg-secondary hover:bg-on-secondary-container text-on-secondary font-label-lg text-label-lg font-semibold flex items-center justify-center gap-1 transition-all" href="https://wa.me/971503429811" target="_blank" title="Direct WhatsApp Patient Chat">
+<span class="material-symbols-outlined text-[17px]">chat</span>
+<span class="hidden sm:inline">WhatsApp</span>
+</a>
+<div class="relative">
+<button class="h-9 w-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center transition-colors" title="Additional Profile Options">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. CLINICAL PROFILE NAVIGATION TABS -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm px-space-md pt-2 flex items-center justify-between overflow-x-auto">
+<nav class="flex items-center gap-space-xs font-label-lg text-label-lg shrink-0">
+<!-- Active Tab: Overview -->
+<a class="relative px-space-md py-3 text-primary font-bold flex items-center gap-2 border-b-2 border-primary" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span>Overview</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</a>
+<!-- Odontogram Chart -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">dentistry</span>
+<span>Dental Chart</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface text-[10px] font-semibold">32 teeth</span>
+</a>
+<!-- Treatment Plans -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">clinical_notes</span>
+<span>Treatment Plans</span>
+<span class="px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold">1 Active</span>
+</a>
+<!-- Appointments -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">event</span>
+<span>Appointments</span>
+<span class="px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold">1 Upcoming</span>
+</a>
+<!-- Invoices & Payments -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+<span>Invoices &amp; Payments</span>
+<span class="px-1.5 py-0.5 rounded-full bg-error-container text-tertiary font-bold text-[10px]">$450 due</span>
+</a>
+<!-- Medical History -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">medical_information</span>
+<span>Medical History</span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</a>
+<!-- Files & X-Rays -->
+<a class="px-space-md py-3 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[18px]">radiology</span>
+<span>Files &amp; X-Rays</span>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container-high text-outline text-[10px] font-semibold">14</span>
+</a>
+</nav>
+<div class="hidden lg:flex items-center gap-space-xs text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px]">print</span>
+<button class="hover:text-on-surface transition-colors font-medium">Print Patient Record</button>
+</div>
+</div>
+<!-- 3. OVERVIEW TAB CONTENT (Bespoke 2-Column Split Bento Architecture) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: Alerts & Treatment Plans (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-lg">
+<!-- A. ALLERGIES & CRITICAL MEDICAL ALERTS -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md relative">
+<!-- Ambient subtle coral tint banner -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-8 h-8 rounded-lg bg-tertiary-container/15 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Medical Alerts &amp; Sensitivities</h2>
+<p class="font-body-sm text-body-sm text-outline">Clinical contraindications and safety protocol checks</p>
+</div>
+</div>
+<button class="text-primary hover:text-primary-container font-label-md text-label-md font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[15px]">add</span>
+<span>Update History</span>
+</button>
+</div>
+<!-- Alert Badges Mosaics -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm pt-space-xs">
+<!-- Penicillin Critical Alert -->
+<div class="p-space-md rounded-xl bg-error-container/70 flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-tertiary text-on-tertiary font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shield_with_heart</span>
+                  Penicillin Allergy (High Risk)
+                </span>
+<span class="font-mono text-tertiary font-bold text-[10px]">CRITICAL</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">Reaction: Severe anaphylactoid urticaria recorded in hospital stay 2021. Avoid all beta-lactams &amp; Amoxicillin.</p>
+</div>
+<!-- Mild Hypertension -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-primary">vital_signs</span>
+                  Mild Hypertension (Stage 1)
+                </span>
+<span class="font-mono text-primary font-bold text-[11px]">132/84</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Monitored at triage. Verified safe for local infiltration with standard 1:100,000 epinephrine.</p>
+</div>
+<!-- Latex Sensitivity -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-outline">do_not_touch</span>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Latex Sensitivity</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Use synthetic nitrile gloves &amp; non-latex rubber dam</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-outline font-label-sm text-label-sm">Noted</span>
+</div>
+<!-- Bleeding Risk Normal -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Bleeding Risk: Normal</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">No anticoagulant therapies active. INR not required.</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">Cleared</span>
+</div>
+</div>
+</div>
+<!-- B. ACTIVE TREATMENT PLAN PROGRESS CARD -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-mono font-bold text-[10px]">#TP-2024-09</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold uppercase tracking-wider">Active Plan</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">Full Arch Rehabilitation &amp; Posterior Crowns</h2>
+<span class="font-body-sm text-body-sm text-outline">Lead Clinician: Dr. Marcus Vance (Prosthodontics) • Started Oct 05, 2024</span>
+</div>
+<div class="flex flex-col sm:items-end">
+<span class="font-headline-md text-headline-md text-primary font-bold font-mono">$2,850.00</span>
+<span class="font-body-sm text-body-sm text-outline">Ins: $1,950.00 | Copay: $900.00</span>
+</div>
+</div>
+<!-- Progress Bar & Analytics -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-semibold text-on-surface">Phase Completion Status</span>
+<span class="font-bold text-secondary font-mono">65% (Phase 3 of 4 Active)</span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container-highest overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-secondary to-primary transition-all duration-500" style="width: 65%;"></div>
+</div>
+</div>
+<!-- Step Progression Roadmap -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Step 1: Completed -->
+<div class="flex items-start gap-space-md p-space-sm rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Phase 1: Full-Mouth Ultrasonic Scaling &amp; Root Planing</span>
+<span class="font-mono text-body-sm text-secondary font-semibold">Oct 12, 2024</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Completed by Hygienist Leila Noor. Gingival pockets reduced from 5mm to 3mm.</p>
+</div>
+</div>
+<!-- Step 2: Completed -->
+<div class="flex items-start gap-space-md p-space-sm rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Phase 2: Root Canal Obturation &amp; Fiber Post #14</span>
+<span class="font-mono text-body-sm text-secondary font-semibold">Oct 20, 2024</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Endodontic seal verified via post-op RVG. Asymptomatic periapical condition.</p>
+</div>
+</div>
+<!-- Step 3: Current Scheduled -->
+<div class="flex items-start gap-space-md p-space-sm rounded-lg bg-primary/5">
+<div class="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+<span class="material-symbols-outlined text-[16px]">pending</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-primary">Phase 3: Crown Preparation &amp; CAD/CAM Provisional #14</span>
+<span class="px-2 py-0.5 rounded bg-primary text-on-primary font-mono text-[10px] font-bold">Tomorrow 14:30</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">Tooth reduction, optical scan with iTero 5D Element, provisional acrylic temp placement.</p>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex items-start gap-space-md p-space-sm rounded-lg opacity-60">
+<div class="w-7 h-7 rounded-full bg-surface-container-highest text-outline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Phase 4: Final Monolithic Zirconia Crown Cementation</span>
+<span class="font-body-sm text-body-sm text-outline">Scheduled post-lab return</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Permanent adhesive cementation using RelyX Ultimate resin cement. Bite check.</p>
+</div>
+</div>
+</div>
+<!-- Bottom Action Link -->
+<div class="pt-space-xs flex justify-between items-center border-t border-surface-container">
+<span class="font-body-sm text-body-sm text-outline">Lab Order #LAB-8839 in progress at Downtown Milling Center</span>
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-variant text-primary font-label-md text-label-md font-bold flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">dentistry</span>
+<span>View Full Treatment Plan &amp; Odontogram</span>
+</button>
+</div>
+</div>
+<!-- Mini Visual X-Ray Insight Strip -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<img class="w-16 h-16 rounded-lg object-cover bg-black shrink-0" data-alt="Digital dental bitewing and periapical X-ray of upper molar tooth 14 showing clear root canal obturation and surrounding bone trabeculation, high contrast monochrome clinical radiograph." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5JL8j6hgi_XUfKuGSQ-7NDg6auQp-2kdICkhKY2i7dTH0_35NaiB1_ZpeugmGCugGSJOH0n8wKQ8k_mtxa-XYo9abO1Yr8hn49lxeMW08QgRki4x4rENZVrjRnuTcF6cbwZjyrahJfi3pksaGbfsy31IIEXL4Xg8HoL5xWUhSJQOgf4Jnrgrx3oTlwPrkiqR0NxuYb0TxUXlmF2_tPx4bVFUlVoQOrQZ2NAUf-SmA"/>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Latest Digital Radiograph (PA #14)</span>
+<span class="font-body-sm text-body-sm text-outline">Acquired Oct 20, 2024 by Sensor Carestream RVG 6200 • Normal trabecular density</span>
+</div>
+</div>
+<button class="h-8 px-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container-high text-primary font-label-md text-label-md font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">open_in_full</span>
+<span>DICOM Viewer</span>
+</button>
+</div>
+</div>
+<!-- RIGHT COLUMN: Appointments & Invoices (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg">
+<!-- C. UPCOMING APPOINTMENTS CARD -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Upcoming Chair Visit</h2>
+<span class="font-body-sm text-body-sm text-outline">Scheduled Operatory slot</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Confirmed
+            </span>
+</div>
+<!-- Highlight Next Appointment Container -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Tomorrow, Oct 24, 2024</span>
+<span class="font-mono font-bold text-on-surface bg-surface-container-lowest px-2 py-0.5 rounded text-body-sm shadow-xs">14:30 – 15:15 (45m)</span>
+</div>
+<div class="flex flex-col gap-1 font-body-sm text-body-sm">
+<div class="flex items-center gap-2 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span>Dr. Marcus Vance (Prosthodontist)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[16px] text-outline">chair</span>
+<span>Operatory 02 (Surgical &amp; Prosthetic Suite)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-[16px] text-primary">dentistry</span>
+<span>Crown Prep - Tooth #14 (CDT D2750)</span>
+</div>
+</div>
+<!-- SMS Delivery & Hardware Notes -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">sms</span>
+<span>Automated SMS reminder confirmed by patient at 10:14 today</span>
+</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+<span class="material-symbols-outlined text-[14px]">sensors_off</span>
+<span>Sensor Inactive notice flagged for Operatory 02 — Assist notified</span>
+</div>
+</div>
+<!-- Fast Chair Actions -->
+<div class="flex items-center gap-space-xs pt-space-xs">
+<button class="flex-1 h-8 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[15px]">how_to_reg</span>
+<span>Check-in Patient</span>
+</button>
+<button class="h-8 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md font-medium transition-colors">
+                Reschedule
+              </button>
+<button class="h-8 px-2 rounded-lg bg-surface-container-high hover:bg-error-container text-tertiary transition-colors" title="Cancel Appointment">
+<span class="material-symbols-outlined text-[16px]">event_busy</span>
+</button>
+</div>
+</div>
+<!-- Previous Visit Mini Summary -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-lowest">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[17px]">done_all</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Previous: Oct 12, 2024</span>
+<span class="font-body-sm text-body-sm text-outline">Prophylaxis &amp; Root Scaling by Dr. Vance</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Completed</span>
+</div>
+</div>
+<!-- D. RECENT INVOICES & FINANCIAL SUMMARY TABLE -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-8 h-8 rounded-lg bg-surface-container-high text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ledger &amp; Invoices</h2>
+<span class="font-body-sm text-body-sm text-outline">Recent dental billings &amp; claims</span>
+</div>
+</div>
+<a class="font-label-md text-label-md text-primary hover:text-primary-container font-bold flex items-center gap-0.5" href="#">
+<span>View All (8)</span>
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+<!-- Invoices Data Table -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider">
+<th class="p-space-sm rounded-l-lg">Invoice / Date</th>
+<th class="p-space-sm">Procedure</th>
+<th class="p-space-sm text-right">Total</th>
+<th class="p-space-sm text-right">Patient Due</th>
+<th class="p-space-sm text-center">Status</th>
+<th class="p-space-sm text-right rounded-r-lg">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1: Overdue Invoice -->
+<tr class="hover:bg-error-container/20 transition-colors">
+<td class="p-space-sm">
+<div class="flex flex-col">
+<span class="font-mono font-bold text-on-surface">#INV-2024-884</span>
+<span class="text-outline text-[10px]">12 Oct 2024</span>
+</div>
+</td>
+<td class="p-space-sm font-medium text-on-surface">
+<span class="line-clamp-1">Prophylaxis &amp; Root Scaling</span>
+<span class="text-outline text-[10px]">Ins: $0.00 (Denied)</span>
+</td>
+<td class="p-space-sm text-right font-mono font-semibold text-on-surface">$450.00</td>
+<td class="p-space-sm text-right font-mono font-bold text-tertiary">$450.00</td>
+<td class="p-space-sm text-center">
+<span class="px-2 py-0.5 rounded-full bg-error-container text-tertiary font-label-sm text-label-sm font-bold">OVERDUE</span>
+</td>
+<td class="p-space-sm text-right">
+<button class="h-7 px-2 rounded bg-tertiary text-on-tertiary font-label-sm text-label-sm font-bold hover:bg-tertiary-container transition-colors shadow-xs">
+                      Pay Now
+                    </button>
+</td>
+</tr>
+<!-- Row 2: Settled -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-space-sm">
+<div class="flex flex-col">
+<span class="font-mono font-bold text-on-surface">#INV-2024-792</span>
+<span class="text-outline text-[10px]">15 Sep 2024</span>
+</div>
+</td>
+<td class="p-space-sm font-medium text-on-surface">
+<span class="line-clamp-1">Root Canal Therapy #14</span>
+<span class="text-secondary text-[10px]">Daman paid $960.00</span>
+</td>
+<td class="p-space-sm text-right font-mono text-outline">$1,200.00</td>
+<td class="p-space-sm text-right font-mono text-on-surface font-semibold">$240.00</td>
+<td class="p-space-sm text-center">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">SETTLED</span>
+</td>
+<td class="p-space-sm text-right">
+<button class="h-7 px-2 rounded text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors" title="Download Receipt">
+<span class="material-symbols-outlined text-[16px]">receipt</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Settled -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-space-sm">
+<div class="flex flex-col">
+<span class="font-mono font-bold text-on-surface">#INV-2024-650</span>
+<span class="text-outline text-[10px]">04 Jul 2024</span>
+</div>
+</td>
+<td class="p-space-sm font-medium text-on-surface">
+<span class="line-clamp-1">Diagnostic Exam &amp; OPG</span>
+<span class="text-secondary text-[10px]">Daman paid $280.00</span>
+</td>
+<td class="p-space-sm text-right font-mono text-outline">$350.00</td>
+<td class="p-space-sm text-right font-mono text-on-surface font-semibold">$70.00</td>
+<td class="p-space-sm text-center">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">SETTLED</span>
+</td>
+<td class="p-space-sm text-right">
+<button class="h-7 px-2 rounded text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors" title="Download Receipt">
+<span class="material-symbols-outlined text-[16px]">receipt</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Bottom Financial Quick Actions -->
+<div class="flex items-center justify-between pt-space-xs">
+<button class="h-8 px-space-md rounded-lg bg-secondary hover:bg-on-secondary-container text-on-secondary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors shadow-xs">
+<span class="material-symbols-outlined text-[16px]">add_card</span>
+<span>Receive Payment</span>
+</button>
+<button class="h-8 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-md text-label-md font-medium flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Download Financial Statement</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-[3px] w-full bg-gradient-to-r from-primary via-secondary to-tertiary opacity-90"></div><div class="h-12 w-full px-margin flex items-center justify-between text-outline font-label-md text-label-md"><div class="flex items-center gap-space-md"><span>© 2025 DOXamigo Clinical Systems</span><span class="text-outline-variant">•</span><span>Downtown Dental Center Branch #01</span></div><div class="flex items-center gap-space-lg"><span class="flex items-center gap-space-xs text-secondary font-medium"><span class="material-symbols-outlined text-[14px]">verified_user</span>HIPAA &amp; HL7 Certified</span><span class="text-outline-variant">•</span><a class="hover:text-primary transition-colors" href="#">Support Desk</a><a class="hover:text-primary transition-colors" href="#">Clinical Guidelines</a></div></div></footer></div></body></html>

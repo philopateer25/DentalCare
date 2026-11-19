@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/app.jsx',
                 // React calendar mounted inside Filament (AppointmentsCalendarWidget)
                 'resources/css/filament-calendar.css',
+                'resources/css/filament-theme.css',
                 'resources/js/filament/appointments-calendar.jsx',
             ],
             refresh: true,

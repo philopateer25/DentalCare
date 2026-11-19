@@ -19,12 +19,14 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppPendingRequestsWidget extends BaseWidget
 {
-    protected static ?int $sort = 1;
-    protected int | string | array $columnSpan = 'full';
+    protected static ?int $sort = 2; // beside the reception queue
+    protected int | string | array $columnSpan = 1;
+    protected static ?string $heading = 'WhatsApp Intake Queue';
 
     public static function canView(): bool
     {
-        return false;
+        // Shown beside the live reception queue (design/stitch/01-dashboard).
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'secretary']) ?? false;
     }
 
     public function table(Table $table): Table
@@ -36,6 +38,10 @@ class WhatsAppPendingRequestsWidget extends BaseWidget
                     ->where('status', 'pending')
                     ->latest()
             )
+            ->description('Booking requests received on WhatsApp')
+            ->emptyStateHeading('No pending WhatsApp requests')
+            ->emptyStateIcon('heroicon-o-chat-bubble-left-right')
+            ->paginated([5])
             ->columns([
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Patient')

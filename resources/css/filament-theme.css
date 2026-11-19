@@ -406,3 +406,61 @@
     padding: 1rem 1.5rem; font-size: 11px; font-weight: 500; color: var(--dx-outline);
 }
 .dx-auth-footer-copy { font-weight: 600; color: var(--dx-text); }
+
+/* ================= Dashboard (design/stitch/01-dashboard) ================= */
+.fi-dashboard-page .fi-header { display: none; }  /* replaced by the greeting widget */
+
+.dx-greeting { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.25rem 0; }
+.dx-greeting-title-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.dx-greeting-title { font-size: 25px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em; color: var(--dx-text); }
+.dx-live-pill {
+    display: inline-flex; align-items: center; gap: 0.3rem; padding: 2px 0.5rem; border-radius: 9999px;
+    background: color-mix(in srgb, var(--dx-teal) 12%, transparent); color: var(--dx-teal-deep);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+}
+.dark .dx-live-pill { color: #61dbbd; }
+.dx-live-pill > span { width: 6px; height: 6px; border-radius: 9999px; background: var(--dx-teal); animation: dx-pulse 2s infinite; }
+@keyframes dx-pulse { 50% { opacity: 0.35; } }
+.dx-greeting-meta { margin-top: 0.25rem; display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 12px; color: var(--dx-text-muted); }
+.dx-greeting-date { font-weight: 500; color: var(--dx-text); }
+.dx-greeting-sep { color: var(--dx-outline-soft); }
+.dx-greeting-duty { margin-top: 0.15rem; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 12px; font-weight: 500; color: var(--dx-blue); }
+.dark .dx-greeting-duty { color: #b2c5ff; }
+.dx-greeting-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.dx-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem; height: 2.25rem; padding: 0 0.85rem;
+    border-radius: var(--dx-radius-sm); font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+    transition: background-color .15s ease, box-shadow .15s ease; white-space: nowrap;
+}
+.dx-btn-primary { background: var(--dx-blue-deep); color: #fff; box-shadow: 0 1px 2px rgba(27, 65, 143, 0.3); }
+.dx-btn-primary:hover { background: var(--dx-blue); }
+.dx-btn-soft { background: var(--dx-card); color: var(--dx-teal-deep); box-shadow: var(--dx-shadow-card); }
+.dx-btn-soft:hover { background: color-mix(in srgb, var(--dx-teal) 6%, var(--dx-card)); }
+.dark .dx-btn-soft { color: #61dbbd; }
+
+/* Table widget headings (reception + WhatsApp queues) */
+.fi-wi-table .fi-ta-header-heading { font-size: 18px !important; font-weight: 600 !important; color: var(--dx-text) !important; }
+.fi-wi-table .fi-ta-header-description { font-size: 12px !important; color: var(--dx-text-muted) !important; }
+.fi-wi-table .fi-ta-header { background: var(--dx-tint); }
+
+/* ================= Patients directory (design/stitch/02-patients-list) ================= */
+.dx-identity { display: flex; align-items: center; gap: 0.6rem; min-width: 11rem; }
+.dx-avatar {
+    width: 2.25rem; height: 2.25rem; border-radius: 9999px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+    background: #dae2ff; color: var(--dx-blue-deep);
+}
+.dx-avatar[data-tone="teal"] { background: #80f7d8; color: #005142; }
+.dx-avatar[data-tone="violet"] { background: #ede4ff; color: #5b21b6; }
+.dx-avatar[data-tone="amber"] { background: #fde68a; color: #92400e; }
+.dark .dx-avatar { background: #1e3a8a; color: #dae2ff; }
+.dark .dx-avatar[data-tone="teal"] { background: #005142; color: #80f7d8; }
+.dark .dx-avatar[data-tone="violet"] { background: #4c1d95; color: #ede4ff; }
+.dark .dx-avatar[data-tone="amber"] { background: #78350f; color: #fde68a; }
+.dx-identity-text { display: flex; flex-direction: column; line-height: 1.25; }
+.dx-identity-name { font-size: 14px; font-weight: 600; color: var(--dx-text); }
+.fi-ta-row:hover .dx-identity-name { color: var(--dx-blue); }
+.dx-identity-meta { font-size: 11px; color: var(--dx-text-muted); }
+.fi-ta-cell .fi-ta-text-description, .fi-ta-cell .fi-ta-text-item-description { font-size: 11px !important; }
+.fi-ta-cell { padding-top: 0.15rem; padding-bottom: 0.15rem; }

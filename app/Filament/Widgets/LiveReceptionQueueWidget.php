@@ -11,13 +11,14 @@ use Illuminate\Database\Eloquent\Builder;
 
 class LiveReceptionQueueWidget extends BaseWidget
 {
-    protected static ?int $sort = 2;
-    protected int | string | array $columnSpan = 'full';
+    protected static ?int $sort = 2; // right after the calendar (ties sort by class name)
+    protected int | string | array $columnSpan = 1;
     protected static ?string $heading = 'Live Reception Queue';
 
     public static function canView(): bool
     {
-        return false;
+        // Shown beside the WhatsApp intake queue (design/stitch/01-dashboard).
+        return auth()->user()?->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'secretary']) ?? false;
     }
 
     public function table(Table $table): Table
@@ -32,6 +33,10 @@ class LiveReceptionQueueWidget extends BaseWidget
                     ->whereIn('status', ['booked', 'arrived', 'in_chair', 'completed'])
                     ->orderBy('start_time', 'asc')
             )
+            ->description('Real-time waiting room & chair triage for today')
+            ->emptyStateHeading('No patients in the queue')
+            ->emptyStateIcon('heroicon-o-user-group')
+            ->paginated([5])
             ->columns([
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Time')

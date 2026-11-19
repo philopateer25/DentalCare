@@ -5,22 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\DentalExamination;
 use App\Models\Patient;
 use App\Models\ToothFinding;
+use App\Services\Dental\OdontogramRules;
 use Illuminate\Http\Request;
 
 class DentalExaminationController extends Controller
 {
     protected function authorizePatient(Patient $patient): void
     {
-        if (auth()->check() && auth()->user()->practice_id) {
-            abort_unless($patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
-        }
+        abort_unless(auth()->check() && $patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
     }
 
     protected function authorizeExamination(DentalExamination $examination): void
     {
-        if (auth()->check() && auth()->user()->practice_id) {
-            abort_unless($examination->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant examination access.');
-        }
+        abort_unless(auth()->check() && $examination->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant examination access.');
     }
 
     /**
@@ -44,11 +41,34 @@ class DentalExaminationController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $previous = $patient->examinations()->with('toothFindings.surfaceFindings')
+            ->latest('examined_at')->latest('id')->first();
+
         $examination = $patient->examinations()->create([
-            'doctor_id' => auth()->id(), // Allow null if not authenticated
+            'doctor_id' => auth()->id(),
             'type' => $validated['type'],
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        // A new exam starts from the current mouth (missing teeth, crowns, fillings carry
+        // forward) rather than an empty chart; the doctor then updates what changed.
+        if ($previous) {
+            foreach ($previous->toothFindings as $finding) {
+                $copy = $examination->toothFindings()->create([
+                    'tooth_number_fdi' => $finding->tooth_number_fdi,
+                    'finding_type' => $finding->finding_type,
+                    'status' => $finding->status,
+                    'clinical_details' => $finding->clinical_details,
+                    'notes' => $finding->notes,
+                ]);
+                foreach ($finding->surfaceFindings as $surface) {
+                    $copy->surfaceFindings()->create([
+                        'surface' => $surface->surface,
+                        'finding_type' => $surface->finding_type,
+                    ]);
+                }
+            }
+        }
 
         return response()->json($examination, 201);
     }
@@ -73,6 +93,8 @@ class DentalExaminationController extends Controller
 
             $teethRecords[$finding->tooth_number_fdi] = [
                 'condition' => $finding->finding_type,
+                'status' => $finding->status ?? 'existing',
+                'clinical_details' => $finding->clinical_details,
                 'notes' => $finding->notes,
                 'surfaces' => (object)$surfaces, // Force object for empty arrays in JSON
             ];
@@ -88,8 +110,12 @@ class DentalExaminationController extends Controller
     {
         $this->authorizeExamination($examination);
         $validated = $request->validate([
-            'tooth_number' => 'required|string',
-            'condition' => 'required|string', // mapping to finding_type
+            'tooth_number' => ['required', 'string', function ($attr, $value, $fail) {
+                if (! OdontogramRules::isValidFdi($value)) {
+                    $fail('Invalid FDI tooth number.');
+                }
+            }],
+            'condition' => 'required|string|in:'.implode(',', OdontogramRules::CONDITIONS), // mapping to finding_type
             'notes' => 'nullable|string',
             'surfaces' => 'nullable|array',
             'status' => 'nullable|string|in:existing,needs_treatment,watch',
@@ -139,60 +165,9 @@ class DentalExaminationController extends Controller
             );
             $patient->touch();
 
-            // Auto-sync to Treatment Plan if marked "Needs Treatment"
-            if ($status === 'needs_treatment' && in_array($validated['condition'], ['active_caries', 'crown', 'root_canal', 'missing', 'implant', 'composite_filled'])) {
-                $plan = $patient->treatmentPlans()->whereIn('status', ['draft', 'proposed', 'accepted', 'in_progress'])->latest()->first();
-                if (!$plan) {
-                    $plan = $patient->treatmentPlans()->create([
-                        'patient_id' => $patient->id,
-                        'doctor_id' => auth()->id() ?? $patient->doctor_id ?? 1,
-                        'title' => 'Dental Treatment Plan (Odontogram Sync)',
-                        'status' => 'proposed',
-                        'total_amount' => 0,
-                        'discount_amount' => 0,
-                        'net_amount' => 0,
-                    ]);
-                }
-
-                $phase = $plan->phases()->firstOrCreate(
-                    ['sequence' => 1],
-                    ['name' => 'Phase 1 - Restorative & Surgical', 'treatment_plan_id' => $plan->id]
-                );
-
-                $codeStr = match ($validated['condition']) {
-                    'active_caries' => 'D2330',
-                    'crown' => 'D2740',
-                    'root_canal' => 'D3310',
-                    'missing' => 'D7140',
-                    'implant' => 'D6010',
-                    'composite_filled' => 'D2330',
-                    default => 'D2330',
-                };
-
-                $procCode = \App\Models\ProcedureCode::where('code', $codeStr)->first();
-                if ($procCode) {
-                    $existing = $phase->procedures()
-                        ->where('tooth_number_fdi', (int) $validated['tooth_number'])
-                        ->where('procedure_code_id', $procCode->id)
-                        ->where('status', '!=', 'completed')
-                        ->first();
-
-                    if (!$existing) {
-                        $phase->procedures()->create([
-                            'treatment_phase_id' => $phase->id,
-                            'tooth_number_fdi' => (int) $validated['tooth_number'],
-                            'procedure_code_id' => $procCode->id,
-                            'doctor_id' => auth()->id() ?? 1,
-                            'fee' => $procCode->standard_fee,
-                            'discount' => 0,
-                            'net_amount' => $procCode->standard_fee,
-                            'status' => 'planned',
-                            'chairside_notes' => 'Generated from 3D Odontogram: ' . $procCode->title,
-                        ]);
-                        $plan->recalculateTotals();
-                    }
-                }
-            }
+            // Charting never creates treatment by itself (it used to auto-create a plan and
+            // procedure here). A "needs treatment" finding returns a suggestion instead; the
+            // doctor adds it to a plan explicitly. See App\Services\Dental\OdontogramRules.
 
             \Illuminate\Support\Facades\Cache::forget("p360_raw_{$patient->id}");
             \Illuminate\Support\Facades\Cache::forget("p360_teeth_{$patient->id}");
@@ -200,6 +175,8 @@ class DentalExaminationController extends Controller
             \Illuminate\Support\Facades\Cache::forget("p360_plans_{$patient->id}");
         }
 
-        return response()->json($toothFinding->load('surfaceFindings'));
+        return response()->json(array_merge($toothFinding->load('surfaceFindings')->toArray(), [
+            'suggestion' => OdontogramRules::suggestionFor($validated['condition'], $status, $validated['tooth_number']),
+        ]));
     }
 }

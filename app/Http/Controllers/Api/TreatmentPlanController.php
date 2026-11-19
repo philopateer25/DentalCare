@@ -15,16 +15,12 @@ class TreatmentPlanController extends Controller
 {
     protected function authorizePatient(Patient $patient): void
     {
-        if (auth()->check() && auth()->user()->practice_id) {
-            abort_unless($patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
-        }
+        abort_unless(auth()->check() && $patient->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant patient access.');
     }
 
     protected function authorizePlan(TreatmentPlan $plan): void
     {
-        if (auth()->check() && auth()->user()->practice_id) {
-            abort_unless($plan->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant treatment plan access.');
-        }
+        abort_unless(auth()->check() && $plan->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant treatment plan access.');
     }
 
     /**
@@ -69,7 +65,7 @@ class TreatmentPlanController extends Controller
     }
 
     /**
-     * Get or create the active (draft/in_progress) treatment plan for a patient
+     * Get the active (draft/in_progress) treatment plan for a patient, or null
      */
     public function getActivePlan(Patient $patient)
     {
@@ -81,24 +77,8 @@ class TreatmentPlanController extends Controller
             ->latest()
             ->first();
 
-        // If none exists, create a default draft plan with one phase
-        if (!$plan) {
-            DB::transaction(function () use ($patient, &$plan) {
-                $plan = $patient->treatmentPlans()->create([
-                    'title' => 'Comprehensive Treatment Plan',
-                    'status' => 'draft',
-                ]);
-
-                $plan->phases()->create([
-                    'sequence' => 1,
-                    'name' => 'Phase 1: General Treatment',
-                ]);
-            });
-
-            // Reload with relations
-            $plan->load(['phases.procedures.procedureCode']);
-        }
-
+        // Viewing the chart must not create records: return null when there is no active plan.
+        // The frontend creates a plan only when the doctor adds the first procedure.
         return response()->json($plan);
     }
 
@@ -109,7 +89,11 @@ class TreatmentPlanController extends Controller
     {
         $this->authorizePlan($plan);
         $validated = $request->validate([
-            'tooth_number_fdi' => 'required|integer',
+            'tooth_number_fdi' => ['required', 'integer', function ($attr, $value, $fail) {
+                if (! \App\Services\Dental\OdontogramRules::isValidFdi($value)) {
+                    $fail('Invalid FDI tooth number.');
+                }
+            }],
             'surface' => 'nullable|string',
             'procedure_code' => 'required|string', // We expect the string code, e.g. D2140
             'anesthetic_agent' => 'nullable|string',
@@ -120,17 +104,11 @@ class TreatmentPlanController extends Controller
         ]);
 
         // Find the procedure code in the database
+        abort_if(in_array($plan->status, ['completed', 'cancelled', 'rejected'], true), 422, 'This treatment plan is closed.');
+
+        // Unknown codes used to be created on the fly with a 0 fee; reject them instead.
         $code = ProcedureCode::where('code', $validated['procedure_code'])->first();
-        if (!$code) {
-            $code = ProcedureCode::firstOrCreate(
-                ['code' => $validated['procedure_code']],
-                [
-                    'title' => 'Procedure ' . $validated['procedure_code'],
-                    'standard_fee' => 0.00,
-                    'category_id' => 1,
-                ]
-            );
-        }
+        abort_unless($code, 422, 'Unknown procedure code: '.$validated['procedure_code']);
 
         // Get the first phase, or create one if none exists (fallback)
         $phase = $plan->phases()->first();
@@ -146,6 +124,7 @@ class TreatmentPlanController extends Controller
             'fee' => $code->standard_fee,
             'net_amount' => $code->standard_fee,
             'status' => 'planned',
+            'doctor_id' => auth()->id(),
             'anesthetic_agent' => $validated['anesthetic_agent'] ?? null,
             'anesthetic_dosage' => $validated['anesthetic_dosage'] ?? null,
             'anesthetic_technique' => $validated['anesthetic_technique'] ?? null,
@@ -153,12 +132,7 @@ class TreatmentPlanController extends Controller
             'tools_used_json' => $validated['tools_used_json'] ?? null,
         ]);
 
-        // Recalculate plan totals
-        $total = $plan->phases->flatMap->procedures->sum('fee');
-        $plan->update([
-            'total_amount' => $total,
-            'net_amount' => $total,
-        ]);
+        $plan->recalculateTotals();
 
         return response()->json([
             'message' => 'Procedure added',

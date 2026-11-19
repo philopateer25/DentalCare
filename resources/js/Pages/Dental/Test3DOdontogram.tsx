@@ -11,6 +11,7 @@ import {
   ToothRecord,
   SurfaceCondition,
   ToothSurfaces,
+  ToothCondition,
 } from '../../Components/Dental3D/types';
 import { ToothSurfaceKey } from '../../Components/Dental3D/dentitionManifest';
 
@@ -388,6 +389,10 @@ const Test3DOdontogramInner: React.FC<Props> = ({
   const [allPlans, setAllPlans] = useState<any[]>([]);
   const [plannedProcedures, setPlannedProcedures] = useState<Record<string, any[]>>(initialProcedures);
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
+  // Suggested treatment returned by the server when a tooth is marked "needs treatment".
+  // Nothing is added to a plan until the doctor confirms it.
+  const [suggestion, setSuggestion] = useState<{ tooth: string; code: string; title: string; fee: number; reason: string } | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
   const [newPlanTitle, setNewPlanTitle] = useState(PLAN_TEMPLATES[0]);
   const [selectedProcCode, setSelectedProcCode] = useState<string>('D2330');
   const [selectedAnesthesia, setSelectedAnesthesia] = useState<string>('');
@@ -435,12 +440,10 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         setActivePlan(res.data[0]);
         loadProceduresFromPlan(res.data[0]);
       } else {
-        // Fallback to active if none found, which auto-creates one
-        axios.get(`/api/patients/${patient.id}/treatment-plans/active`).then(activeRes => {
-          setAllPlans([activeRes.data]);
-          setActivePlan(activeRes.data);
-          loadProceduresFromPlan(activeRes.data);
-        });
+        // No plan yet: nothing is created on view. A plan is created when the doctor
+        // adds the first procedure (see ensurePlan).
+        setAllPlans([]);
+        setActivePlan(null);
       }
     });
   }, [patient.id]);
@@ -500,17 +503,29 @@ const Test3DOdontogramInner: React.FC<Props> = ({
     }
   };
 
+  /** Returns the active plan, creating a draft plan only when the doctor adds the first procedure. */
+  const ensurePlan = async (): Promise<any> => {
+    if (activePlan) return activePlan;
+    const res = await axios.post(`/api/patients/${patient.id}/treatment-plans`, { title: 'Comprehensive Treatment Plan' });
+    setAllPlans((prev) => [res.data, ...prev]);
+    setActivePlan(res.data);
+    return res.data;
+  };
+
   const handleTreatmentSelect = async (procedureCode: string, details?: {
     anesthetic_agent?: string;
     anesthetic_dosage?: string;
     anesthetic_technique?: string;
     materials_used_json?: string[];
-  }) => {
-    if (!selectedTooth || !activePlan) return;
+  }, toothOverride?: string) => {
+    const toothNum = toothOverride || selectedTooth;
+    if (!toothNum) return;
     setSavingStatus('saving');
+    setPlanError(null);
     try {
-      const res = await axios.post(`/api/treatment-plans/${activePlan.id}/procedures`, {
-        tooth_number_fdi: selectedTooth,
+      const plan = await ensurePlan();
+      const res = await axios.post(`/api/treatment-plans/${plan.id}/procedures`, {
+        tooth_number_fdi: toothNum,
         procedure_code: procedureCode,
         anesthetic_agent: details?.anesthetic_agent,
         anesthetic_dosage: details?.anesthetic_dosage,
@@ -520,13 +535,16 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       // Update local state
       setPlannedProcedures(prev => ({
         ...prev,
-        [selectedTooth]: [...(prev[selectedTooth] || []), res.data.procedure]
+        [toothNum]: [...(prev[toothNum] || []), res.data.procedure]
       }));
+      if (res.data.plan) setActivePlan(res.data.plan);
+      if (suggestion?.tooth === toothNum && suggestion.code === procedureCode) setSuggestion(null);
       setSavingStatus('saved');
-      notifyParentWindow(selectedTooth);
+      notifyParentWindow(toothNum);
       setTimeout(() => setSavingStatus('idle'), 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to add treatment', err);
+      setPlanError(err?.response?.data?.message || 'Could not add the procedure.');
       setSavingStatus('error');
     }
   };
@@ -537,7 +555,16 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       // In a real app, you'd want a dedicated endpoint like PUT /api/procedures/{id}/complete
       // For now, we simulate an API call or assume the backend accepts a PATCH.
       // But since we don't have that endpoint in this demo, let's create a quick API endpoint in web.php.
-      await axios.patch(`/api/procedures/${procedureId}/complete`);
+      const res = await axios.patch(`/api/procedures/${procedureId}/complete`);
+      // Reflect the resulting condition (decided server-side by CDT code) and clear "needs treatment".
+      setTeethRecords(prev => ({
+        ...prev,
+        [toothNumber]: {
+          ...(prev[toothNumber] || {}),
+          condition: res.data?.condition || prev[toothNumber]?.condition || 'healthy',
+          status: 'existing',
+        } as ToothRecord,
+      }));
       
       // Update local state
       setPlannedProcedures(prev => {
@@ -575,7 +602,9 @@ const Test3DOdontogramInner: React.FC<Props> = ({
       const res = await axios.post(`/api/patients/${patient.id}/examinations`, { type: 'periodic' });
       setExaminations([res.data, ...examinations]);
       setActiveExam(res.data);
-      setTeethRecords({}); // empty slate for new exam
+      // The new exam starts from the previous chart (carried forward server-side).
+      const chart = await axios.get(`/api/examinations/${res.data.id}/odontogram`);
+      setTeethRecords(chart.data && !Array.isArray(chart.data) ? chart.data : {});
     } catch (err) {
       console.error('Failed to create examination', err);
     }
@@ -615,7 +644,7 @@ const Test3DOdontogramInner: React.FC<Props> = ({
     setSavingStatus('saving');
 
     try {
-      await axios.post(`/api/examinations/${activeExam.id}/findings`, {
+      const res = await axios.post(`/api/examinations/${activeExam.id}/findings`, {
         tooth_number: toothNum,
         condition,
         status,
@@ -623,6 +652,10 @@ const Test3DOdontogramInner: React.FC<Props> = ({
         surfaces,
         notes,
       });
+      const alreadyPlanned = (plannedProcedures[toothNum] || []).some(
+        (p: any) => p.status !== 'completed' && p.procedure_code?.code === res.data?.suggestion?.code
+      );
+      setSuggestion(res.data?.suggestion && !alreadyPlanned ? { tooth: toothNum, ...res.data.suggestion } : null);
       setSavingStatus('saved');
       notifyParentWindow(toothNum, condition);
       setTimeout(() => setSavingStatus('idle'), 2000);
@@ -756,6 +789,75 @@ const Test3DOdontogramInner: React.FC<Props> = ({
           cleanMode={true}
         />
         
+        {/* Phase 1 overlay: chart summary + legend (top-right) and selected-tooth card. */}
+        {(() => {
+          const records = Object.values(teethRecords);
+          const needsCare = records.filter((r) => r.status === 'needs_treatment').length;
+          const watch = records.filter((r) => r.status === 'watch').length;
+          const allProcs = Object.values(plannedProcedures).flat() as any[];
+          const openProcs = allProcs.filter((p) => p.status !== 'completed').length;
+          const chips = (Object.keys(CONDITION_COLORS) as ToothCondition[])
+            .filter((c) => c !== 'healthy' && (conditionCounts[c] || 0) > 0)
+            .map((c) => ({ key: c, label: CONDITION_LABELS[c]?.label || c, count: conditionCounts[c] || 0, color: CONDITION_COLORS[c] }));
+          const rec = selectedTooth ? teethRecords[selectedTooth] : undefined;
+          const cond: ToothCondition = (rec?.condition as ToothCondition) || 'healthy';
+          const procs = (selectedTooth ? plannedProcedures[selectedTooth] : []) || [];
+          const statusLabel = rec?.status === 'needs_treatment' ? 'Needs treatment' : rec?.status === 'watch' ? 'Watch' : 'Existing';
+          const statusClass = rec?.status === 'needs_treatment' ? 'bg-rose-600/90' : rec?.status === 'watch' ? 'bg-amber-600/90' : 'bg-emerald-700/90';
+          return (
+            <>
+              <div className="absolute top-3 right-3 z-10 flex max-w-[60%] flex-wrap justify-end gap-1.5 pointer-events-none max-sm:top-auto max-sm:bottom-[5.5rem] max-sm:right-2 max-sm:max-w-[95%]">
+                {needsCare > 0 && <span className="rounded-full bg-rose-600/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{needsCare} need treatment</span>}
+                {watch > 0 && <span className="rounded-full bg-amber-600/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{watch} watch</span>}
+                {openProcs > 0 && <span className="rounded-full bg-sky-700/90 px-2.5 py-1 text-[11px] font-bold text-white shadow">{openProcs} planned</span>}
+                {chips.map((c) => (
+                  <span key={c.key} className="flex items-center gap-1.5 rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-semibold text-slate-100 shadow backdrop-blur">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                    {c.count} {c.label}
+                  </span>
+                ))}
+                {chips.length === 0 && needsCare === 0 && <span className="rounded-full bg-slate-900/85 px-2.5 py-1 text-[11px] font-semibold text-slate-300 shadow">No findings charted</span>}
+              </div>
+
+              {selectedTooth && (
+                <div className="absolute left-3 top-[5.5rem] z-10 w-64 rounded-xl border border-slate-700/70 bg-slate-900/90 p-3 text-slate-100 shadow-2xl backdrop-blur max-sm:left-2 max-sm:right-2 max-sm:top-auto max-sm:bottom-[8rem] max-sm:w-auto">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: CONDITION_COLORS[cond] }} />
+                      <span className="text-sm font-bold">Tooth #{selectedTooth}</span>
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${statusClass}`}>{statusLabel}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">{CONDITION_LABELS[cond]?.label || cond}</p>
+                  {procs.length > 0 ? (
+                    <ul className="mt-2 space-y-1">
+                      {procs.slice(0, 4).map((p: any) => (
+                        <li key={p.id} className="flex items-center justify-between gap-2 text-[11px]">
+                          <span className="truncate text-slate-200">{p.procedure_code?.code} {p.procedure_code?.title}</span>
+                          <span className={`shrink-0 rounded px-1.5 py-0.5 font-bold ${p.status === 'completed' ? 'bg-emerald-800 text-emerald-100' : 'bg-sky-800 text-sky-100'}`}>
+                            {p.status === 'completed' ? 'Done' : 'Planned'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-[11px] text-slate-400">No procedures planned for this tooth.</p>
+                  )}
+                  {rec?.notes && <p className="mt-2 line-clamp-2 text-[11px] text-slate-400">{rec.notes}</p>}
+                  <a
+                    href={`/patients/${patient.id}/odontogram-details?tooth=${selectedTooth}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 flex min-h-[40px] items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white hover:bg-indigo-500"
+                  >
+                    Chart / plan this tooth
+                  </a>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
         {/* Hovering Action Button (hidden when embedded in the Filament tab, which shows its own button) */}
         <div className={`absolute bottom-6 right-6 z-10 ${new URLSearchParams(window.location.search).get('embed') === '1' ? 'hidden' : ''}`}>
           <a 
@@ -1323,9 +1425,33 @@ const Test3DOdontogramInner: React.FC<Props> = ({
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1.5">
                       {currentStatus === 'existing' && '✓ Past clinical history in mouth (unbilled baseline).'}
-                      {currentStatus === 'needs_treatment' && '⚠️ Active pathology requiring treatment -> auto-adds to Treatment Plan & appears in 360 history.'}
+                      {currentStatus === 'needs_treatment' && '⚠️ Needs treatment. Recorded on the chart; add a procedure to a plan when ready.'}
                       {currentStatus === 'watch' && '👁️ Watch and monitor at next recall exam.'}
                     </p>
+                    {suggestion && suggestion.tooth === selectedTooth && currentStatus === 'needs_treatment' && (
+                      <div className="mt-2 rounded-lg border border-sky-700/60 bg-sky-950/40 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-sky-300">Suggested treatment</p>
+                        <p className="mt-1 text-sm font-semibold text-white">{suggestion.code} · {suggestion.title}</p>
+                        <p className="text-[11px] text-slate-400">{suggestion.reason} Fee: {Number(suggestion.fee).toLocaleString()}</p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleTreatmentSelect(suggestion.code, undefined, suggestion.tooth)}
+                            className="min-h-[44px] flex-1 rounded-md bg-sky-600 px-3 text-xs font-bold text-white hover:bg-sky-500"
+                          >
+                            Add to {activePlan ? 'plan' : 'a new plan'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSuggestion(null)}
+                            className="min-h-[44px] rounded-md border border-slate-700 px-3 text-xs font-semibold text-slate-300 hover:text-white"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {planError && <p className="mt-1.5 text-[11px] text-rose-400">{planError}</p>}
                   </div>
 
                   {/* 1. Primary Condition Dropdown */}

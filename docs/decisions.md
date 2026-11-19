@@ -145,3 +145,21 @@ This document captures non-obvious architectural patterns, intentional workaroun
 - **Gotchas:**
   - After adding any Livewire/Filament class (pages, widgets, the custom Login), run `docker exec clinic_app php artisan filament:cache-components`. A stale cache makes Livewire reject requests to the new component with **419 Page Expired**.
   - The container's opcache revalidates every 60s. Run `docker restart clinic_app` to see PHP changes immediately.
+
+---
+
+## 14. Odontogram Clinical Rules (charting ≠ treatment)
+- **Location:** `app/Services/Dental/OdontogramRules.php`, `DentalExaminationController`, `Api/TreatmentPlanController`, `Api/TreatmentProcedureController`, `resources/js/Pages/Dental/Test3DOdontogram.tsx`.
+- **Rules:**
+  - Charting a tooth as "needs treatment" records the finding only. The API returns a `suggestion`, and the doctor adds it with "Add to plan".
+    - It used to auto-create a plan and a procedure, with bad mappings such as an extraction for a missing tooth.
+  - Suggestions:
+    - caries / failing filling → D2330 (anterior) or D2391 (posterior)
+    - root-canal-treated or defective crown → D2740
+    - missing → D6010
+    - healthy / implant / custom → none
+  - Opening the chart creates no plan. The first procedure the doctor adds creates the draft plan.
+  - Completing a procedure sets the tooth condition by **CDT code range**, not title words ("pulp capping" is not a crown). It sets the status back to `existing` and appends to the notes instead of overwriting them.
+  - A new examination carries forward the previous exam's findings.
+  - Unknown procedure codes and invalid FDI numbers are rejected (422).
+- **Security:** all chart/exam/plan/fee APIs and the 3D pages require `auth`. The fallback auto-login and the "Demo Patient" creation in `PatientOdontogramController` were removed.

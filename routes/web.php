@@ -111,7 +111,7 @@ Route::middleware(['auth', 'onboarding'])->group(function () {
     })->name('support');
 });
 
-Route::middleware('feature:3d_model')->group(function () {
+Route::middleware(['auth', 'feature:3d_model'])->group(function () {
     Route::get('/patients/{patient?}/odontogram', [\App\Http\Controllers\PatientOdontogramController::class, 'showTest'])->name('patient.odontogram');
     Route::get('/patients/{patient?}/odontogram-details', [\App\Http\Controllers\PatientOdontogramController::class, 'showDetails'])->name('patient.odontogram.details');
     Route::post('/api/patients/{patient}/teeth', [\App\Http\Controllers\PatientOdontogramController::class, 'updateTooth']);
@@ -129,126 +129,57 @@ Route::get('/locale/{lang}', function (string $lang) {
 
 Route::middleware('auth')->post('/push/subscribe', [PushSubscriptionController::class, 'update'])->name('push.subscribe');
 
-// Examination-based Odontogram API
-Route::get('/api/patients/{patient}/examinations', [\App\Http\Controllers\DentalExaminationController::class, 'index']);
-Route::post('/api/patients/{patient}/examinations', [\App\Http\Controllers\DentalExaminationController::class, 'store']);
-Route::get('/api/examinations/{examination}/odontogram', [\App\Http\Controllers\DentalExaminationController::class, 'show']);
-Route::post('/api/examinations/{examination}/findings', [\App\Http\Controllers\DentalExaminationController::class, 'updateFinding']);
+// Odontogram, examination, treatment-plan and fee-schedule APIs (session auth required;
+// these used to be reachable without login).
+Route::middleware('auth')->group(function () {
+    // Examination-based Odontogram API
+    Route::get('/api/patients/{patient}/examinations', [\App\Http\Controllers\DentalExaminationController::class, 'index']);
+    Route::post('/api/patients/{patient}/examinations', [\App\Http\Controllers\DentalExaminationController::class, 'store']);
+    Route::get('/api/examinations/{examination}/odontogram', [\App\Http\Controllers\DentalExaminationController::class, 'show']);
+    Route::post('/api/examinations/{examination}/findings', [\App\Http\Controllers\DentalExaminationController::class, 'updateFinding']);
 
-// Treatment Planning Endpoints
-Route::get('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'index']);
-Route::post('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'store']);
-Route::get('/api/patients/{patient}/treatment-plans/active', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'getActivePlan']);
-Route::post('/api/treatment-plans/{plan}/procedures', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'addProcedure']);
+    // Treatment Planning Endpoints
+    Route::get('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'index']);
+    Route::post('/api/patients/{patient}/treatment-plans', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'store']);
+    Route::get('/api/patients/{patient}/treatment-plans/active', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'getActivePlan']);
+    Route::post('/api/treatment-plans/{plan}/procedures', [\App\Http\Controllers\Api\TreatmentPlanController::class, 'addProcedure']);
 
-// Procedure Codes & Fee Schedule API
-Route::get('/api/procedure-codes', function () {
-    return \App\Models\ProcedureCode::with('category')->orderBy('code')->get();
-});
-Route::patch('/api/procedure-codes/{procedureCode}', function (\App\Models\ProcedureCode $procedureCode, \Illuminate\Http\Request $request) {
-    $validated = $request->validate([
-        'standard_fee' => 'required|numeric|min:0',
-        'estimated_duration_minutes' => 'nullable|integer|min:1',
-    ]);
-    $procedureCode->update($validated);
-    return response()->json([
-        'success' => true,
-        'procedure' => $procedureCode->fresh('category'),
-    ]);
-});
-Route::post('/api/procedure-codes', function (\Illuminate\Http\Request $request) {
-    $validated = $request->validate([
-        'code' => 'required|string|unique:procedure_codes,code',
-        'title' => 'required|string',
-        'standard_fee' => 'required|numeric|min:0',
-        'category_id' => 'required|exists:procedure_categories,id',
-        'estimated_duration_minutes' => 'nullable|integer|min:1',
-    ]);
-    $code = \App\Models\ProcedureCode::create($validated);
-    return response()->json([
-        'success' => true,
-        'procedure' => $code->load('category'),
-    ]);
-});
-Route::patch('/api/procedures/{procedure}/complete', function (\App\Models\TreatmentProcedure $procedure, \Illuminate\Http\Request $request) {
-    if (auth()->check() && auth()->user()->practice_id) {
-        abort_unless($procedure->phase?->plan?->patient?->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
-    }
-    $updateData = [
-        'status' => 'completed',
-        'completed_at' => now(),
-    ];
-    if ($request->filled('anesthetic_agent')) $updateData['anesthetic_agent'] = $request->input('anesthetic_agent');
-    if ($request->filled('anesthetic_dosage')) $updateData['anesthetic_dosage'] = $request->input('anesthetic_dosage');
-    if ($request->filled('anesthetic_technique')) $updateData['anesthetic_technique'] = $request->input('anesthetic_technique');
-    if ($request->has('tools_used_json')) $updateData['tools_used_json'] = $request->input('tools_used_json');
-    if ($request->has('materials_used_json')) $updateData['materials_used_json'] = $request->input('materials_used_json');
-    if ($request->filled('chairside_notes')) $updateData['chairside_notes'] = $request->input('chairside_notes');
-    if ($request->has('hemostasis_achieved')) $updateData['hemostasis_achieved'] = $request->boolean('hemostasis_achieved');
-
-    $procedure->update($updateData);
-
-    // If this procedure has a tooth number, automatically sync condition to patient_teeth and tooth_findings
-    if ($procedure->tooth_number_fdi) {
-        $patient = $procedure->phase?->plan?->patient;
-        if ($patient) {
-            $procTitle = strtolower($procedure->procedureCode?->title ?: '');
-            $procCode = strtoupper($procedure->procedureCode?->code ?: '');
-            $condition = null;
-            if (str_contains($procTitle, 'crown') || str_contains($procCode, 'D2740') || str_contains($procTitle, 'cap') || str_contains($procTitle, 'bridge')) {
-                $condition = 'crown';
-            } elseif (str_contains($procTitle, 'implant') || str_contains($procCode, 'D6010')) {
-                $condition = 'implant';
-            } elseif (str_contains($procTitle, 'root canal') || str_contains($procTitle, 'endo') || str_contains($procCode, 'D3310') || str_contains($procCode, 'D3320') || str_contains($procCode, 'D3330')) {
-                $condition = 'root_canal';
-            } elseif (str_contains($procTitle, 'extract') || str_contains($procCode, 'D7140') || str_contains($procCode, 'D7210')) {
-                $condition = 'missing';
-            } elseif (str_contains($procTitle, 'composite') || str_contains($procTitle, 'fill') || str_contains($procCode, 'D2330') || str_contains($procCode, 'D2140')) {
-                $condition = 'composite_filled';
-            }
-
-            if ($condition) {
-                \App\Models\PatientTooth::updateOrCreate(
-                    ['patient_id' => $patient->id, 'tooth_number' => (string) $procedure->tooth_number_fdi],
-                    [
-                        'condition' => $condition,
-                        'notes' => "Completed inside procedure: " . ($procedure->procedureCode?->title ?: 'Clinical Treatment'),
-                    ]
-                );
-
-                $exam = $patient->examinations()->latest('examined_at')->first();
-                if (!$exam) {
-                    $exam = $patient->examinations()->create([
-                        'doctor_id' => auth()->id() ?? $procedure->doctor_id ?? 1,
-                        'type' => 'treatment',
-                        'examined_at' => now(),
-                    ]);
-                } else if (!$exam->examined_at) {
-                    $exam->update(['examined_at' => now()]);
-                }
-
-                $exam->toothFindings()->updateOrCreate(
-                    ['tooth_number_fdi' => (string) $procedure->tooth_number_fdi],
-                    [
-                        'finding_type' => $condition,
-                        'notes' => "Completed: " . ($procedure->procedureCode?->title ?: 'Clinical Treatment'),
-                    ]
-                );
-
-                $patient->touch();
-            }
-        }
-    }
-
-    return response()->json(['message' => 'Completed', 'procedure' => $procedure->fresh()]);
+    // Procedure Codes & Fee Schedule API
+    Route::get('/api/procedure-codes', function () {
+        return \App\Models\ProcedureCode::with('category')->orderBy('code')->get();
+    });
+    Route::patch('/api/procedure-codes/{procedureCode}', function (\App\Models\ProcedureCode $procedureCode, \Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'standard_fee' => 'required|numeric|min:0',
+            'estimated_duration_minutes' => 'nullable|integer|min:1',
+        ]);
+        $procedureCode->update($validated);
+        return response()->json([
+            'success' => true,
+            'procedure' => $procedureCode->fresh('category'),
+        ]);
+    });
+    Route::post('/api/procedure-codes', function (\Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'code' => 'required|string|unique:procedure_codes,code',
+            'title' => 'required|string',
+            'standard_fee' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:procedure_categories,id',
+            'estimated_duration_minutes' => 'nullable|integer|min:1',
+        ]);
+        $code = \App\Models\ProcedureCode::create($validated);
+        return response()->json([
+            'success' => true,
+            'procedure' => $code->load('category'),
+        ]);
+    });
+    Route::patch('/api/procedures/{procedure}/complete', [\App\Http\Controllers\Api\TreatmentProcedureController::class, 'complete']);
 });
 
 Route::get('/prescriptions/{prescription}/print', function (\App\Models\Prescription $prescription) {
-    if (auth()->check() && auth()->user()->practice_id) {
-        abort_unless($prescription->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
-    }
+    abort_unless($prescription->practice_id === auth()->user()->practice_id, 403, 'Unauthorized cross-tenant access.');
     return view('prescriptions.print', compact('prescription'));
-})->name('prescriptions.print');
+})->middleware('auth')->name('prescriptions.print');
 
 // Public & Secure Token Streaming Routes
 Route::get('/voice-notes/stream/{share_token}', [\App\Http\Controllers\Api\PatientVoiceNoteController::class, 'stream'])->name('voice-notes.stream');

@@ -183,7 +183,7 @@
     box-shadow: var(--dx-shadow-card) !important;
     --tw-ring-color: transparent !important;
 }
-.fi-section { overflow: hidden; }
+/* No overflow:hidden on sections: it clipped select dropdowns and date pickers inside forms. */
 .fi-section-header-heading {
     font-size: 15px !important;
     line-height: 20px !important;
@@ -335,7 +335,7 @@
 
 /* ================= Auth layout (design/stitch/06-login) ================= */
 .dx-auth { min-height: 100vh; display: flex; flex-direction: column; background: var(--dx-bg); }
-.dx-auth-header { position: relative; background: var(--dx-card); box-shadow: var(--dx-shadow); overflow: hidden; }
+.dx-auth-header { position: relative; z-index: 5; background: var(--dx-card); box-shadow: var(--dx-shadow); } /* no overflow:hidden: the language menu drops below it */
 .dx-auth-header-inner {
     position: relative; z-index: 1; max-width: 80rem; margin: 0 auto;
     display: flex; align-items: center; justify-content: space-between;
@@ -468,7 +468,7 @@
 /* ================= Booking form (design/stitch/03-appointment-form) ================= */
 .fi-fo-component-ctn, .fi-form { counter-reset: dx-step; }
 .dx-step { counter-increment: dx-step; }
-.dx-step-first::before { content: ""; display: block; height: 4px; background: var(--dx-ribbon); }
+.dx-step-first::before { content: ""; display: block; height: 4px; background: var(--dx-ribbon); border-radius: var(--dx-radius) var(--dx-radius) 0 0; }
 .dx-step .fi-section-header-heading { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 18px !important; }
 .dx-step .fi-section-header-heading::before {
     content: counter(dx-step);
@@ -525,10 +525,10 @@
 .dx-btn-block { width: 100%; justify-content: center; }
 
 .dx-profile {
-    position: relative; overflow: hidden; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.25rem;
+    position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.25rem; /* no overflow:hidden: WhatsApp menu */
     padding: 1.5rem; border-radius: var(--dx-radius); background: var(--dx-card); box-shadow: var(--dx-shadow-card);
 }
-.dx-profile::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--dx-ribbon); }
+.dx-profile::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--dx-ribbon); border-radius: var(--dx-radius) var(--dx-radius) 0 0; }
 .dx-profile-id { display: flex; gap: 1rem; min-width: 0; flex: 1 1 32rem; }
 .dx-profile-photo {
     position: relative; width: 6.5rem; height: 6.5rem; flex-shrink: 0; border-radius: 1rem;

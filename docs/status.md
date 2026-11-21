@@ -84,7 +84,6 @@
 ## 3. Known Tech Debt & Quirks
 
 - **Doc-Comment Test Annotations:** Feature and unit tests use `/** @test */` doc-comments, which trigger PHPUnit 11 deprecation notices (targeting PHP 8 attributes `#[Test]`).
-- **Scratch & Diagnostic Scripts:** The `scratch/` and `testing_scripts/` directories contain ad-hoc verification scripts from past milestones. They are harmless and ignored by the runtime, but should eventually be cleaned up.
 - **Local License Bypass:** `LicenseManager` purposefully bypasses verification when `APP_ENV=local`. This is intentional and prevents developers from being locked out.
 
 ---

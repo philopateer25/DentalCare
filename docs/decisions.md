@@ -130,7 +130,7 @@ This document captures non-obvious architectural patterns, intentional workaroun
 ---
 
 ## 13. DOXamigo Theme as Plain CSS Layered Over Filament
-- **Location:** `resources/css/filament-theme.css` (HEAD_END render hook in `AdminPanelProvider`), `resources/views/filament/brand/*`, design source in `design/stitch/` and `design/brand/`.
+- **Location:** `resources/css/filament-theme.css` (HEAD_END render hook in `AdminPanelProvider`), `resources/views/filament/brand/*`, design source in `design/brand/` (the Google Stitch screen mockups referenced in code comments as `design/stitch/*` are kept outside the repo).
 - **Pattern:** brand colours go through `->colors()` (primary `#3859a8`, success `#009e83`, danger `#d82c1e`) and `->font('DM Sans')`. All visual restyling is plain CSS targeting Filament's `fi-*` classes plus our own `dx-*` components.
 - **Why not `->viteTheme()`:** Filament v3 themes need Tailwind v3, but this project uses Tailwind v4 for the Inertia app. `viteTheme()` would also replace Filament's compiled CSS.
 - **Custom screens:**

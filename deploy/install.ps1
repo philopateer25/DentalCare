@@ -137,14 +137,23 @@ if (!(Get-Command "docker" -ErrorAction SilentlyContinue)) {
     
     # Wait for docker daemon
     Write-Host "      Waiting for Docker Engine to start (this may take a few minutes)..."
-    while ($true) {
+    $DockerDeadline = (Get-Date).AddMinutes(10)
+    $DockerReady = $false
+    while ((Get-Date) -lt $DockerDeadline) {
         if (Get-Command "docker" -ErrorAction SilentlyContinue) {
             $dockerInfo = docker info 2>&1 | Out-String
             if ($dockerInfo -match "Server Version") {
+                $DockerReady = $true
                 break
             }
         }
         Start-Sleep -Seconds 5
+    }
+    if (-not $DockerReady) {
+        Write-Host "      CRITICAL ERROR: Docker Engine did not start within 10 minutes." -ForegroundColor Red
+        Write-Host "      Restart this PC (Docker/WSL often needs a reboot after install), then run the installer again." -ForegroundColor Yellow
+        Pause
+        Exit 1
     }
 } else {
     Write-Host "      Docker is already installed." -ForegroundColor Green
@@ -266,6 +275,31 @@ if (-not $AppKey) {
     $AppKey = "base64:" + [Convert]::ToBase64String($Bytes)
 }
 
+# Database passwords: reuse the ones from an existing install (MySQL only applies them
+# when its volume is first created), otherwise generate random ones.
+function New-RandomSecret {
+    $b = New-Object Byte[] 24
+    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+    return ([Convert]::ToBase64String($b) -replace '[+/=]', '')
+}
+$DbPassword = $null
+$DbRootPassword = $null
+if (Test-Path $ExistingCompose) {
+    $m = Select-String -Path $ExistingCompose -Pattern 'MYSQL_PASSWORD:\s*(\S+)' | Select-Object -First 1
+    if ($m) { $DbPassword = $m.Matches[0].Groups[1].Value }
+    $m = Select-String -Path $ExistingCompose -Pattern 'MYSQL_ROOT_PASSWORD:\s*(\S+)' | Select-Object -First 1
+    if ($m) { $DbRootPassword = $m.Matches[0].Groups[1].Value }
+}
+if (-not $DbPassword) { $DbPassword = New-RandomSecret }
+if (-not $DbRootPassword) { $DbRootPassword = New-RandomSecret }
+
+# Prefer the Compose v2 plugin ('docker compose'); fall back to the old docker-compose binary.
+docker compose version 2>&1 | Out-Null
+$UseComposeV2 = ($LASTEXITCODE -eq 0)
+function Invoke-Compose {
+    if ($script:UseComposeV2) { docker compose @args } else { docker-compose @args }
+}
+
 # ---------------------------------------------------------
 # 7. Download and Start Application
 # ---------------------------------------------------------
@@ -290,18 +324,50 @@ services:
     image: philohany12/dentalcare-app:latest
     container_name: clinic_app
     restart: unless-stopped
-    environment:
+    environment: &app-env
       - APP_ENV=production
+      - APP_DEBUG=false
       - APP_KEY=$AppKey
       - DB_CONNECTION=mysql
       - DB_HOST=db
       - DB_DATABASE=clinic_db
       - DB_USERNAME=clinic_user
-      - DB_PASSWORD=secret
+      - DB_PASSWORD=$DbPassword
       - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
     volumes:
       - clinic_code:/var/www/html
       - clinic_storage:/var/www/html/storage/app
+    networks:
+      - clinic_network
+
+  # Background jobs (WhatsApp, notifications). The image entrypoint starts php-fpm,
+  # so the entrypoint is overridden here.
+  worker:
+    image: philohany12/dentalcare-app:latest
+    container_name: clinic_worker
+    restart: unless-stopped
+    entrypoint: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=120"]
+    environment: *app-env
+    volumes:
+      - clinic_storage:/var/www/html/storage/app
+    depends_on:
+      - app
+      - redis
+    networks:
+      - clinic_network
+
+  # Scheduled tasks, including license:tick and license:heartbeat
+  scheduler:
+    image: philohany12/dentalcare-app:latest
+    container_name: clinic_scheduler
+    restart: unless-stopped
+    entrypoint: ["php", "artisan", "schedule:work"]
+    environment: *app-env
+    volumes:
+      - clinic_storage:/var/www/html/storage/app
+    depends_on:
+      - app
     networks:
       - clinic_network
 
@@ -312,8 +378,8 @@ services:
     environment:
       MYSQL_DATABASE: clinic_db
       MYSQL_USER: clinic_user
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_PASSWORD: $DbPassword
+      MYSQL_ROOT_PASSWORD: $DbRootPassword
     volumes:
       - clinic_db_data:/var/lib/mysql
     networks:
@@ -342,6 +408,8 @@ networks:
 "@
 
 $ComposeContent | Set-Content -Path "$InstallDir\docker-compose.yml"
+# The compose file holds the DB passwords and APP_KEY: restrict it to Administrators and SYSTEM.
+icacls "$InstallDir\docker-compose.yml" /inheritance:r /grant:r "*S-1-5-32-544:F" "*S-1-5-18:F" | Out-Null
 
 Write-Host "      Generating Nginx Configuration..."
 $NginxContent = @"
@@ -389,11 +457,10 @@ Write-Host "      Stopping any existing containers (patient data is kept)..."
 # Remove containers only. Volumes (database, uploads) are never deleted here:
 # 'down -v' would erase the clinic's database.
 docker rm -f clinic_app clinic_db clinic_nginx clinic_redis clinic_worker clinic_scheduler 2>&1 | Out-Null
-docker-compose down --remove-orphans 2>&1 | Out-Null
+Invoke-Compose down --remove-orphans 2>&1 | Out-Null
 
 Write-Host "      Starting containers (this may take a moment to download images)..."
-# Using docker-compose up
-docker-compose up -d 2>&1 | ForEach-Object { Write-Host $_ }
+Invoke-Compose up -d 2>&1 | ForEach-Object { Write-Host $_ }
 
 Write-Host "      Initializing Database and Clinical Data (this may take 15 seconds)..."
 # Wait for MySQL to be fully ready and the container to run migrations
@@ -409,7 +476,7 @@ if (-not $IsFreshInstall) {
     $RetryCount = -1
 }
 while ($RetryCount -ge 0 -and $RetryCount -lt $MaxRetries) {
-    $SeedResult = docker-compose exec -T app php artisan db:seed --force 2>&1 | Out-String
+    $SeedResult = Invoke-Compose exec -T app php artisan db:seed --force 2>&1 | Out-String
     if ($LASTEXITCODE -eq 0 -and $SeedResult -match "DONE") {
         break
     }

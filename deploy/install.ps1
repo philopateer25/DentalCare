@@ -2,7 +2,29 @@
 .SYNOPSIS
     Automated Installer for DentalCare On-Premise Clinic Server.
     Run this script as Administrator on the Clinic's Windows Server/PC.
+
+.DESCRIPTION
+    Tailscale auto-join: the installer never contains a Tailscale key. It gets a
+    single-use, pre-authorized, tagged auth key from (in order):
+      1. the -TailscaleAuthKey parameter or the DENTALCARE_TS_AUTHKEY env var,
+      2. the central enrollment API (POST $CentralApiUrl/enroll/tailscale-key),
+         which mints a key per clinic with a Tailscale OAuth client,
+      3. a hidden prompt for the person running the install.
+    The key is handed to tailscale.exe through a temporary file (never on the
+    command line) and deleted right after.
+
+.PARAMETER InstallDir
+    Install location. Prompts if omitted (default C:\DentalCare).
+.PARAMETER EnrollmentCode
+    Clinic enrollment code. Prompts if omitted.
+.PARAMETER TailscaleAuthKey
+    Optional single-use Tailscale auth key (tskey-auth-...).
 #>
+param(
+    [string]$InstallDir,
+    [string]$EnrollmentCode,
+    [string]$TailscaleAuthKey = $env:DENTALCARE_TS_AUTHKEY
+)
 
 # Ensure Script is running as Administrator
 if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -16,12 +38,21 @@ Write-Host " DentalCare Clinic Server Installer v1.0" -ForegroundColor Cyan
 Write-Host "==============================================" -ForegroundColor Cyan
 Write-Host ""
 
-$InstallDir = Read-Host "Where would you like to install the system? (Press Enter for default: C:\DentalCare)"
+if ([string]::IsNullOrWhiteSpace($InstallDir)) {
+    $InstallDir = Read-Host "Where would you like to install the system? (Press Enter for default: C:\DentalCare)"
+}
 if ([string]::IsNullOrWhiteSpace($InstallDir)) {
     $InstallDir = "C:\DentalCare"
 }
 $StorageDir = "$InstallDir\storage\app"
 $CentralApiUrl = "https://central.dentalcare-software.com/api/v1" # Replace with real domain
+
+# Clinic enrollment code is needed early: it names this machine on the tailnet
+# and is what the central API uses to mint its Tailscale key.
+while ([string]::IsNullOrWhiteSpace($EnrollmentCode)) {
+    $EnrollmentCode = Read-Host "Please enter your Clinic Enrollment Code (e.g., CLINIC-XYZ-123)"
+}
+$EnrollmentCode = $EnrollmentCode.Trim()
 
 # ---------------------------------------------------------
 # 1. Hardware Pre-requisite Check (Virtualization)
@@ -123,32 +154,84 @@ if (!(Get-Command "docker" -ErrorAction SilentlyContinue)) {
 # 4. Install Tailscale (Remote Management)
 # ---------------------------------------------------------
 Write-Host "[4/7] Checking for Tailscale Secure Network..."
-if (!(Get-Command "tailscale" -ErrorAction SilentlyContinue)) {
+$TsPath = "${env:ProgramFiles}\Tailscale\tailscale.exe"
+if (!(Get-Command "tailscale" -ErrorAction SilentlyContinue) -and !(Test-Path $TsPath)) {
     Write-Host "      Tailscale not found. Downloading..." -ForegroundColor Yellow
     $TsInstaller = "$env:TEMP\tailscale-setup.exe"
     Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile $TsInstaller
-    
+
     Write-Host "      Installing Tailscale silently..."
     Start-Process -FilePath $TsInstaller -ArgumentList "/quiet" -Wait -NoNewWindow
-    
-    Write-Host "      Authenticating Tailscale silently with Auth Key..." -ForegroundColor Green
-    $TsPath = "${env:ProgramFiles}\Tailscale\tailscale.exe"
-    if (Test-Path $TsPath) {
-        # Silent authentication using Auth Key. No browser will open!
-        Start-Process $TsPath -ArgumentList "up --authkey=tskey-auth-kVcjs8HMFF11CNTRL-qR4gR9vVE61PtrvHUFve61Sgzd84xs5XG --hostname=dentalcare-clinic --unattended" -Wait -NoNewWindow
-    } else {
-        Write-Host "      Could not find tailscale.exe. You may need to run 'tailscale up' manually after restarting PowerShell." -ForegroundColor Yellow
-    }
 } else {
     Write-Host "      Tailscale is already installed." -ForegroundColor Green
+}
+if (!(Test-Path $TsPath)) {
+    $TsCmd = Get-Command "tailscale" -ErrorAction SilentlyContinue
+    if ($TsCmd) { $TsPath = $TsCmd.Source }
+}
+
+# Tailnet hostname derived from the enrollment code, e.g. dentalcare-clinic-xyz-123
+$TsHostname = ("dentalcare-" + ($EnrollmentCode.ToLower() -replace '[^a-z0-9]+', '-')).Trim('-')
+if ($TsHostname.Length -gt 63) { $TsHostname = $TsHostname.Substring(0, 63).Trim('-') }
+
+$TsAlreadyJoined = $false
+if (Test-Path $TsPath) {
+    try {
+        $TsStatus = & $TsPath status --json 2>$null | Out-String | ConvertFrom-Json
+        if ($TsStatus.BackendState -eq "Running") { $TsAlreadyJoined = $true }
+    } catch { }
+}
+
+if (!(Test-Path $TsPath)) {
+    Write-Host "      Could not find tailscale.exe. Run 'tailscale up' manually after restarting." -ForegroundColor Yellow
+} elseif ($TsAlreadyJoined) {
+    Write-Host "      This PC is already connected to the DentalCare network." -ForegroundColor Green
+} else {
+    # 1) parameter / env var, 2) central enrollment API, 3) prompt
+    if ([string]::IsNullOrWhiteSpace($TailscaleAuthKey)) {
+        try {
+            Write-Host "      Requesting a network key from the Central Server..."
+            $Resp = Invoke-RestMethod -Method Post -Uri "$CentralApiUrl/enroll/tailscale-key" `
+                -ContentType "application/json" -TimeoutSec 20 `
+                -Body (@{ enrollment_code = $EnrollmentCode; hostname = $TsHostname } | ConvertTo-Json)
+            if ($Resp.auth_key) { $TailscaleAuthKey = [string]$Resp.auth_key }
+        } catch {
+            Write-Host "      Central Server did not provide a key ($($_.Exception.Message))." -ForegroundColor Yellow
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($TailscaleAuthKey)) {
+        $Secure = Read-Host "      Paste the Tailscale auth key for this clinic (or press Enter to skip)" -AsSecureString
+        $TailscaleAuthKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR(
+            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Secure))
+    }
+
+    if ([string]::IsNullOrWhiteSpace($TailscaleAuthKey)) {
+        Write-Host "      Skipped. Remote support will not work until this PC joins the network." -ForegroundColor Yellow
+    } else {
+        Write-Host "      Joining the DentalCare network as '$TsHostname'..." -ForegroundColor Green
+        # Pass the key via a temp file readable only by Administrators/SYSTEM so it never
+        # shows up in process lists or logs.
+        $KeyFile = Join-Path $env:TEMP ("ts-" + [guid]::NewGuid().ToString("N") + ".key")
+        try {
+            Set-Content -Path $KeyFile -Value $TailscaleAuthKey.Trim() -NoNewline
+            icacls $KeyFile /inheritance:r /grant:r "*S-1-5-32-544:F" "*S-1-5-18:F" | Out-Null
+            & $TsPath up "--auth-key=file:$KeyFile" "--hostname=$TsHostname" --unattended
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "      Connected to the DentalCare network." -ForegroundColor Green
+            } else {
+                Write-Host "      WARNING: Tailscale could not join (exit $LASTEXITCODE). The key may be expired or already used." -ForegroundColor Yellow
+            }
+        } finally {
+            Remove-Item $KeyFile -Force -ErrorAction SilentlyContinue
+            $TailscaleAuthKey = $null
+        }
+    }
 }
 
 # ---------------------------------------------------------
 # 5. Clinic Enrollment
 # ---------------------------------------------------------
 Write-Host "[5/7] Clinic Enrollment" -ForegroundColor Cyan
-$EnrollmentCode = Read-Host "Please enter your Clinic Enrollment Code (e.g., CLINIC-XYZ-123)"
-
 Write-Host "      Validating code with Central Server..."
 # In production, you would use Invoke-RestMethod here. 
 # We mock the response to generate the local license.json file.
@@ -166,10 +249,22 @@ Write-Host "      Enrollment successful! License generated." -ForegroundColor Gr
 # 6. Generate Secure App Key
 # ---------------------------------------------------------
 Write-Host "[6/8] Generating Secure Application Key..."
-$Bytes = New-Object Byte[] 32
-$Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$Rng.GetBytes($Bytes)
-$AppKey = "base64:" + [Convert]::ToBase64String($Bytes)
+# Reuse the existing APP_KEY on a re-run: a new key would make encrypted data unreadable.
+$AppKey = $null
+$ExistingCompose = "$InstallDir\docker-compose.yml"
+if (Test-Path $ExistingCompose) {
+    $Match = Select-String -Path $ExistingCompose -Pattern 'APP_KEY=(base64:[A-Za-z0-9+/=]+)' | Select-Object -First 1
+    if ($Match) {
+        $AppKey = $Match.Matches[0].Groups[1].Value
+        Write-Host "      Existing installation found. Keeping its application key." -ForegroundColor Green
+    }
+}
+if (-not $AppKey) {
+    $Bytes = New-Object Byte[] 32
+    $Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $Rng.GetBytes($Bytes)
+    $AppKey = "base64:" + [Convert]::ToBase64String($Bytes)
+}
 
 # ---------------------------------------------------------
 # 7. Download and Start Application
@@ -286,10 +381,15 @@ $NginxContent | Set-Content -Path "$InstallDir\nginx.conf"
 
 # Note: In production, the script would run `docker login` using credentials returned from the Enrollment API.
 Set-Location -Path $InstallDir
-Write-Host "      Cleaning up any existing containers or orphaned volumes..."
-# Forcefully remove any containers holding these names to prevent "Name already in use" conflicts
+# Detect an existing database BEFORE touching anything, so a re-run never wipes or re-seeds it.
+$ExistingDb = docker volume ls -q --filter "name=clinic_db_data" 2>$null
+$IsFreshInstall = [string]::IsNullOrWhiteSpace(($ExistingDb | Out-String))
+
+Write-Host "      Stopping any existing containers (patient data is kept)..."
+# Remove containers only. Volumes (database, uploads) are never deleted here:
+# 'down -v' would erase the clinic's database.
 docker rm -f clinic_app clinic_db clinic_nginx clinic_redis clinic_worker clinic_scheduler 2>&1 | Out-Null
-docker-compose down -v --remove-orphans 2>&1 | Out-Null
+docker-compose down --remove-orphans 2>&1 | Out-Null
 
 Write-Host "      Starting containers (this may take a moment to download images)..."
 # Using docker-compose up
@@ -303,7 +403,12 @@ Start-Sleep -Seconds 15
 # We loop to wait for migrations to finish first, and use -T to prevent terminal allocation errors
 $MaxRetries = 24
 $RetryCount = 0
-while ($RetryCount -lt $MaxRetries) {
+if (-not $IsFreshInstall) {
+    Write-Host "      Existing database found. Skipping seeding so no data is changed." -ForegroundColor Green
+    $MaxRetries = 0
+    $RetryCount = -1
+}
+while ($RetryCount -ge 0 -and $RetryCount -lt $MaxRetries) {
     $SeedResult = docker-compose exec -T app php artisan db:seed --force 2>&1 | Out-String
     if ($LASTEXITCODE -eq 0 -and $SeedResult -match "DONE") {
         break

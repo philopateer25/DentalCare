@@ -2,17 +2,27 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Models\Prescription;
+use App\Services\WhatsAppLink;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PrescriptionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'prescriptions';
+
+    /**
+     * Relation managers on a View page are read-only by default in Filament, which hid the
+     * Create button. Doctors and admins can write prescriptions.
+     */
+    public function isReadOnly(): bool
+    {
+        return ! (auth()->user()?->hasAnyRole(['doctor', 'clinic_admin', 'super_admin', 'developer']) ?? false);
+    }
 
     public function form(Form $form): Form
     {
@@ -25,28 +35,28 @@ class PrescriptionsRelationManager extends RelationManager
                         'Amoxicillin', 'Clindamycin', 'Ibuprofen', 'Paracetamol', 'Chlorhexidine',
                     ])
                     ->columnSpanFull(),
-                
+
                 Forms\Components\TextInput::make('dosage')
                     ->required()
                     ->maxLength(255)
                     ->placeholder('e.g., 500mg'),
-                    
+
                 Forms\Components\TextInput::make('frequency')
                     ->required()
                     ->maxLength(255)
                     ->datalist(['Every 8 hours', 'Every 12 hours', 'Once daily', 'Twice daily', 'As needed'])
                     ->placeholder('e.g., Every 8 hours'),
-                    
+
                 Forms\Components\TextInput::make('duration')
                     ->required()
                     ->maxLength(255)
                     ->datalist(['3 days', '5 days', '7 days', '14 days', 'Until finished'])
                     ->placeholder('e.g., 7 days'),
-                    
+
                 Forms\Components\DatePicker::make('date_prescribed')
                     ->default(now())
                     ->required(),
-                    
+
                 Forms\Components\Select::make('status')
                     ->options([
                         'active' => 'Active',
@@ -55,7 +65,7 @@ class PrescriptionsRelationManager extends RelationManager
                     ])
                     ->default('active')
                     ->required(),
-                    
+
                 Forms\Components\Textarea::make('instructions')
                     ->maxLength(65535)
                     ->columnSpanFull(),
@@ -95,6 +105,7 @@ class PrescriptionsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['doctor_id'] = auth()->id();
+
                         return $data;
                     }),
             ])
@@ -103,52 +114,16 @@ class PrescriptionsRelationManager extends RelationManager
                 Tables\Actions\Action::make('print')
                     ->icon('heroicon-o-printer')
                     ->color('gray')
-                    ->url(fn (\App\Models\Prescription $record): string => route('prescriptions.print', $record))
+                    ->url(fn (Prescription $record): string => route('prescriptions.print', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('whatsapp')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->label('WhatsApp')
-                    ->visible(fn () => \Filament\Facades\Filament::getTenant()->hasFeature('whatsapp'))
-                    ->requiresConfirmation()
-                    ->action(function (\App\Models\Prescription $record) {
-                        $patientName = $record->patient->full_name;
-                        $doctorName = $record->doctor->name ?? 'Doctor';
-                        $clinicName = \App\Models\Practice::find(1)->name ?? 'Dental Clinic';
-                        
-                        $message = "🏥 *{$clinicName} - Prescription*\n";
-                        $message .= "👨‍⚕️ Dr. {$doctorName}\n\n";
-                        $message .= "💊 *Medication:* {$record->medication_name} {$record->dosage}\n";
-                        $message .= "⏱ *Frequency:* {$record->frequency}\n";
-                        $message .= "📅 *Duration:* {$record->duration}\n";
-                        if ($record->instructions) {
-                            $message .= "📝 *Instructions:* {$record->instructions}\n";
-                        }
-                        $message .= "\nGet well soon!";
-                        
-                        $phone = $record->patient->phone ?? '';
-                        if (empty($phone)) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Patient has no phone number.')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        $success = \App\Services\WhatsAppService::sendMessage($phone, $message);
-
-                        if ($success) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Prescription sent via WhatsApp!')
-                                ->success()
-                                ->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Failed to send WhatsApp message.')
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                    ->visible(fn () => Filament::getTenant()?->hasFeature('whatsapp') ?? false)
+                    // Opens WhatsApp with the prescription written out; staff press send.
+                    ->url(fn (Prescription $record) => WhatsAppLink::forPrescription($record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

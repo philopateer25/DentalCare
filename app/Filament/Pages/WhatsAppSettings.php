@@ -32,8 +32,8 @@ class WhatsAppSettings extends Page
     {
         $practice = Filament::getTenant();
         $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
-        $apiUrl = env('EVOLUTION_API_URL', 'http://evolution_api:8080');
-        $apiKey = env('EVOLUTION_API_KEY', '');
+        $apiUrl = config('services.evolution.url') ?? env('EVOLUTION_API_URL', 'http://evolution_api:8080');
+        $apiKey = config('services.evolution.key') ?? env('EVOLUTION_API_KEY', '');
 
         try {
             Http::withHeaders(['apikey' => $apiKey])->delete("{$apiUrl}/instance/delete/{$instanceName}");
@@ -51,8 +51,8 @@ class WhatsAppSettings extends Page
     {
         $practice = Filament::getTenant();
         $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
-        $apiUrl = env('EVOLUTION_API_URL', 'http://evolution_api:8080');
-        $apiKey = env('EVOLUTION_API_KEY', '');
+        $apiUrl = config('services.evolution.url') ?? env('EVOLUTION_API_URL', 'http://evolution_api:8080');
+        $apiKey = config('services.evolution.key') ?? env('EVOLUTION_API_KEY', '');
 
         // Using the WSL vEthernet IP to reach the Windows host running `php artisan serve`
         $webhookUrl = 'http://172.31.176.1:8000/api/whatsapp/webhook';
@@ -89,8 +89,8 @@ class WhatsAppSettings extends Page
         // Fallback name if no tenant context
         $instanceName = $practice ? 'clinic_' . $practice->id : 'default_clinic';
         
-        $apiUrl = env('EVOLUTION_API_URL', 'http://evolution_api:8080');
-        $apiKey = env('EVOLUTION_API_KEY', ''); // Add your global API key if needed
+        $apiUrl = config('services.evolution.url') ?? env('EVOLUTION_API_URL', 'http://evolution_api:8080');
+        $apiKey = config('services.evolution.key') ?? env('EVOLUTION_API_KEY', ''); // Add your global API key if needed
 
         try {
             // First, let's check the current connection state of this instance

@@ -15,43 +15,18 @@ class PatientOdontogramController extends Controller
      */
     protected function authorizePatientAccess(?Patient $patient): Patient
     {
-        if (!auth()->check()) {
-            $fallbackUser = \App\Models\User::where('email', 'admin@clinic.com')->first() 
-                ?? \App\Models\User::where('email', 'doctor@dentalcare.com')->first()
-                ?? \App\Models\User::first();
-            if ($fallbackUser) {
-                auth()->login($fallbackUser);
-            }
-        }
-
-        $userPracticeId = auth()->user()?->practice_id ?? \Filament\Facades\Filament::getTenant()?->id;
+        // Routes are behind the `auth` middleware. This used to auto-login a fallback admin
+        // for anonymous visitors and create a "Demo Patient"; both were removed.
+        $userPracticeId = auth()->user()->practice_id ?? \Filament\Facades\Filament::getTenant()?->id;
 
         if ($patient && $patient->exists) {
-            if ($userPracticeId && $patient->practice_id !== $userPracticeId) {
-                abort(403, 'Unauthorized cross-tenant patient access.');
-            }
+            abort_unless($patient->practice_id === $userPracticeId, 403, 'Unauthorized cross-tenant patient access.');
+
             return $patient;
         }
 
-        if ($userPracticeId) {
-            $patient = Patient::where('practice_id', $userPracticeId)->first();
-        }
-
-        if (!$patient) {
-            $patient = Patient::firstOrCreate(
-                ['practice_id' => $userPracticeId],
-                [
-                    'file_number' => 'DEMO-001',
-                    'first_name' => 'Demo',
-                    'last_name' => 'Patient',
-                    'gender' => 'male',
-                    'phone' => '0000000000',
-                    'status' => 'active',
-                ]
-            );
-        }
-
-        return $patient;
+        // No patient in the URL: open the practice's first patient, if any.
+        return Patient::where('practice_id', $userPracticeId)->firstOrFail();
     }
 
     /**
@@ -62,7 +37,7 @@ class PatientOdontogramController extends Controller
         $patient = $this->authorizePatientAccess($patient);
 
         // Get or create the latest examination
-        $examination = $patient->examinations()->latest('examined_at')->first();
+        $examination = $patient->examinations()->latest('id')->first();
         if (!$examination) {
             $examination = $patient->examinations()->create([
                 'doctor_id' => auth()->id(),
@@ -136,78 +111,17 @@ class PatientOdontogramController extends Controller
     /**
      * Display the Fullscreen Detailed Odontogram.
      */
-    public function showDetails(?Patient $patient = null): Response
+    public function showDetails(?Patient $patient = null): \Symfony\Component\HttpFoundation\Response
     {
         $patient = $this->authorizePatientAccess($patient);
 
-        // Get or create the latest examination
-        $examination = $patient->examinations()->latest('examined_at')->first();
-        if (!$examination) {
-            $examination = $patient->examinations()->create([
-                'doctor_id' => auth()->id(),
-                'type' => 'initial',
-            ]);
+        // Retired: the standalone details page is replaced by the Chart workspace in Filament.
+        $url = \App\Filament\Resources\PatientResource::getUrl('chart', ['record' => $patient], panel: 'admin', tenant: $patient->practice);
+        if ($tooth = request('tooth')) {
+            $url .= '?tooth='.urlencode((string) $tooth);
         }
 
-        $examination->load('toothFindings.surfaceFindings');
-        
-        $teethRecords = [];
-        foreach ($examination->toothFindings as $finding) {
-            $surfaces = [];
-            foreach ($finding->surfaceFindings as $surfaceFinding) {
-                $surfaces[$surfaceFinding->surface] = $surfaceFinding->finding_type;
-            }
-
-            $teethRecords[$finding->tooth_number_fdi] = [
-                'condition' => $finding->finding_type,
-                'status' => $finding->status ?? 'existing',
-                'clinical_details' => $finding->clinical_details,
-                'notes' => $finding->notes,
-                'surfaces' => (object)$surfaces,
-            ];
-        }
-
-        $patient->load('teeth');
-        foreach ($patient->teeth as $pt) {
-            if (!isset($teethRecords[$pt->tooth_number])) {
-                $teethRecords[$pt->tooth_number] = [
-                    'condition' => $pt->condition,
-                    'status' => $pt->status ?? 'existing',
-                    'clinical_details' => $pt->clinical_details,
-                    'notes' => $pt->notes,
-                    'surfaces' => (object)($pt->surfaces ?? []),
-                ];
-            } else {
-                $teethRecords[$pt->tooth_number]['status'] = $pt->status ?? $teethRecords[$pt->tooth_number]['status'] ?? 'existing';
-                $teethRecords[$pt->tooth_number]['clinical_details'] = $pt->clinical_details ?? $teethRecords[$pt->tooth_number]['clinical_details'] ?? null;
-            }
-        }
-
-        $patient->load([
-            'treatmentPlans.phases.procedures.procedureCode',
-            'treatmentPlans.phases.procedures.doctor',
-        ]);
-        $proceduresByTooth = [];
-        foreach ($patient->treatmentPlans as $plan) {
-            foreach ($plan->phases as $phase) {
-                foreach ($phase->procedures as $procedure) {
-                    if ($procedure->tooth_number_fdi) {
-                        $proceduresByTooth[(string)$procedure->tooth_number_fdi][] = $procedure;
-                    }
-                }
-            }
-        }
-
-        $procedureCategories = \App\Models\ProcedureCategory::with(['procedureCodes' => fn($q) => $q->orderBy('code')])->get();
-
-        return Inertia::render('Dental/Test3DOdontogram', [
-            'patient' => $patient,
-            'examination' => $examination,
-            'initialRecords' => $teethRecords,
-            'initialProcedures' => $proceduresByTooth,
-            'procedureCategories' => $procedureCategories,
-            'initialViewMode' => 'detailed',
-        ]);
+        return redirect()->to($url);
     }
 
     /**
@@ -262,7 +176,7 @@ class PatientOdontogramController extends Controller
             ]
         );
 
-        $latestExam = $patient->examinations()->latest('examined_at')->first();
+        $latestExam = $patient->examinations()->latest('id')->first();
         if (!$latestExam) {
             $latestExam = $patient->examinations()->create([
                 'doctor_id' => auth()->id() ?? 1,

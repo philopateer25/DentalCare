@@ -9,6 +9,7 @@ use App\Models\Operatory;
 use App\Models\Patient;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Services\Scheduling\RoomAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -131,23 +132,9 @@ class CalendarController extends Controller
         $startTime = Carbon::parse($validated['start_time']);
         $endTime = Carbon::parse($validated['end_time']);
 
-        // Check for time collisions (same doctor OR same operatory)
-        $hasConflict = Appointment::where('practice_id', $practiceId)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($q) use ($doctor, $operatory) {
-                $q->where('doctor_id', $doctor->id)
-                  ->orWhere('operatory_id', $operatory->id);
-            })
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->where('start_time', '<', $endTime)
-                  ->where('end_time', '>', $startTime);
-            })
-            ->exists();
-
-        if ($hasConflict) {
-            return response()->json([
-                'message' => 'Time slot conflict: The selected doctor or operatory/chair is already booked during this time interval.',
-            ], 422);
+        // Doctor/chair overlap + room maintenance guard
+        if ($blocked = $this->availabilityResponse($request, (int) $practiceId, $operatory->id, $startTime, $endTime, $doctor->id)) {
+            return $blocked;
         }
 
         $appointment = Appointment::create([
@@ -198,24 +185,9 @@ class CalendarController extends Controller
         $startTime = Carbon::parse($validated['start_time']);
         $endTime = Carbon::parse($validated['end_time']);
 
-        // Check for time collisions excluding current appointment
-        $hasConflict = Appointment::where('practice_id', $practiceId)
-            ->where('id', '!=', $appointment->id)
-            ->where('status', '!=', 'cancelled')
-            ->where(function ($q) use ($doctorId, $operatoryId) {
-                $q->where('doctor_id', $doctorId)
-                  ->orWhere('operatory_id', $operatoryId);
-            })
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->where('start_time', '<', $endTime)
-                  ->where('end_time', '>', $startTime);
-            })
-            ->exists();
-
-        if ($hasConflict) {
-            return response()->json([
-                'message' => 'Time slot conflict: The selected doctor or operatory/chair is already booked during this time interval.',
-            ], 422);
+        // Doctor/chair overlap (excluding this appointment) + room maintenance guard
+        if ($blocked = $this->availabilityResponse($request, (int) $practiceId, (int) $operatoryId, $startTime, $endTime, $doctorId ? (int) $doctorId : null, $appointment->id)) {
+            return $blocked;
         }
 
         $appointment->update([
@@ -260,5 +232,35 @@ class CalendarController extends Controller
             'message' => "Appointment status updated to {$validated['status']}.",
             'appointment' => $appointment->fresh(['patient', 'doctor', 'operatory']),
         ]);
+    }
+
+    /**
+     * Shared doctor/chair/maintenance guard. Returns an error response, or null when bookable.
+     * - overlap or room closed for maintenance → 422
+     * - room operational but equipment missing → 409 with `warnings`, unless the
+     *   client re-sends with `acknowledge_maintenance=true`.
+     */
+    private function availabilityResponse(Request $request, int $practiceId, int $operatoryId, Carbon $start, Carbon $end, ?int $doctorId, ?int $ignoreId = null): ?JsonResponse
+    {
+        $service = app(RoomAvailabilityService::class);
+        $assessment = $service->assess($practiceId, $operatoryId, $start, $end, $doctorId, $ignoreId);
+
+        if ($message = $service->closureMessage($assessment)) {
+            return response()->json(['message' => $message, 'closures' => $assessment['closures']], 422);
+        }
+
+        if ($assessment['appointment_conflict']) {
+            return response()->json(['message' => RoomAvailabilityService::CONFLICT_MESSAGE], 422);
+        }
+
+        if (! empty($assessment['warnings']) && ! $request->boolean('acknowledge_maintenance')) {
+            return response()->json([
+                'message' => $service->warningMessage($assessment),
+                'requires_acknowledgement' => true,
+                'warnings' => $assessment['warnings'],
+            ], 409);
+        }
+
+        return null;
     }
 }

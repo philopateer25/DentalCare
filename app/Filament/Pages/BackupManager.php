@@ -16,36 +16,58 @@ class BackupManager extends Page
     use WithFileUploads;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+
     protected static ?string $navigationGroup = 'Settings';
+
     protected static ?string $navigationLabel = 'Backup & Security';
+
     protected static ?string $title = 'System Backups & Data Protection';
+
     protected static ?int $navigationSort = 5;
 
     protected static string $view = 'filament.pages.backup-manager';
 
+    public function getSubheading(): ?string
+    {
+        return __('Automatic encrypted backup every day at 02:00. The newest :count backups (up to :days days) are kept; older ones are removed automatically.', [
+            'count' => config('backup.retention.max_backups'),
+            'days' => config('backup.retention.days'),
+        ]);
+    }
+
     // Delete Modal State
     public bool $isDeleteModalOpen = false;
+
     public string $deleteFilename = '';
+
     public string $deletePassword = '';
+
     public string $deleteErrorMessage = '';
 
     // Restore Modal State
     public bool $isRestoreModalOpen = false;
+
     public string $restoreFilename = '';
+
     public string $restoreConfirmKeyword = '';
+
     public string $restoreCustomKey = '';
+
     public bool $restoreDb = true;
+
     public bool $restoreFiles = true;
+
     public string $restoreErrorMessage = '';
 
     // Upload & Restore Modal State
     public bool $isUploadModalOpen = false;
+
     public $uploadedBackup = null;
 
     public static function canAccess(): bool
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -145,13 +167,14 @@ class BackupManager extends Page
     {
         $backupService = app(BackupService::class);
 
-        if (!$backupService->verifyDeletePassword($this->deletePassword)) {
+        if (! $backupService->verifyDeletePassword($this->deletePassword)) {
             $this->deleteErrorMessage = 'Incorrect security password. Deletion rejected.';
             Notification::make()
                 ->title('Deletion Rejected')
                 ->body('The security password entered is incorrect.')
                 ->danger()
                 ->send();
+
             return;
         }
 
@@ -201,6 +224,7 @@ class BackupManager extends Page
     {
         if (strtoupper(trim($this->restoreConfirmKeyword)) !== 'RESTORE') {
             $this->restoreErrorMessage = 'Please type RESTORE in capital letters to confirm.';
+
             return;
         }
 
@@ -218,7 +242,7 @@ class BackupManager extends Page
 
             Notification::make()
                 ->title('System Restored Successfully!')
-                ->body("Backup {$restoredFile} was restored. Database: " . ($result['database_restored'] ? 'Restored' : 'Skipped') . " | Files: {$result['files_restored_count']}. Refresh the page to see updated data.")
+                ->body("Backup {$restoredFile} was restored. Database: ".($result['database_restored'] ? 'Restored' : 'Skipped')." | Files: {$result['files_restored_count']}. Refresh the page to see updated data.")
                 ->success()
                 ->persistent()
                 ->send();
@@ -249,12 +273,13 @@ class BackupManager extends Page
 
     public function executeUploadAndRestore(): void
     {
-        if (!$this->uploadedBackup) {
+        if (! $this->uploadedBackup) {
             Notification::make()
                 ->title('No File Selected')
                 ->body('Please choose an encrypted (.enc) or ZIP (.zip) backup file.')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -263,12 +288,12 @@ class BackupManager extends Page
             $backupDir = $backupService->getBackupDirectory();
 
             $clientName = $this->uploadedBackup->getClientOriginalName();
-            if (!str_ends_with($clientName, '.enc') && !str_ends_with($clientName, '.zip')) {
+            if (! str_ends_with($clientName, '.enc') && ! str_ends_with($clientName, '.zip')) {
                 throw new \RuntimeException('Invalid file format. Only .enc and .zip backups are supported.');
             }
 
             // Save uploaded file into backups directory
-            $targetPath = $backupDir . '/' . basename($clientName);
+            $targetPath = $backupDir.'/'.basename($clientName);
             $this->uploadedBackup->storeAs(config('backup.directory', 'backups'), basename($clientName), 'local');
 
             $this->closeUploadModal();
@@ -298,6 +323,7 @@ class BackupManager extends Page
     public function getTotalSizeProperty(): string
     {
         $bytes = $this->backups->sum('size');
+
         return app(BackupService::class)->formatBytes($bytes);
     }
 

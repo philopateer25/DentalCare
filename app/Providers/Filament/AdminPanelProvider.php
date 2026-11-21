@@ -27,10 +27,22 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->tenant(\App\Models\Practice::class)
-            ->login()
-            ->brandName('DentalCare Management')
+            ->login(\App\Filament\Pages\Auth\Login::class)
+            // SPA mode: menu clicks swap the page content instead of reloading everything.
+            ->spa()
+            ->brandName('DOXamigo')
+            ->brandLogo(fn () => view('filament.brand.logo'))
+            ->brandLogoHeight('2.25rem')
+            ->favicon(asset('images/icon-512x512.png'))
+            ->font('DM Sans')
+            // DOXamigo brand kit: blue #3859a8, teal #009e83, red #d82c1e
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => Color::hex('#3859a8'),
+                'success' => Color::hex('#009e83'),
+                'danger' => Color::hex('#d82c1e'),
+                'warning' => Color::Amber,
+                'info' => Color::Sky,
+                'gray' => Color::Slate,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -59,6 +71,43 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn (): string => '<link rel="manifest" href="/manifest.json">'
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // DOXamigo theme layered over Filament's CSS (plain CSS, see docs/decisions.md #13)
+                fn (): string => app(\Illuminate\Foundation\Vite::class)(['resources/css/filament-theme.css'])->toHtml()
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // React Chart workspace bundle (Patients -> Chart page only)
+                function (): string {
+                    $vite = app(\Illuminate\Foundation\Vite::class);
+
+                    return ($vite->reactRefresh()?->toHtml() ?? '')
+                        .$vite(['resources/css/chart-workspace.css', 'resources/js/filament/chart-workspace.jsx'])->toHtml();
+                },
+                // Loaded on every page (SPA navigation): mounts only where a chart element exists.
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::FOOTER,
+                fn () => view('filament.brand.footer')
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // React + FullCalendar bundle for AppointmentsCalendarWidget (dashboard only)
+                function (): string {
+                    $vite = app(\Illuminate\Foundation\Vite::class);
+
+                    return ($vite->reactRefresh()?->toHtml() ?? '')
+                        .$vite(['resources/css/filament-calendar.css', 'resources/js/filament/appointments-calendar.jsx'])->toHtml();
+                },
+                // Loaded on every page (SPA navigation does not re-run page-scoped <head> hooks);
+                // the bundle only mounts where its element exists.
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                // Dark-mode text for maintenance callouts (MaintenanceBookingFields)
+                fn (): string => '<style>.dark .dc-callout[data-tone=danger]{color:rgb(var(--danger-300))!important}.dark .dc-callout[data-tone=warning]{color:rgb(var(--warning-300))!important}</style>'
             )
             ->middleware([
                 EncryptCookies::class,

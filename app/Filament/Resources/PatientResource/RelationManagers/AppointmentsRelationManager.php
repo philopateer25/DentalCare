@@ -53,8 +53,14 @@ class AppointmentsRelationManager extends RelationManager
                         //     ->label('Branch'),
 
                         Forms\Components\Select::make('operatory_id')
-                            ->relationship('operatory', 'name')
+                            // Only this clinic's rooms (the list used to include every clinic's rooms).
+                            ->relationship('operatory', 'name', fn ($query) => $query->whereHas(
+                                'branch',
+                                fn ($b) => $b->where('practice_id', \Filament\Facades\Filament::getTenant()?->id)
+                            ))
                             ->required()
+                            ->live()
+                            ->rules([\App\Filament\Support\MaintenanceBookingFields::closureRule()])
                             ->label('Room (Operatory)'),
 
                         Forms\Components\Select::make('doctor_id')
@@ -119,6 +125,11 @@ class AppointmentsRelationManager extends RelationManager
                             ])
                             ->default('booked')
                             ->required(),
+
+                        // Room maintenance: closure callout (blocked by the operatory rule) or
+                        // "something will be missing" warning that must be acknowledged.
+                        \App\Filament\Support\MaintenanceBookingFields::notice(),
+                        \App\Filament\Support\MaintenanceBookingFields::acknowledgement(),
 
                         Forms\Components\TextInput::make('consultation_fee')
                             ->numeric()

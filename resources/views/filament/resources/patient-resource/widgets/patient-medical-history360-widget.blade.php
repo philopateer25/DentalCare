@@ -70,12 +70,11 @@
                     </button>
 
                     <a 
-                        href="{{ route('patient.odontogram', $record?->id ?? 1) }}" 
-                        target="_blank"
+                        href="{{ \App\Filament\Resources\PatientResource::getUrl('chart', ['record' => $record]) }}" 
                         style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff;"
                         class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold hover:bg-white/25 active:scale-95 rounded-xl backdrop-blur-md transition-all cursor-pointer">
                         <x-heroicon-m-sparkles class="w-4 h-4 text-amber-300" />
-                        <span>Open 3D Odontogram</span>
+                        <span>Open dental chart</span>
                     </a>
                 </div>
             </div>

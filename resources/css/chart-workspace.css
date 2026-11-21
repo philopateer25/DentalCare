@@ -1,0 +1,38 @@
+/*
+ * Chart workspace styles (Filament page Patients → Chart).
+ * Tailwind v4 utilities only (no preflight, so Filament's own base styles are untouched),
+ * generated just for the workspace and the Dental3D components it reuses.
+ * Filament toggles dark mode with the `.dark` class, so the dark variant follows it.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+/* Unlayered on purpose: Filament's (unlayered) base styles reset button backgrounds, and
+   layered utilities always lose to unlayered CSS. Unlayered, they win by load order. */
+@import "tailwindcss/utilities.css" source(none);
+
+@source "../js/filament/workspace";
+@source "../js/Components/Dental3D";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-brand: #3859a8;
+    --color-brand-deep: #1b418f;
+    --color-brand-teal: #009e83;
+    --color-brand-red: #d82c1e;
+}
+
+/* Page chrome: give the workspace the full content width. */
+.dxw-page .fi-header { display: none; }
+.dxw-host { min-height: 60vh; }
+.dxw-skeleton {
+    display: grid; place-items: center; min-height: 50vh; border-radius: 0.75rem;
+    background: var(--dx-card, #fff); color: var(--dx-text-muted, #64748b); font-size: 13px;
+}
+.dxw-root { -webkit-tap-highlight-color: transparent; }
+.dxw-root button { touch-action: manipulation; }
+
+/* 3D viewer toolbar (shared Dental3DViewer component): finger-sized buttons on touch screens.
+   Its own buttons are 25–30px, which is too small for chairside tablets (44px guideline). */
+@media (pointer: coarse) {
+    .dxw-viewer button { min-height: 44px; min-width: 44px; }
+}

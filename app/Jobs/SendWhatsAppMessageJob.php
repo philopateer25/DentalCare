@@ -32,8 +32,8 @@ class SendWhatsAppMessageJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $apiUrl = env('EVOLUTION_API_URL', 'http://evolution_api:8080');
-        $apiKey = env('EVOLUTION_API_KEY', '');
+        $apiUrl = config('services.evolution.url') ?? env('EVOLUTION_API_URL', 'http://evolution_api:8080');
+        $apiKey = config('services.evolution.key') ?? env('EVOLUTION_API_KEY', '');
 
         // Format phone number to strictly digits just in case
         $formattedPhone = preg_replace('/[^0-9]/', '', $this->phoneNumber);

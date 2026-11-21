@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Services\Backup\BackupEncryptor;
 use App\Services\Backup\BackupService;
-use App\Services\Backup\DatabaseDumper;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
@@ -12,10 +11,25 @@ class BackupSystemTest extends TestCase
 {
     protected string $testBackupDir;
 
+    protected string $storageSandbox;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Run against a throwaway storage folder: the restore test writes files back into
+        // storage/app (patient files, license.json), which used to hit the real storage.
+        $this->storageSandbox = sys_get_temp_dir().DIRECTORY_SEPARATOR.'dentalcare-backup-test-'.bin2hex(random_bytes(4));
+        File::ensureDirectoryExists($this->storageSandbox.'/app');
+        $this->app->useStoragePath($this->storageSandbox);
+
         $this->testBackupDir = storage_path('app/backups');
+    }
+
+    protected function tearDown(): void
+    {
+        File::deleteDirectory($this->storageSandbox);
+        parent::tearDown();
     }
 
     public function test_can_create_encrypted_backup_with_manifest_and_checksum(): void
@@ -28,7 +42,7 @@ class BackupSystemTest extends TestCase
         ]);
 
         $this->assertFileExists($result['path']);
-        $this->assertFileExists($result['path'] . '.sha256');
+        $this->assertFileExists($result['path'].'.sha256');
         $this->assertTrue($result['encrypted']);
         $this->assertNotEmpty($result['checksum']);
         $this->assertGreaterThan(0, $result['size']);
@@ -47,14 +61,14 @@ class BackupSystemTest extends TestCase
         $service = app(BackupService::class);
         $result = $service->createBackup(['encrypt' => true]);
 
-        $targetDir = storage_path('app/backup-temp/test_extract_' . uniqid());
+        $targetDir = storage_path('app/backup-temp/test_extract_'.uniqid());
         $extractResult = $service->extractBackup($result['filename'], $targetDir);
 
         $this->assertTrue($extractResult['success']);
-        $this->assertFileExists($targetDir . '/manifest.json');
+        $this->assertFileExists($targetDir.'/manifest.json');
 
-        $manifest = json_decode(file_get_contents($targetDir . '/manifest.json'), true);
-        $this->assertEquals('DentalCare', $manifest['app_name']);
+        $manifest = json_decode(file_get_contents($targetDir.'/manifest.json'), true);
+        $this->assertEquals(config('app.name'), $manifest['app_name']);
         $this->assertTrue($manifest['encrypted']);
 
         // Clean up
@@ -67,7 +81,7 @@ class BackupSystemTest extends TestCase
         $service = app(BackupService::class);
         $result = $service->createBackup(['encrypt' => true]);
 
-        $targetDir = storage_path('app/backup-temp/test_fail_' . uniqid());
+        $targetDir = storage_path('app/backup-temp/test_fail_'.uniqid());
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Authentication failed');

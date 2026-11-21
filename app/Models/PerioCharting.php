@@ -12,12 +12,16 @@ class PerioCharting extends Model
 
     protected $fillable = [
         'patient_id',
+        'dental_examination_id',
         'exam_date',
         'examined_by_doctor_id',
         'probe_depths_json',
         'bleeding_on_probing_json',
         'gingival_margins_json',
         'plaque_index_json',
+        'suppuration_json',
+        'mobility_json',
+        'furcation_json',
         'notes',
     ];
 
@@ -27,6 +31,9 @@ class PerioCharting extends Model
         'bleeding_on_probing_json' => 'array',
         'gingival_margins_json' => 'array',
         'plaque_index_json' => 'array',
+        'suppuration_json' => 'array',
+        'mobility_json' => 'array',
+        'furcation_json' => 'array',
     ];
 
     public function patient(): BelongsTo

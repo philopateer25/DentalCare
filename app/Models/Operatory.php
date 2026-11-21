@@ -60,4 +60,9 @@ class Operatory extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function maintenanceRecords(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(MaintenanceRecord::class, 'maintenance_record_operatory');
+    }
 }

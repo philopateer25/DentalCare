@@ -19,11 +19,14 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppPendingRequestsWidget extends BaseWidget
 {
-    protected static ?int $sort = 1;
-    protected int | string | array $columnSpan = 'full';
+    protected static ?int $sort = 2; // beside the reception queue
+    protected int | string | array $columnSpan = 1;
+    protected static ?string $heading = 'WhatsApp Intake Queue';
 
     public static function canView(): bool
     {
+        // Removed from the dashboard: WhatsApp now works by opening WhatsApp Web with a
+        // prefilled template (staff just press send). Class kept; return the role check to restore.
         return false;
     }
 
@@ -36,6 +39,10 @@ class WhatsAppPendingRequestsWidget extends BaseWidget
                     ->where('status', 'pending')
                     ->latest()
             )
+            ->description('Booking requests received on WhatsApp')
+            ->emptyStateHeading('No pending WhatsApp requests')
+            ->emptyStateIcon('heroicon-o-chat-bubble-left-right')
+            ->paginated([5])
             ->columns([
                 Tables\Columns\TextColumn::make('patient.full_name')
                     ->label('Patient')
@@ -71,6 +78,35 @@ class WhatsAppPendingRequestsWidget extends BaseWidget
 
                             $startTime = Carbon::parse($record->requested_date . ' ' . $record->requested_time);
                             $endTime = $startTime->copy()->addMinutes(30);
+
+                            // Skip rooms closed for maintenance; warn when equipment is missing.
+                            $availability = app(\App\Services\Scheduling\RoomAvailabilityService::class);
+                            $assessment = $availability->assess((int) $practiceId, (int) $operatoryId, $startTime, $endTime);
+                            if (! empty($assessment['closures'])) {
+                                $openRoomId = Operatory::where('branch_id', $branchId)->pluck('id')
+                                    ->first(fn ($id) => empty($availability->assess((int) $practiceId, (int) $id, $startTime, $endTime)['closures']));
+
+                                if (! $openRoomId) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('All rooms are closed for maintenance at the requested time')
+                                        ->body($availability->closureMessage($assessment))
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+
+                                $operatoryId = $openRoomId;
+                                $assessment = $availability->assess((int) $practiceId, (int) $operatoryId, $startTime, $endTime);
+                            }
+                            if ($warning = $availability->warningMessage($assessment)) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Something will be missing in this room')
+                                    ->body($warning)
+                                    ->warning()
+                                    ->persistent()
+                                    ->send();
+                            }
 
                             Appointment::create([
                                 'practice_id' => $practiceId,

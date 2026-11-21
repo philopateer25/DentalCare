@@ -23,9 +23,18 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      # Laravel's config/route/event caches live on the Docker volume, never in the shared
+      # project folder (a cached config there would also be picked up by host-side test runs).
+      APP_CONFIG_CACHE: /var/www/html/storage/framework/cache/config.php
+      APP_ROUTES_CACHE: /var/www/html/storage/framework/cache/routes-v7.php
+      APP_EVENTS_CACHE: /var/www/html/storage/framework/cache/events.php
     volumes:
       - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
+      # Compiled views + framework cache live inside Docker: on a Windows bind mount every
+      # page render paid for several slow cross-OS file checks per view.
+      - clinic_framework:/var/www/html/storage/framework
       - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini:ro
     networks:
       - clinic_network
@@ -39,9 +48,18 @@ services:
     command: php artisan queue:work --sleep=3 --tries=3
     env_file:
       - .env
+    environment:
+      # Laravel's config/route/event caches live on the Docker volume, never in the shared
+      # project folder (a cached config there would also be picked up by host-side test runs).
+      APP_CONFIG_CACHE: /var/www/html/storage/framework/cache/config.php
+      APP_ROUTES_CACHE: /var/www/html/storage/framework/cache/routes-v7.php
+      APP_EVENTS_CACHE: /var/www/html/storage/framework/cache/events.php
     volumes:
       - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
+      # Compiled views + framework cache live inside Docker: on a Windows bind mount every
+      # page render paid for several slow cross-OS file checks per view.
+      - clinic_framework:/var/www/html/storage/framework
       - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini:ro
     depends_on:
       - app
@@ -58,9 +76,18 @@ services:
     command: php artisan schedule:work
     env_file:
       - .env
+    environment:
+      # Laravel's config/route/event caches live on the Docker volume, never in the shared
+      # project folder (a cached config there would also be picked up by host-side test runs).
+      APP_CONFIG_CACHE: /var/www/html/storage/framework/cache/config.php
+      APP_ROUTES_CACHE: /var/www/html/storage/framework/cache/routes-v7.php
+      APP_EVENTS_CACHE: /var/www/html/storage/framework/cache/events.php
     volumes:
       - .:/var/www/html
       - clinic_vendor:/var/www/html/vendor
+      # Compiled views + framework cache live inside Docker: on a Windows bind mount every
+      # page render paid for several slow cross-OS file checks per view.
+      - clinic_framework:/var/www/html/storage/framework
       - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/opcache-recommended.ini:ro
     depends_on:
       - app
@@ -94,6 +121,7 @@ volumes:
   clinic_db_data:
   clinic_redis_data:
   clinic_vendor:
+  clinic_framework:
 
 networks:
   clinic_network:

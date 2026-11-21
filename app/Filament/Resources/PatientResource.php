@@ -146,13 +146,11 @@ class PatientResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => PatientTable::query($query))
             ->columns(PatientTable::columns())
             ->filters(PatientTable::filters())
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
+            ->actions(PatientTable::actions())
+            ->striped(false)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -178,6 +176,7 @@ class PatientResource extends Resource
             'create' => Pages\CreatePatient::route('/create'),
             'view' => Pages\ViewPatient::route('/{record}'),
             'edit' => Pages\EditPatient::route('/{record}/edit'),
+            'chart' => Pages\ChartWorkspace::route('/{record}/chart'),
         ];
     }
 }

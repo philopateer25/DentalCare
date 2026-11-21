@@ -190,6 +190,11 @@ class Practice extends Model
         return $this->hasMany(Appointment::class);
     }
 
+    public function maintenanceRecords(): HasMany
+    {
+        return $this->hasMany(MaintenanceRecord::class);
+    }
+
     public function clinicExpenses(): HasMany
     {
         return $this->hasMany(ClinicExpense::class);

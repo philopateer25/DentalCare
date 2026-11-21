@@ -68,8 +68,10 @@ return [
     |
     */
     'retention' => [
-        'days' => (int) env('BACKUP_RETENTION_DAYS', 30),
-        'max_backups' => (int) env('BACKUP_MAX_COUNT', 50),
+        // One backup per day (02:00): keep two weeks. Older/extra backups are pruned after
+        // every backup and again daily at 03:00.
+        'days' => (int) env('BACKUP_RETENTION_DAYS', 14),
+        'max_backups' => (int) env('BACKUP_MAX_COUNT', 14),
     ],
 
     /*

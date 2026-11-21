@@ -25,3 +25,12 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local debug / scratch scripts and design exports (keep out of the repo)
+/scratch/
+/testing_scripts/
+/design/stitch/
+/debug*.php
+/check_*.php
+/check_*.cjs
+/puppeteer_test.cjs

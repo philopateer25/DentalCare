@@ -39,7 +39,7 @@ class FollowUpRequestsWidget extends Widget implements HasActions, HasForms
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(FollowUpRequests::RECEPTION_ROLES) ?? false;
+        return auth()->user()?->hasAnyRole([...FollowUpRequests::RECEPTION_ROLES, 'developer']) ?? false;
     }
 
     protected function practiceId(): int

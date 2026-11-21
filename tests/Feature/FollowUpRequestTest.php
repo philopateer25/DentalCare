@@ -12,9 +12,11 @@ use App\Models\Operatory;
 use App\Models\Patient;
 use App\Models\Practice;
 use App\Models\User;
+use App\Services\FollowUpRequests;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -38,7 +40,7 @@ class FollowUpRequestTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        foreach (['doctor', 'secretary', 'clinic_admin', 'super_admin'] as $r) {
+        foreach (['doctor', 'secretary', 'clinic_admin', 'super_admin', 'developer'] as $r) {
             Role::firstOrCreate(['name' => $r]);
         }
         $this->practice = Practice::create(['name' => 'FU Clinic', 'currency' => 'EGP', 'is_active' => true]);
@@ -181,5 +183,65 @@ class FollowUpRequestTest extends TestCase
 
         // Doctors do not get the reception panel.
         $this->assertFalse(FollowUpRequestsWidget::canView());
+    }
+
+    #[Test]
+    public function two_receptionists_booking_the_same_request_create_only_one_appointment(): void
+    {
+        $request = $this->requestFollowUp();
+        $other = $this->user('sec2@fu.test', 'secretary');
+
+        // Both receptionists opened the request while it was still pending.
+        $first = FollowUpRequest::findOrFail($request->id);
+        $second = FollowUpRequest::findOrFail($request->id);
+        $slot = fn (int $hour) => [
+            'start_time' => now()->addDays(14)->setTime($hour, 0)->format('Y-m-d H:i:s'), 'duration_minutes' => 30,
+            'doctor_id' => $this->doctor->id, 'operatory_id' => $this->room->id,
+        ];
+
+        app(FollowUpRequests::class)->book($first, $this->secretary, $slot(11));
+
+        try {
+            app(FollowUpRequests::class)->book($second, $other, $slot(13));
+            $this->fail('A request that was already booked was booked again.');
+        } catch (HttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
+
+        $request->refresh();
+        $this->assertSame('booked', $request->status);
+        $this->assertSame($this->secretary->id, $request->handled_by);
+        $this->assertSame(1, Appointment::where('type', 'follow_up')->count());
+        $this->assertSame(1, $this->doctor->notifications()->count());
+    }
+
+    #[Test]
+    public function a_booked_request_cannot_be_closed_from_a_stale_copy(): void
+    {
+        $request = $this->requestFollowUp();
+        $stale = FollowUpRequest::findOrFail($request->id);
+
+        app(FollowUpRequests::class)->book($request, $this->secretary, [
+            'start_time' => now()->addDays(14)->setTime(11, 0)->format('Y-m-d H:i:s'), 'duration_minutes' => 30,
+            'doctor_id' => $this->doctor->id, 'operatory_id' => $this->room->id,
+        ]);
+
+        try {
+            app(FollowUpRequests::class)->dismiss($stale, $this->secretary, 'No answer');
+            $this->fail('A booked request was closed.');
+        } catch (HttpException $e) {
+            $this->assertSame(422, $e->getStatusCode());
+        }
+
+        $this->assertSame('booked', $request->fresh()->status);
+        $this->assertNull($request->fresh()->handled_note);
+    }
+
+    #[Test]
+    public function developers_see_the_follow_up_requests_widget(): void
+    {
+        $this->actingAs($this->user('dev@fu.test', 'developer'));
+
+        $this->assertTrue(FollowUpRequestsWidget::canView());
     }
 }

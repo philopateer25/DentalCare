@@ -68,7 +68,6 @@ class FollowUpRequests
     public function book(FollowUpRequest $request, User $handler, array $data): array
     {
         abort_unless($request->practice_id === $handler->practice_id, 403);
-        abort_unless($request->status === FollowUpRequest::STATUS_PENDING, 422, 'This request was already handled.');
 
         $start = RoomAvailabilityService::parse($data['start_time']);
         $end = $start->copy()->addMinutes((int) $data['duration_minutes']);
@@ -76,12 +75,16 @@ class FollowUpRequests
             ->whereHas('branch', fn ($q) => $q->where('practice_id', $request->practice_id))
             ->firstOrFail();
 
-        // Closures and clashes throw; missing equipment is allowed but reported back.
-        $assessment = $this->availability->assertBookable(
-            $request->practice_id, $operatory->id, $start, $end, (int) $data['doctor_id'], null, true
-        );
+        [$appointment, $assessment] = DB::transaction(function () use ($request, $handler, $data, $start, $end, $operatory) {
+            // Two receptionists can open the same request at once: lock the row and re-check
+            // it is still pending, so only the first booking goes through.
+            $this->lockPending($request);
 
-        $appointment = DB::transaction(function () use ($request, $handler, $data, $start, $end, $operatory) {
+            // Closures and clashes throw; missing equipment is allowed but reported back.
+            $assessment = $this->availability->assertBookable(
+                $request->practice_id, $operatory->id, $start, $end, (int) $data['doctor_id'], null, true
+            );
+
             $appointment = Appointment::create([
                 'practice_id' => $request->practice_id,
                 'branch_id' => $operatory->branch_id,
@@ -104,7 +107,7 @@ class FollowUpRequests
                 'handled_at' => now(),
             ]);
 
-            return $appointment;
+            return [$appointment, $assessment];
         });
 
         $this->notifyDoctor($request, 'Follow-up booked', $start->format('D j M, h:i A').' · '.$operatory->name.' · by '.$handler->name, 'success');
@@ -115,16 +118,31 @@ class FollowUpRequests
     public function dismiss(FollowUpRequest $request, User $handler, ?string $reason): void
     {
         abort_unless($request->practice_id === $handler->practice_id, 403);
-        abort_unless($request->status === FollowUpRequest::STATUS_PENDING, 422, 'This request was already handled.');
 
-        $request->update([
-            'status' => FollowUpRequest::STATUS_CANCELLED,
-            'handled_by' => $handler->id,
-            'handled_at' => now(),
-            'handled_note' => $reason,
-        ]);
+        DB::transaction(function () use ($request, $handler, $reason) {
+            $this->lockPending($request);
+
+            $request->update([
+                'status' => FollowUpRequest::STATUS_CANCELLED,
+                'handled_by' => $handler->id,
+                'handled_at' => now(),
+                'handled_note' => $reason,
+            ]);
+        });
 
         $this->notifyDoctor($request, 'Follow-up not booked', ($reason ?: 'No reason given').' · by '.$handler->name, 'warning');
+    }
+
+    /**
+     * Lock the request row for the rest of the transaction and sync $request with what is
+     * stored, so a copy loaded before someone else handled it can't be handled twice.
+     */
+    protected function lockPending(FollowUpRequest $request): void
+    {
+        $current = FollowUpRequest::whereKey($request->getKey())->lockForUpdate()->first();
+        abort_unless($current, 404);
+        $request->setRawAttributes($current->getAttributes(), true);
+        abort_unless($request->status === FollowUpRequest::STATUS_PENDING, 422, 'This request was already handled.');
     }
 
     protected function notifyDoctor(FollowUpRequest $request, string $title, string $body, string $color): void

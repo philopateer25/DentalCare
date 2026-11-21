@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('license:tick')->everyTenMinutes();
-Schedule::command('license:heartbeat')->everyFourHours();
+Schedule::command('license:heartbeat')->everyThirtyMinutes()->withoutOverlapping();
 
 // Automated Daily Clinic Backups (Protected AES-256 at 02:00 AM)
 Schedule::command('backup:run')

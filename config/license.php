@@ -18,6 +18,96 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Enforcement
+    |--------------------------------------------------------------------------
+    |
+    | null (default) = enforce everywhere except the `local` and `testing`
+    | environments. Set LICENSE_ENFORCE=true to test enforcement locally.
+    | `local` is always bypassed by LicenseManager so developers are never
+    | locked out.
+    |
+    */
+
+    'enforce' => env('LICENSE_ENFORCE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | License Signing Keys (Ed25519 public keys, base64)
+    |--------------------------------------------------------------------------
+    |
+    | Replies from the central app are signed with its private key; only the
+    | public half lives here. Production keys are committed in code on purpose
+    | so they can't be swapped through a clinic's .env. Outside production,
+    | extra keys can be added with LICENSE_PUBLIC_KEYS="k1:BASE64,k2:BASE64".
+    | Several keys may be listed at once to rotate keys without downtime.
+    |
+    */
+
+    'public_keys' => array_merge(
+        [
+            // 'k1' => 'BASE64_PUBLIC_KEY', // add the central app's key here when it is generated
+        ],
+        env('APP_ENV') === 'production'
+            ? []
+            : \App\Services\Licensing\LicenseEnvelope::parseKeyList(env('LICENSE_PUBLIC_KEYS')),
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscription Lock Steps (defaults; the signed payload can override)
+    |--------------------------------------------------------------------------
+    |
+    | After `paid_until`: warning banner from 7 days before, read-only after
+    | `read_only_after_days`, fully locked `lock_after_days` later. All
+    | boundaries fall on midnight, so a clinic is never cut off mid-session.
+    |
+    */
+
+    'billing_warning_days' => 7,
+
+    'read_only_after_days' => 3,
+
+    'lock_after_days' => 30,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed While Restricted
+    |--------------------------------------------------------------------------
+    |
+    | Routes that keep working in read-only and locked mode, so staff can log
+    | in, reach the license page, sync, enter an unlock code and export data.
+    |
+    */
+
+    'always_allowed_routes' => [
+        'filament.admin.auth.*',
+        'filament.admin.pages.license',
+        'filament.system.auth.*',
+        'license.export',
+        'locale.switch',
+        'livewire.update',
+        'logout',
+        'login',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Models Writable In Read-Only Mode
+    |--------------------------------------------------------------------------
+    |
+    | Logging in and contacting support must keep working.
+    |
+    */
+
+    'read_only_exempt_models' => [
+        \App\Models\User::class,
+        \App\Models\SupportTicket::class,
+        \App\Models\SupportTicketReply::class,
+        \Illuminate\Notifications\DatabaseNotification::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Grace Period
     |--------------------------------------------------------------------------
     |
@@ -61,15 +151,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Heartbeat Interval (hours)
+    | Heartbeat Interval
     |--------------------------------------------------------------------------
     |
-    | How often the scheduler attempts to send a heartbeat to the central
-    | server to re-validate the license.
+    | The scheduler sends a heartbeat every 30 minutes (routes/console.php).
+    | Staff can also press "Sync now" on the License page.
     |
     */
 
-    'heartbeat_interval_hours' => (int) env('LICENSE_HEARTBEAT_INTERVAL', 4),
+    'heartbeat_interval_minutes' => 30,
 
     /*
     |--------------------------------------------------------------------------

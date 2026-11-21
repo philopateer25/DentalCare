@@ -179,7 +179,8 @@ class FeatureManager
         }
 
         if (!$practice) {
-            return self::FEATURES[$featureKey]['default'] ?? true;
+            return (self::FEATURES[$featureKey]['default'] ?? true)
+                && app(LicenseManager::class)->allowsFeature($featureKey);
         }
 
         return $practice->hasFeature($featureKey);
@@ -205,8 +206,21 @@ class FeatureManager
 
         $finalFeatures = [];
 
+        $license = app(LicenseManager::class);
+
         foreach (self::FEATURES as $key => $meta) {
             $requestedEnabled = in_array($key, $requestedFeatures, true) || (isset($requestedFeatures[$key]) && $requestedFeatures[$key] === true);
+
+            // Nobody on the clinic side (super admins included) can enable a
+            // feature the signed license doesn't include; its stored value is
+            // left untouched so it comes back if the plan is upgraded.
+            if (! $license->allowsFeature($key)) {
+                if (in_array($key, $currentFeatures, true) || ! empty($currentFeatures[$key])) {
+                    $finalFeatures[] = $key;
+                }
+
+                continue;
+            }
 
             if ($meta['system_only'] && !$isSuperAdmin) {
                 // Clinic users cannot change system-only features; keep current state

@@ -55,6 +55,10 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'license' => fn () => [
+                'mode' => app(\App\Services\LicenseManager::class)->getMode(),
+                'banners' => app(\App\Services\LicenseManager::class)->getBanners(),
+            ],
         ];
     }
 }

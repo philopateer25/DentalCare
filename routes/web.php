@@ -129,6 +129,9 @@ Route::get('/locale/{lang}', function (string $lang) {
 
 Route::middleware('auth')->post('/push/subscribe', [PushSubscriptionController::class, 'update'])->name('push.subscribe');
 
+// Clinic data export — reachable even when the license is read-only or locked.
+Route::middleware('auth')->get('/license/export', \App\Http\Controllers\LicenseExportController::class)->name('license.export');
+
 // Odontogram, examination, treatment-plan and fee-schedule APIs (session auth required;
 // these used to be reachable without login).
 Route::middleware('auth')->group(function () {

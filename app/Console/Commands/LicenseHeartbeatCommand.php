@@ -6,7 +6,7 @@ use App\Services\LicenseManager;
 use Illuminate\Console\Command;
 
 /**
- * Sends a heartbeat to the Central license server every N hours.
+ * Sends a heartbeat to the Central license server every 30 minutes.
  *
  * If the server responds with 'active', the grace period clock resets.
  * If 'suspended' or 'revoked', the app locks out immediately.

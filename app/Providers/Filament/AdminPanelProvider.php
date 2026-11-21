@@ -109,6 +109,11 @@ class AdminPanelProvider extends PanelProvider
                 // Dark-mode text for maintenance callouts (MaintenanceBookingFields)
                 fn (): string => '<style>.dark .dc-callout[data-tone=danger]{color:rgb(var(--danger-300))!important}.dark .dc-callout[data-tone=warning]{color:rgb(var(--warning-300))!important}</style>'
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::CONTENT_START,
+                // License banners: subscription ending, offline, read-only, announcements.
+                fn (): string => view('filament.license-banners')->render(),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

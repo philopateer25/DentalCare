@@ -11,7 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One license/clock instance per request or process, so the signed
+        // payload is read and verified once rather than on every feature check.
+        $this->app->singleton(\App\Services\TamperProofClock::class);
+        $this->app->singleton(\App\Services\LicenseManager::class);
     }
 
     /**
@@ -26,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\TreatmentProcedure::observe(\App\Observers\TreatmentProcedureObserver::class);
         \App\Models\Appointment::observe(\App\Observers\AppointmentObserver::class);
         \App\Models\Practice::observe(\App\Observers\PracticeObserver::class);
+
+        // Read-only / locked license mode. Registered first: Gate::before
+        // callbacks run in order and the super-admin rule below would
+        // otherwise allow every write.
+        \App\Services\Licensing\ReadOnlyGuard::register();
 
         \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
             return $user->hasAnyRole(['developer', 'super_admin']) ? true : null;

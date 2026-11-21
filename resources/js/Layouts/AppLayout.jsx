@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
 import WelcomeNavbar from '../Components/WelcomeNavbar';
 import Footer from '../Components/Footer';
+import LicenseBanners from '../Components/LicenseBanners';
 
 export default function AppLayout({ title, auth, appName = 'DentalCare', children, isWelcome = false, customNavbar = null }) {
     return (
@@ -28,6 +29,8 @@ export default function AppLayout({ title, auth, appName = 'DentalCare', childre
             {/* Side Bar*/}
 
 
+
+            <LicenseBanners />
 
             {/* Page Content */}
             <main className="relative z-10 flex-grow">

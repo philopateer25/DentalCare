@@ -72,6 +72,12 @@ class Practice extends Model
      */
     public function hasFeature(string $feature): bool
     {
+        // The signed license from the central app is the ceiling: the clinic
+        // can switch licensed features off, never switch unlicensed ones on.
+        if (! app(\App\Services\LicenseManager::class)->allowsFeature($feature)) {
+            return false;
+        }
+
         $features = $this->features;
 
         if (is_null($features)) {

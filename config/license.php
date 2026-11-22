@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\SupportTicket;
+use App\Models\SupportTicketReply;
+use App\Models\User;
+use App\Services\Licensing\LicenseEnvelope;
+use Illuminate\Notifications\DatabaseNotification;
+
 return [
 
     /*
@@ -49,7 +55,7 @@ return [
         ],
         env('APP_ENV') === 'production'
             ? []
-            : \App\Services\Licensing\LicenseEnvelope::parseKeyList(env('LICENSE_PUBLIC_KEYS')),
+            : LicenseEnvelope::parseKeyList(env('LICENSE_PUBLIC_KEYS')),
     ),
 
     /*
@@ -85,9 +91,55 @@ return [
         'filament.system.auth.*',
         'license.export',
         'locale.switch',
-        'livewire.update',
         'logout',
         'login',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rollout Stages (Phase 3)
+    |--------------------------------------------------------------------------
+    |
+    | The central app sets `rollout_stage` (1–4) per clinic so new clinics get
+    | the system a few modules at a time. A module unlocks once the clinic's
+    | stage reaches the number below; anything not listed is open at stage 1
+    | (calendar, patients, reception). Keys are FeatureManager feature keys,
+    | plus `clinical` (charting, treatment plans, prescriptions, follow-ups).
+    | Stage gates only hide: a module also needs to be in the clinic's plan.
+    |
+    */
+
+    'rollout_stages' => [
+        'whatsapp' => 1,
+        'finance' => 2,
+        'installments' => 2,
+        'insurance' => 2,
+        'clinical' => 3,
+        'labs' => 4,
+        'inventory' => 4,
+        'staff' => 4,
+        'payroll' => 4,
+        'online_doc' => 4,
+        '3d_model' => 4,
+        'ai_analysis' => 4,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Livewire Components Usable While Locked
+    |--------------------------------------------------------------------------
+    |
+    | Livewire posts every click to one route (`*livewire.update`). In read-only
+    | mode those posts are allowed (ReadOnlyGuard blocks the writes). In locked
+    | mode only these components may run, so the License page keeps working
+    | without the rest of the app slipping past the lock.
+    |
+    */
+
+    'locked_livewire_components' => [
+        'app.filament.pages.license-page',
+        'filament.livewire.notifications',
+        'filament.livewire.database-notifications',
     ],
 
     /*
@@ -100,10 +152,10 @@ return [
     */
 
     'read_only_exempt_models' => [
-        \App\Models\User::class,
-        \App\Models\SupportTicket::class,
-        \App\Models\SupportTicketReply::class,
-        \Illuminate\Notifications\DatabaseNotification::class,
+        User::class,
+        SupportTicket::class,
+        SupportTicketReply::class,
+        DatabaseNotification::class,
     ],
 
     /*

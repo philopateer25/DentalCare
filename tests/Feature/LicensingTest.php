@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -94,7 +95,7 @@ class LicensingTest extends TestCase
         parent::tearDown();
     }
 
-    // ── Helpers ──────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /** A clock that reports a fixed offline time, so tests can travel in time freely. */
     private function useClock(float $offlineHours): void
@@ -143,7 +144,7 @@ class LicensingTest extends TestCase
             'status' => 'active',
             'package_tier' => 'amigo_pro',
             'features' => ['finance', 'labs'],
-            'rollout_stage' => 2,
+            'rollout_stage' => 4,
             'chair_limit' => 3,
             'xray_limit' => 1,
             'paid_until' => now()->addMonth()->toDateString(),
@@ -184,7 +185,17 @@ class LicensingTest extends TestCase
         $this->assertTrue($result['success'], $result['message']);
     }
 
-    // ── Signature & activation ──────────────────
+    // â”€â”€ Signature & activation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    #[Test]
+    public function license_enforce_flag_wins_even_in_local(): void
+    {
+        $this->app['env'] = 'local';
+        $this->assertTrue($this->license()->isEnforced());
+
+        config(['license.enforce' => null]);
+        $this->assertFalse($this->license()->isEnforced());
+    }
 
     #[Test]
     public function no_license_means_locked(): void
@@ -199,7 +210,7 @@ class LicensingTest extends TestCase
 
         $this->assertSame(LicenseManager::MODE_FULL, $this->license()->getMode());
         $this->assertSame('clinic-1', $this->license()->getSummary()['clinic_id']);
-        $this->assertSame(2, $this->license()->getRolloutStage());
+        $this->assertSame(4, $this->license()->getRolloutStage());
     }
 
     #[Test]
@@ -243,7 +254,7 @@ class LicensingTest extends TestCase
         $this->assertFalse($this->license()->allowsFeature('3d_model'));
     }
 
-    // ── Features ────────────────────────────────
+    // â”€â”€ Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     #[Test]
     public function license_is_the_ceiling_for_features(): void
@@ -281,7 +292,73 @@ class LicensingTest extends TestCase
         $this->assertTrue($this->practice->fresh()->hasFeature('labs'));
     }
 
-    // ── Subscription steps ──────────────────────
+    // â”€â”€ Rollout stages (Phase 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    #[Test]
+    public function rollout_stage_reveals_modules_week_by_week(): void
+    {
+        $this->activate(['features' => ['finance', 'labs', 'whatsapp'], 'rollout_stage' => 1]);
+        $practice = $this->practice->fresh();
+        $practice->update(['features' => ['finance', 'labs', 'whatsapp']]);
+
+        $this->assertTrue($practice->hasFeature('whatsapp'), 'Stage 1: WhatsApp reminders are on.');
+        $this->assertFalse($practice->hasFeature('finance'), 'Stage 1: licensed, but finance comes at stage 2.');
+        $this->assertFalse(FeatureManager::stageAllows('clinical'));
+
+        $this->fakeServer(['features' => ['finance', 'labs', 'whatsapp'], 'rollout_stage' => 2]);
+        $this->assertTrue($this->license()->sendHeartbeat()['success']);
+        $this->assertTrue($practice->hasFeature('finance'));
+        $this->assertFalse($practice->hasFeature('labs'), 'Labs come at stage 4.');
+        $this->assertFalse(FeatureManager::stageAllows('clinical'));
+
+        $this->fakeServer(['features' => ['finance', 'labs', 'whatsapp'], 'rollout_stage' => 3]);
+        $this->license()->sendHeartbeat();
+        $this->assertTrue(FeatureManager::stageAllows('clinical'));
+        $this->assertFalse($practice->hasFeature('labs'));
+
+        $this->fakeServer(['features' => ['finance', 'labs', 'whatsapp'], 'rollout_stage' => 4]);
+        $this->license()->sendHeartbeat();
+        $this->assertTrue($practice->hasFeature('labs'));
+    }
+
+    #[Test]
+    public function a_license_without_a_stage_shows_everything_licensed(): void
+    {
+        $this->activate(['features' => ['finance', 'labs'], 'rollout_stage' => null]);
+
+        $this->assertTrue($this->practice->fresh()->hasFeature('labs'));
+        $this->assertTrue(FeatureManager::stageAllows('clinical'));
+    }
+
+    #[Test]
+    public function saving_settings_at_an_early_stage_keeps_later_modules_switched_on(): void
+    {
+        $this->activate(['features' => ['finance', 'labs', 'inventory'], 'rollout_stage' => 1]);
+
+        $features = FeatureManager::updatePracticeFeatures($this->practice->fresh(), [], $this->admin);
+
+        $this->assertEqualsCanonicalizing(['finance', 'inventory', 'labs'], $features);
+    }
+
+    #[Test]
+    public function stage_pages_follow_the_rollout_stage(): void
+    {
+        $this->activate(['features' => ['finance'], 'rollout_stage' => 1]);
+        $tenant = ['tenant' => $this->practice->id];
+
+        $this->actingAs($this->admin)->get(route('filament.admin.pages.coming-next', $tenant))
+            ->assertOk()->assertSee('Stage 2')->assertSee('Coming next');
+        $this->actingAs($this->admin)->get(route('filament.admin.pages.todays-close', $tenant))->assertForbidden();
+
+        $this->fakeServer(['features' => ['finance'], 'rollout_stage' => 2]);
+        $this->license()->sendHeartbeat();
+        $this->app->forgetInstance(LicenseManager::class);
+
+        $this->actingAs($this->admin)->get(route('filament.admin.pages.todays-close', $tenant))
+            ->assertOk()->assertSee('Cash in the drawer');
+    }
+
+    // â”€â”€ Subscription steps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     #[Test]
     public function subscription_goes_warning_then_read_only_then_locked(): void
@@ -329,7 +406,7 @@ class LicensingTest extends TestCase
         $this->assertSame(LicenseManager::MODE_LOCKED, $this->license()->getMode());
     }
 
-    // ── Read-only & locked enforcement ──────────
+    // â”€â”€ Read-only & locked enforcement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     #[Test]
     public function read_only_mode_blocks_model_writes(): void
@@ -367,6 +444,42 @@ class LicensingTest extends TestCase
         $this->assertStringContainsString('/license', $response->headers->get('Location'));
     }
 
+    /** POST /livewire/update for the named components (the payload is fake; only the lock's decision matters). */
+    private function livewireUpdate(string ...$names): TestResponse
+    {
+        $components = array_map(fn ($name) => [
+            'snapshot' => json_encode(['data' => [], 'memo' => ['id' => 'x', 'name' => $name], 'checksum' => 'x']),
+            'updates' => [],
+            'calls' => [],
+        ], $names);
+
+        return $this->actingAs($this->admin)->withHeader('X-Livewire', '1')->postJson('/livewire/update', ['components' => $components]);
+    }
+
+    #[Test]
+    public function locked_mode_lets_the_license_page_livewire_calls_through_but_nothing_else(): void
+    {
+        $this->assertSame(LicenseManager::MODE_LOCKED, $this->license()->getMode());
+
+        // License page + notifications: not stopped by the lock (no redirect loop).
+        $allowed = $this->livewireUpdate('app.filament.pages.license-page', 'filament.livewire.notifications');
+        $this->assertNotContains($allowed->status(), [302, 423]);
+
+        // Any other component is refused, also when mixed with an allowed one.
+        $this->livewireUpdate('app.filament.resources.patient-resource.pages.list-patients')->assertStatus(423);
+        $this->livewireUpdate('app.filament.pages.license-page', 'app.filament.pages.backup-manager')->assertStatus(423);
+    }
+
+    #[Test]
+    public function read_only_mode_lets_livewire_calls_through(): void
+    {
+        $this->travelTo(now()->setDate(2026, 12, 20)->setTime(10, 0));
+        $this->activate(['paid_until' => '2026-12-01', 'read_only_after_days' => 3, 'lock_after_days' => 60]);
+
+        $response = $this->livewireUpdate('app.filament.resources.patient-resource.pages.list-patients');
+        $this->assertNotContains($response->status(), [302, 423]);
+    }
+
     #[Test]
     public function export_works_while_locked_and_only_contains_own_clinic(): void
     {
@@ -399,7 +512,7 @@ class LicensingTest extends TestCase
         $this->actingAs($doctor)->get('/license/export')->assertForbidden();
     }
 
-    // ── Offline grace & unlock codes ────────────
+    // â”€â”€ Offline grace & unlock codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     #[Test]
     public function offline_too_long_locks_and_unlock_code_reopens(): void
@@ -443,7 +556,7 @@ class LicensingTest extends TestCase
         $this->assertSame(LicenseManager::MODE_LOCKED, $this->license()->getMode());
     }
 
-    // ── Heartbeat contents, commands, server address ──
+    // â”€â”€ Heartbeat contents, commands, server address â”€â”€
 
     #[Test]
     public function heartbeat_sends_health_and_counts_but_no_patient_data(): void

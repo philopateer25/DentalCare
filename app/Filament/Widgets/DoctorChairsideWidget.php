@@ -46,7 +46,8 @@ class DoctorChairsideWidget extends Widget implements HasActions, HasForms
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasRole('doctor') ?? false;
+        return (auth()->user()?->hasRole('doctor') ?? false)
+            && \App\Services\FeatureManager::stageAllows('clinical');
     }
 
     protected function practiceId(): int

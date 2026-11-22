@@ -105,17 +105,15 @@ class LicenseManager
      */
     public function isEnforced(): bool
     {
-        if (app()->environment('local')) {
-            return false;
-        }
-
+        // An explicit LICENSE_ENFORCE wins everywhere, so the real behaviour can be
+        // tried on a local Docker install (docs/testing/manual-test-guide.md).
         $flag = config('license.enforce');
 
-        if ($flag === null || $flag === '') {
-            return ! app()->environment('testing');
+        if ($flag !== null && $flag !== '') {
+            return filter_var($flag, FILTER_VALIDATE_BOOL);
         }
 
-        return filter_var($flag, FILTER_VALIDATE_BOOL);
+        return ! app()->environment('local', 'testing');
     }
 
     // ──────────────────────────────────────────────
@@ -455,6 +453,27 @@ class LicenseManager
         $stage = $this->getPayload()['rollout_stage'] ?? null;
 
         return $stage === null ? null : (int) $stage;
+    }
+
+    /** Stage a module unlocks at (config `license.rollout_stages`; unlisted = 1). */
+    public static function stageFor(string $module): int
+    {
+        return max(1, (int) (config('license.rollout_stages')[$module] ?? 1));
+    }
+
+    /**
+     * Whether the clinic's rollout stage has reached this module. Always true
+     * when the license isn't enforced or the license carries no stage.
+     */
+    public function stageAllows(string $module): bool
+    {
+        if (! $this->isEnforced()) {
+            return true;
+        }
+
+        $stage = $this->getRolloutStage();
+
+        return $stage === null || $stage >= static::stageFor($module);
     }
 
     /**

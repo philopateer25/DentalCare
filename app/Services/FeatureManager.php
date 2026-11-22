@@ -180,10 +180,20 @@ class FeatureManager
 
         if (!$practice) {
             return (self::FEATURES[$featureKey]['default'] ?? true)
-                && app(LicenseManager::class)->allowsFeature($featureKey);
+                && app(LicenseManager::class)->allowsFeature($featureKey)
+                && app(LicenseManager::class)->stageAllows($featureKey);
         }
 
         return $practice->hasFeature($featureKey);
+    }
+
+    /**
+     * Whether the clinic's rollout stage has unlocked a module that isn't a
+     * plan feature (e.g. `clinical`: charting, treatment plans, prescriptions).
+     */
+    public static function stageAllows(string $module): bool
+    {
+        return app(LicenseManager::class)->stageAllows($module);
     }
 
     /**
@@ -214,7 +224,7 @@ class FeatureManager
             // Nobody on the clinic side (super admins included) can enable a
             // feature the signed license doesn't include; its stored value is
             // left untouched so it comes back if the plan is upgraded.
-            if (! $license->allowsFeature($key)) {
+            if (! $license->allowsFeature($key) || ! $license->stageAllows($key)) {
                 if (in_array($key, $currentFeatures, true) || ! empty($currentFeatures[$key])) {
                     $finalFeatures[] = $key;
                 }

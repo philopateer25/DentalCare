@@ -34,5 +34,9 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Ignore a developer's .env license settings; LicensingTest switches enforcement on itself. -->
+        <env name="LICENSE_ENFORCE" value="" force="true"/>
+        <env name="LICENSE_SERVER_URL" value="https://license.test" force="true"/>
+        <env name="LICENSE_PUBLIC_KEYS" value="" force="true"/>
     </php>
 </phpunit>

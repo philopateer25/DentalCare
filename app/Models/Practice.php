@@ -74,7 +74,14 @@ class Practice extends Model
     {
         // The signed license from the central app is the ceiling: the clinic
         // can switch licensed features off, never switch unlicensed ones on.
-        if (! app(\App\Services\LicenseManager::class)->allowsFeature($feature)) {
+        $license = app(\App\Services\LicenseManager::class);
+
+        if (! $license->allowsFeature($feature)) {
+            return false;
+        }
+
+        // Rollout stage (Phase 3): licensed, but not shown to this clinic yet.
+        if (! $license->stageAllows($feature)) {
             return false;
         }
 

@@ -47,6 +47,15 @@ class CheckLicenseStatus
             return $next($request);
         }
 
+        // Livewire round-trips (searching, filters, the License page's own buttons).
+        if ($this->isLivewireUpdate($request)) {
+            if ($mode === LicenseManager::MODE_READ_ONLY || $this->onlyLockedSafeComponents($request)) {
+                return $next($request);
+            }
+
+            return response()->json(['message' => $reason, 'license_mode' => $mode], 423);
+        }
+
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json(['message' => $reason, 'license_mode' => $mode], 423);
         }
@@ -62,6 +71,33 @@ class CheckLicenseStatus
         }
 
         abort(423, $reason);
+    }
+
+    private function isLivewireUpdate(Request $request): bool
+    {
+        return $request->isMethod('POST') && $request->route() !== null && $request->routeIs('livewire.update', '*.livewire.update');
+    }
+
+    /** True when every component in the Livewire request is allowed while locked. */
+    private function onlyLockedSafeComponents(Request $request): bool
+    {
+        $allowed = (array) config('license.locked_livewire_components', []);
+        $components = (array) $request->input('components', []);
+
+        if ($components === []) {
+            return false;
+        }
+
+        foreach ($components as $component) {
+            $snapshot = json_decode((string) ($component['snapshot'] ?? ''), true);
+            $name = $snapshot['memo']['name'] ?? null;
+
+            if (! is_string($name) || ! in_array($name, $allowed, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function isAlwaysAllowed(Request $request): bool

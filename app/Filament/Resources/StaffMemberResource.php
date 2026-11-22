@@ -3,10 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\StaffMemberResource\Pages;
-use App\Models\Practice;
 use App\Models\StaffMember;
-use App\Models\User;
 use App\Services\CurrencyHelper;
+use App\Services\FeatureManager;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -23,6 +23,16 @@ class StaffMemberResource extends Resource
 
     protected static ?string $navigationLabel = 'Staff & Employees';
 
+    public static function canAccess(): bool
+    {
+        $tenant = Filament::getTenant();
+        if ($tenant && ! FeatureManager::isEnabled('staff', $tenant)) {
+            return false;
+        }
+
+        return parent::canAccess();
+    }
+
     protected static ?string $modelLabel = 'Staff Member';
 
     protected static ?string $pluralModelLabel = 'Staff & Employees Directory';
@@ -37,7 +47,7 @@ class StaffMemberResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('employee_id')
                             ->label('Employee ID #')
-                            ->default(fn () => 'EMP-' . str_pad((string) (StaffMember::max('id') + 1), 4, '0', STR_PAD_LEFT))
+                            ->default(fn () => 'EMP-'.str_pad((string) (StaffMember::max('id') + 1), 4, '0', STR_PAD_LEFT))
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->placeholder('Auto-generated (e.g. EMP-0001)'),
@@ -82,7 +92,7 @@ class StaffMemberResource extends Resource
                             ->placeholder('None (No system login)'),
                         Forms\Components\Select::make('practice_id')->hidden()
                             ->relationship('practice', 'name')
-                            ->default(fn () => \Filament\Facades\Filament::getTenant()?->id ?? auth()->user()?->practice_id)
+                            ->default(fn () => Filament::getTenant()?->id ?? auth()->user()?->practice_id)
                             ->required(),
                     ])->columns(3),
 

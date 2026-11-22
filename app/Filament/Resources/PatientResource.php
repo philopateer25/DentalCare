@@ -130,12 +130,14 @@ class PatientResource extends Resource
 
                         \Filament\Infolists\Components\Tabs\Tab::make('Finance & Billing')
                             ->icon('heroicon-o-currency-dollar')
+                            ->visible(fn () => \App\Services\FeatureManager::isEnabled('finance', \Filament\Facades\Filament::getTenant()))
                             ->schema([
                                 \Filament\Infolists\Components\View::make('filament.resources.patient-resource.tabs.finance')
                             ]),
                             
                         \Filament\Infolists\Components\Tabs\Tab::make('Lab Orders')
                             ->icon('heroicon-o-beaker')
+                            ->visible(fn () => \App\Services\FeatureManager::isEnabled('labs', \Filament\Facades\Filament::getTenant()))
                             ->schema([
                                 \Filament\Infolists\Components\View::make('filament.resources.patient-resource.tabs.lab-orders')
                             ]),

@@ -13,6 +13,12 @@ use Filament\Tables\Table;
 
 class PrescriptionsRelationManager extends RelationManager
 {
+    /** Phase 3: clinical tabs appear once the clinic reaches rollout stage 3. */
+    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    {
+        return \App\Services\FeatureManager::stageAllows('clinical') && parent::canViewForRecord($ownerRecord, $pageClass);
+    }
+
     protected static string $relationship = 'prescriptions';
 
     /**

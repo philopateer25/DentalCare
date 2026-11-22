@@ -153,6 +153,8 @@ This plan turns the conversation about "why clinics will reject us" into concret
 4. **End-of-day owner report:** collected today by method, outstanding balances, installments due, per-doctor commission (check existing finance widgets first).
 5. Stage set from the central app (2.4).
 
+**Status (2026-11-22):** built — stage map in `config/license.php` (`rollout_stages`), `LicenseManager::stageAllows()`, gating through `Practice::hasFeature()` plus a `clinical` module (chart, treatment plans, prescriptions, follow-ups), *Coming next* page, *Today's close* report (`DailyCloseReport`). Expenses unlock with finance at stage 2 (the cash close needs them). Not yet: "ready for next stage" hint in the central app (2.4).
+
 **Done when:** a stage-1 clinic sees only calendar + patients + WhatsApp; moving it to stage 2 in the central app reveals finance after sync.
 
 ---

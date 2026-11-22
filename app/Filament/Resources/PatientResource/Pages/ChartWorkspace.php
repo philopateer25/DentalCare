@@ -35,7 +35,8 @@ class ChartWorkspace extends Page
 
     public static function canUseChart(): bool
     {
-        return auth()->user()?->hasAnyRole(['doctor', 'clinic_admin', 'super_admin', 'developer']) ?? false;
+        return (auth()->user()?->hasAnyRole(['doctor', 'clinic_admin', 'super_admin', 'developer']) ?? false)
+            && \App\Services\FeatureManager::stageAllows('clinical');
     }
 
     public function getTitle(): string

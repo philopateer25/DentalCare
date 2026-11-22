@@ -72,7 +72,9 @@ This plan turns the conversation about "why clinics will reject us" into concret
 
 **Goal:** one app — on your laptop or phone — that controls every clinic: creating them, choosing features, billing, health, support and updates. It replaces and extends the current `/system` panel (which today has only Practices — name, type, currency, plan, features, limits, license — plus Users and Support Tickets).
 
-**Stack (D7):** Next.js + TypeScript on Vercel, Postgres (Neon/Supabase), simple UI kit (shadcn/ui), team login. Signing key stored as a Vercel secret.
+**Stack (D7/D8):** Next.js + TypeScript on Cloudflare Workers (OpenNext), Cloudflare D1 (SQLite), Tailwind, team login for 3 people. Signing key stored as a Cloudflare secret. Repo: `doxamigo-central` (sibling folder).
+
+**Status (2026-11-21):** first slice built — 2.1 (except setup pull on enrollment and transfer limit), 2.2 payments + renewals + revenue, 2.3 (except daily summary cron), 2.5, 2.8 announcements, 2.10. See the central repo README.
 
 ### 2.1 Clinics — create and configure everything
 - **New clinic wizard:** clinic name, owner name + phone, city, type, currency, plan, chair/x-ray limits, branches and chairs, feature picks (on top of the plan), starting rollout stage, trial length, paid-until.

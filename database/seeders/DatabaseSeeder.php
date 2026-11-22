@@ -16,18 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@dentalcare.com'],
-            [
-                'name' => 'Dr. Michael Admin',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-                'practice_id' => 1,
-            ]
-        );
-        $admin->update(['practice_id' => 1]);
-        $admin->assignRole('super_admin');
-
+        // Create ClinicData first (creates Practice + roles)
         $this->call([
             ClinicDataSeeder::class,
             MultiClinicSeeder::class,
@@ -43,5 +32,18 @@ class DatabaseSeeder extends Seeder
             EyeInventorySeeder::class,
             EyeLabSeeder::class,
         ]);
+
+        // Create super admin after Practice exists
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@dentalcare.com'],
+            [
+                'name' => 'Dr. Michael Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'practice_id' => 1,
+            ]
+        );
+        $admin->update(['practice_id' => 1]);
+        $admin->assignRole('super_admin');
     }
 }

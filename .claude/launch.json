@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "docker",
+      "url": "http://localhost",
+      "port": 80
+    },
+    {
+      "name": "central",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "D:/projects/rafik/doxamigo-central", "run", "dev", "--", "-p", "3100"],
+      "port": 3100
+    }
+  ]
+}

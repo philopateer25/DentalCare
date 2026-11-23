@@ -20,10 +20,29 @@ class HardwareFingerprint
     /**
      * Generate the hardware fingerprint for this machine.
      *
-     * @return string  A hex-encoded SHA-256 hash (64 characters).
+     * @return string A hex-encoded SHA-256 hash (64 characters).
      */
     public static function generate(): string
     {
+        // Docker (developers / capable PCs): every container (web, scheduler,
+        // worker) must report the same machine, and recreating containers must
+        // not change it. Honoured only inside a container, so a native install
+        // can't be cloned by copying .env.
+        $dockerId = trim((string) config('license.machine_id', ''));
+        if ($dockerId !== '' && self::insideContainer()) {
+            return hash('sha256', 'docker|'.$dockerId);
+        }
+
+        // Windows (the clinic default, Phase 6): MachineGuid alone. It survives
+        // reboots, Windows updates, renaming the PC and adding network cards or
+        // VPNs — all of which changed the old MAC/hostname-based value.
+        if (PHP_OS_FAMILY === 'Windows') {
+            $guid = self::windowsMachineGuid();
+            if ($guid !== null) {
+                return hash('sha256', 'windows|'.strtolower($guid));
+            }
+        }
+
         $components = [];
 
         // Component 1: Machine ID
@@ -48,7 +67,7 @@ class HardwareFingerprint
         // Linux: /etc/machine-id is a stable UUID generated at install.
         if (PHP_OS_FAMILY === 'Linux' && is_readable('/etc/machine-id')) {
             $id = trim(file_get_contents('/etc/machine-id'));
-            if (!empty($id)) {
+            if (! empty($id)) {
                 return $id;
             }
         }
@@ -56,7 +75,7 @@ class HardwareFingerprint
         // macOS: IOPlatformSerialNumber via ioreg.
         if (PHP_OS_FAMILY === 'Darwin') {
             $output = self::shellExec('ioreg -rd1 -c IOPlatformExpertDevice | awk -F\'"\'  \'/IOPlatformSerialNumber/{print $4}\'');
-            if (!empty($output)) {
+            if (! empty($output)) {
                 return $output;
             }
         }
@@ -98,7 +117,7 @@ class HardwareFingerprint
         // macOS: ifconfig en0
         if (PHP_OS_FAMILY === 'Darwin') {
             $output = self::shellExec('ifconfig en0 2>/dev/null | awk \'/ether/{print $2}\'');
-            if (!empty($output)) {
+            if (! empty($output)) {
                 return $output;
             }
         }
@@ -114,6 +133,19 @@ class HardwareFingerprint
         return 'no-mac-found';
     }
 
+    /** HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid, or null if it can't be read. */
+    public static function windowsMachineGuid(): ?string
+    {
+        $output = self::shellExec('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid 2>nul');
+
+        return preg_match('/MachineGuid\s+REG_SZ\s+([0-9a-f\-]{32,40})/i', $output, $m) ? trim($m[1]) : null;
+    }
+
+    public static function insideContainer(): bool
+    {
+        return is_file('/.dockerenv') || (is_readable('/proc/1/cgroup') && str_contains((string) @file_get_contents('/proc/1/cgroup'), 'docker'));
+    }
+
     /**
      * Run a shell command and return trimmed output.
      */
@@ -121,12 +153,14 @@ class HardwareFingerprint
     {
         try {
             $output = @shell_exec($command);
+
             return $output ? trim($output) : '';
         } catch (\Throwable $e) {
             Log::debug('HardwareFingerprint: shell command failed.', [
                 'command' => $command,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
+
             return '';
         }
     }

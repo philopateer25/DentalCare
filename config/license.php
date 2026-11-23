@@ -37,6 +37,14 @@ return [
     'enforce' => env('LICENSE_ENFORCE'),
 
     /*
+    | Docker installs only: a fixed machine id shared by all containers (web,
+    | scheduler, worker) so they count as one PC and survive being recreated.
+    | Generate once, e.g. `php -r "echo bin2hex(random_bytes(16));"`. Ignored
+    | outside a container (see HardwareFingerprint).
+    */
+    'machine_id' => env('LICENSE_MACHINE_ID'),
+
+    /*
     |--------------------------------------------------------------------------
     | License Signing Keys (Ed25519 public keys, base64)
     |--------------------------------------------------------------------------
@@ -51,7 +59,8 @@ return [
 
     'public_keys' => array_merge(
         [
-            // 'k1' => 'BASE64_PUBLIC_KEY', // add the central app's key here when it is generated
+            // Central app on Cloudflare (doxamigo-central), generated 2026-11-23.
+            'k2' => 'YccWJtaSj2g6mlbohdHlozDY81pHxtzOTTjC10awhqg=',
         ],
         env('APP_ENV') === 'production'
             ? []

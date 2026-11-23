@@ -1,0 +1,24 @@
+{
+  "_comment": "Pinned third-party runtime. build.ps1 refuses a download whose SHA-256 differs; an empty sha256 is filled in by running build.ps1 -PinHashes once and committing this file.",
+  "php": {
+    "version": "8.3.14",
+    "url": "https://windows.php.net/downloads/releases/archives/php-8.3.14-nts-Win32-vs16-x64.zip",
+    "sha256": ""
+  },
+  "caddy": {
+    "version": "2.8.4",
+    "url": "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_windows_amd64.zip",
+    "sha256": ""
+  },
+  "winsw": {
+    "version": "2.12.0",
+    "url": "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe",
+    "sha256": ""
+  },
+  "vcredist": {
+    "version": "14 (2015-2022)",
+    "url": "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+    "sha256": "",
+    "_note": "Microsoft updates this file in place; its hash is re-pinned whenever it changes."
+  }
+}

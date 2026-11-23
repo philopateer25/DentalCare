@@ -212,6 +212,8 @@ This plan turns the conversation about "why clinics will reject us" into concret
 11. **Hardware fingerprint** (`HardwareFingerprint`) verified to be stable on Windows across reboots and Windows updates.
 12. Docker install stays available for developers / capable PCs, not as the clinic default.
 
+**Status (2026-11-23):** written, not yet run on a real PC - `deploy/windows/` (build.ps1, setup.ps1, uninstall.ps1, DOXamigo.iss, php.ini, env.template, pinned versions.json): tasks 1-5, 11 (Windows fingerprint = MachineGuid only; Docker uses `LICENSE_MACHINE_ID`), 12. New `clinic:install` (no demo data, random admin password) and `license:activate` commands. Not yet: 6 updater from the central app, 7 USB/Drive backup copy, 9 RustDesk, 10 old-device testing. Blocker for real clinics: the production public key in `config/license.php`.
+
 **Done when:** `DOXamigo-Setup.exe` installs on an old Windows 10 PC without virtualization, the reception PC and a phone can open it on the same Wi-Fi, and it survives a reboot and an update.
 
 ---

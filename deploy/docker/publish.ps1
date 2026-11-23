@@ -3,15 +3,16 @@
     Builds and pushes a new DOXamigo version for the clinics (Docker + Watchtower).
 
 .DESCRIPTION
-    Builds two images from the current commit and pushes them to the registry:
-        <app image>:<version>  and  :<channel>     (PHP app, worker, scheduler)
-        <web image>:<version>  and  :<channel>     (nginx with the built frontend)
+    One PRIVATE repository holds both images, told apart by tag:
+        <image>:app-<version>  and  :app-<channel>    (PHP app, worker, scheduler)
+        <image>:web-<version>  and  :web-<channel>    (nginx with the built frontend)
 
     Clinics on that channel pick it up the next night at 03:30 (Watchtower).
     Release to a couple of clinics first:  -Channel pilot   then later  -Channel stable.
-    Roll back: run again on the previous commit, or re-tag an older <version> as the channel.
+    Roll back: run again on the previous commit (git checkout <old version>).
 
-    Needs: docker (logged in with push rights: `docker login`), a clean git tree.
+    Needs: docker (`docker login` with push rights), a clean git tree, and the
+    repository set to PRIVATE on Docker Hub (the script cannot check that).
 
 .EXAMPLE
     .\deploy\docker\publish.ps1 -Channel pilot
@@ -21,8 +22,7 @@
 param(
     [ValidateSet('pilot', 'stable')]
     [string]$Channel = 'pilot',
-    [string]$AppImage = 'philohany12/dentalcare-app',
-    [string]$WebImage = 'philohany12/dentalcare-web',
+    [string]$Image = 'philohany12/dentalcare-app',
     [switch]$NoPush,
     [switch]$AllowNoProductionKey
 )
@@ -55,22 +55,29 @@ try {
         }
     }
 
-    Write-Step "Building $AppImage`:$version"
-    Invoke-Docker @('build', '--target', 'production', '-t', "$AppImage`:$version", '-t', "$AppImage`:$Channel", '.')
-    Write-Step "Building $WebImage`:$version"
-    Invoke-Docker @('build', '--target', 'web-server', '-t', "$WebImage`:$version", '-t', "$WebImage`:$Channel", '.')
+    $app = "$Image`:app-$version"
+    $web = "$Image`:web-$version"
+
+    Write-Step "Building $app"
+    Invoke-Docker @('build', '--target', 'production', '-t', $app, '-t', "$Image`:app-$Channel", '.')
+    Write-Step "Building $web"
+    Invoke-Docker @('build', '--target', 'web-server', '-t', $web, '-t', "$Image`:web-$Channel", '.')
 
     # Last check on the built image itself.
-    $leak = & docker run --rm --entrypoint sh "$AppImage`:$version" -c 'ls database/*.sqlite storage/app/backups/*.enc storage/app/license.enc .mcp.json 2>/dev/null'
+    $leak = & docker run --rm --entrypoint sh $app -c 'ls database/*.sqlite storage/app/backups/*.enc storage/app/license.enc storage/app/license.json .mcp.json 2>/dev/null; grep -rl "tskey-auth" --exclude-dir=vendor . 2>/dev/null'
     if ($leak) { throw "The image contains private files:`n$leak" }
 
     if ($NoPush) {
-        Write-Host "Built (not pushed): $AppImage`:$version, $WebImage`:$version" -ForegroundColor Green
+        Write-Host "Built (not pushed): $app, $web" -ForegroundColor Green
         return
     }
 
+    Write-Host ''
+    Write-Host "Pushing to $Image. It MUST be private on Docker Hub (Settings > Make private)." -ForegroundColor Yellow
+    if ((Read-Host 'Is the repository private? (y/N)') -notmatch '^[Yy]') { throw 'Stopped: make the repository private first.' }
+
     Write-Step 'Pushing'
-    foreach ($tag in @("$AppImage`:$version", "$AppImage`:$Channel", "$WebImage`:$version", "$WebImage`:$Channel")) {
+    foreach ($tag in @($app, "$Image`:app-$Channel", $web, "$Image`:web-$Channel")) {
         Invoke-Docker @('push', $tag)
     }
     Write-Host "Published $version to '$Channel'. Clinics on that channel update tonight at 03:30." -ForegroundColor Green

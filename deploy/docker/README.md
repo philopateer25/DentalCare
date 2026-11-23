@@ -16,10 +16,10 @@ The **database and uploads** live in Docker volumes (`doxamigo_data`, `doxamigo_
 
 | Container | Image | Role |
 |---|---|---|
-| `doxamigo_app` | dentalcare-app | PHP. On every start: backup if the update changes the database, then migrations and caches |
-| `doxamigo_worker` | dentalcare-app | Background jobs |
-| `doxamigo_scheduler` | dentalcare-app | License sync every 30 min, license clock, backup at 02:00 |
-| `doxamigo_web` | dentalcare-web | nginx on port 80 (or 8080), with the built frontend |
+| `doxamigo_app` | `dentalcare-app:app-<channel>` | PHP. On every start: backup if the update changes the database, then migrations and caches |
+| `doxamigo_worker` | `dentalcare-app:app-<channel>` | Background jobs |
+| `doxamigo_scheduler` | `dentalcare-app:app-<channel>` | License sync every 30 min, license clock, backup at 02:00 |
+| `doxamigo_web` | `dentalcare-app:web-<channel>` | nginx on port 80 (or 8080), with the built frontend |
 | `doxamigo_watchtower` | watchtower | At 03:30 Cairo time it pulls new images for the clinic's channel and recreates the DOXamigo containers (and only those) |
 
 ## Shipping a new version or a fix
@@ -34,7 +34,7 @@ docker login                                    # once, with push rights
 1. Builds from the committed code.
 2. Refuses to build if `config/license.php` has no production key, or if `.dockerignore` would let the database, backups or keys into the image.
 3. Checks the built image for private files.
-4. Pushes `:<version>` and `:<channel>`.
+4. Asks you to confirm the repository is private, then pushes `app-<version>`, `app-<channel>`, `web-<version>` and `web-<channel>` into the **one** private repository `philohany12/dentalcare-app` (Docker Hub's free plan allows one private repository).
 
 **Roll back:** push the previous version again as the channel tag, for example:
 
@@ -65,7 +65,7 @@ Running it again on an installed PC updates the setup and keeps all data. It nev
 
 ## Before the first clinic
 
-1. **Make the images private on Docker Hub** (`philohany12/dentalcare-app`, `-web`), and delete old tags that were built before `.dockerignore` excluded the database and keys.
+1. **Make `philohany12/dentalcare-app` private on Docker Hub.** Delete its old tags `latest` (it contains the 24 Oct database and the Tailscale key), `pilot` and `a766c6c`, and delete the `philohany12/dentalcare-web` repository; both images now live in `dentalcare-app`.
 2. **Create a read-only access token** in Docker Hub (Account settings → Personal access tokens → *Read-only*). It's the "update token" the installer asks for.
 3. **Revoke the Tailscale key** that was written in the old `deploy/install.ps1` (and inside the old `DentalCare.exe`).
 4. **Watchtower:** the compose file pins `nickfedor/watchtower:1.24.1`, the maintained fork, because `containrrr/watchtower` is archived. Tested on 2026-11-23 with Docker Engine 29.7 and a local registry: it found the new image, pulled it, and recreated app/worker/scheduler/web. The app backed up the database, ran the new migration and kept the data. Change the pinned version only after repeating that test.

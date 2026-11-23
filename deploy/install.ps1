@@ -34,7 +34,8 @@ $ClinicCompose = @'
 name: doxamigo
 
 x-app: &app
-  image: ${DOXAMIGO_APP_IMAGE:-philohany12/dentalcare-app}:${DOXAMIGO_CHANNEL:-stable}
+  # One private repository, two kinds of tags: app-<channel> and web-<channel>.
+  image: ${DOXAMIGO_IMAGE:-philohany12/dentalcare-app}:app-${DOXAMIGO_CHANNEL:-stable}
   restart: unless-stopped
   env_file: .env
   volumes:
@@ -66,7 +67,7 @@ services:
     depends_on: [app]
 
   web:
-    image: ${DOXAMIGO_WEB_IMAGE:-philohany12/dentalcare-web}:${DOXAMIGO_CHANNEL:-stable}
+    image: ${DOXAMIGO_IMAGE:-philohany12/dentalcare-app}:web-${DOXAMIGO_CHANNEL:-stable}
     container_name: doxamigo_web
     restart: unless-stopped
     ports:
@@ -113,8 +114,8 @@ $ClinicEnvTemplate = @'
 # {{PLACEHOLDERS}} are filled in by install.ps1. Keep this file private.
 
 # --- Images and updates (Watchtower) ---
-DOXAMIGO_APP_IMAGE={{APP_IMAGE}}
-DOXAMIGO_WEB_IMAGE={{WEB_IMAGE}}
+# One private repository; tags app-<channel> / web-<channel>
+DOXAMIGO_IMAGE={{IMAGE}}
 # stable = everyone, pilot = clinics that get new versions first
 DOXAMIGO_CHANNEL={{CHANNEL}}
 DOXAMIGO_PORT={{PORT}}
@@ -155,8 +156,7 @@ BACKUP_DELETE_PASSWORD={{BACKUP_PASSWORD}}
 '@
 
 $CentralUrl = 'https://doxamigo-central.philopateerhanyk360.workers.dev'
-$DefaultAppImage = 'philohany12/dentalcare-app'
-$DefaultWebImage = 'philohany12/dentalcare-web'
+$DefaultImage = 'philohany12/dentalcare-app'
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
@@ -295,8 +295,7 @@ if ($IsUpdate) {
     $lan = Get-LanAddress
     $suffix = if ($Port -eq 80) { '' } else { ":$Port" }
     $values = @{
-        '{{APP_IMAGE}}'       = $DefaultAppImage
-        '{{WEB_IMAGE}}'       = $DefaultWebImage
+        '{{IMAGE}}'           = $DefaultImage
         '{{CHANNEL}}'         = $channel
         '{{PORT}}'            = "$Port"
         '{{APP_KEY}}'         = 'base64:' + (New-RandomBase64 32)

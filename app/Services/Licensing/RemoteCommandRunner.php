@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
  */
 class RemoteCommandRunner
 {
-    public const ALLOWED = ['sync', 'backup_now', 'clear_cache', 'send_logs', 'update_to_version'];
+    public const ALLOWED = ['sync', 'backup_now', 'clear_cache', 'send_logs', 'update_to_version', 'add_room', 'rename_room', 'set_room_active'];
 
     /**
      * @param  array<int, mixed>  $commands  [{id, type, args?}, ...]
@@ -67,6 +67,10 @@ class RemoteCommandRunner
                 'clear_cache' => $this->clearCache(),
                 'send_logs' => [true, $this->recentErrors()],
                 'update_to_version' => [false, 'The automatic updater is not installed on this version yet.'],
+                // Rooms / chairs (the chair limit from the license still applies).
+                'add_room' => app(ClinicRooms::class)->add($args),
+                'rename_room' => app(ClinicRooms::class)->rename($args),
+                'set_room_active' => app(ClinicRooms::class)->setActive($args),
             };
         } catch (\Throwable $e) {
             return [false, $e->getMessage()];

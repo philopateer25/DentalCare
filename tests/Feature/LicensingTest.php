@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Exceptions\ReadOnlyModeException;
+use App\Models\Branch;
+use App\Models\Operatory;
 use App\Models\Patient;
 use App\Models\Practice;
 use App\Models\User;
@@ -16,6 +18,7 @@ use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -95,7 +98,7 @@ class LicensingTest extends TestCase
         parent::tearDown();
     }
 
-    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Helpers ──────────────────────────────────
 
     /** A clock that reports a fixed offline time, so tests can travel in time freely. */
     private function useClock(float $offlineHours): void
@@ -185,7 +188,7 @@ class LicensingTest extends TestCase
         $this->assertTrue($result['success'], $result['message']);
     }
 
-    // â”€â”€ Signature & activation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Signature & activation ──────────────────
 
     #[Test]
     public function license_enforce_flag_wins_even_in_local(): void
@@ -254,7 +257,7 @@ class LicensingTest extends TestCase
         $this->assertFalse($this->license()->allowsFeature('3d_model'));
     }
 
-    // â”€â”€ Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Features ────────────────────────────────
 
     #[Test]
     public function license_is_the_ceiling_for_features(): void
@@ -292,7 +295,7 @@ class LicensingTest extends TestCase
         $this->assertTrue($this->practice->fresh()->hasFeature('labs'));
     }
 
-    // â”€â”€ Rollout stages (Phase 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Rollout stages (Phase 3) ────────────────
 
     #[Test]
     public function rollout_stage_reveals_modules_week_by_week(): void
@@ -358,7 +361,21 @@ class LicensingTest extends TestCase
             ->assertOk()->assertSee('Cash in the drawer');
     }
 
-    // â”€â”€ Subscription steps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    #[Test]
+    public function the_license_chair_limit_wins_over_the_clinics_own_setting(): void
+    {
+        $this->activate(['chair_limit' => 1]);
+        $this->practice->update(['chair_limit' => 10]);
+        $branch = Branch::create(['practice_id' => $this->practice->id, 'name' => 'Main', 'is_active' => true]);
+
+        $this->assertSame(1, $this->practice->fresh()->effectiveChairLimit());
+        Operatory::create(['branch_id' => $branch->id, 'name' => 'Room 1']);
+
+        $this->expectException(ValidationException::class);
+        Operatory::create(['branch_id' => $branch->id, 'name' => 'Room 2']);
+    }
+
+    // ── Subscription steps ──────────────────────
 
     #[Test]
     public function subscription_goes_warning_then_read_only_then_locked(): void
@@ -406,7 +423,7 @@ class LicensingTest extends TestCase
         $this->assertSame(LicenseManager::MODE_LOCKED, $this->license()->getMode());
     }
 
-    // â”€â”€ Read-only & locked enforcement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Read-only & locked enforcement ──────────
 
     #[Test]
     public function read_only_mode_blocks_model_writes(): void
@@ -512,7 +529,7 @@ class LicensingTest extends TestCase
         $this->actingAs($doctor)->get('/license/export')->assertForbidden();
     }
 
-    // â”€â”€ Offline grace & unlock codes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Offline grace & unlock codes ────────────
 
     #[Test]
     public function offline_too_long_locks_and_unlock_code_reopens(): void
@@ -556,7 +573,7 @@ class LicensingTest extends TestCase
         $this->assertSame(LicenseManager::MODE_LOCKED, $this->license()->getMode());
     }
 
-    // â”€â”€ Heartbeat contents, commands, server address â”€â”€
+    // ── Heartbeat contents, commands, server address ──
 
     #[Test]
     public function heartbeat_sends_health_and_counts_but_no_patient_data(): void

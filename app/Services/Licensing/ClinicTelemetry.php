@@ -25,6 +25,8 @@ class ClinicTelemetry
             'disk_total_gb' => $this->safe(fn () => round(disk_total_space(storage_path()) / 1024 ** 3, 1)),
             'db_size_mb' => $this->safe(fn () => $this->databaseSizeMb()),
             'last_backup_at' => $this->safe(fn () => app(BackupService::class)->listBackups()->first()['created_at']?->toIso8601String()),
+            // Room names only (shown and edited in the central app).
+            'rooms' => $this->safe(fn () => app(ClinicRooms::class)->report()),
         ];
     }
 

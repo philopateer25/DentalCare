@@ -308,6 +308,26 @@ Needs a spare PC/VM with Windows 10/11, virtualization on, and the images publis
 3. With a new migration: ✅ `C:\DOXamigoackups` gets a backup just before the update.
 4. Restart the PC and sign in to Windows -> ✅ DOXamigo comes back by itself.
 
+## Rooms & chairs
+
+The chair limit comes from the license (central app -> clinic -> plan settings -> Chairs). Only rooms **in use** count.
+
+### AE. In the clinic
+1. Settings -> **Rooms & chairs** (admin) -> ✅ "X of Y chairs in use" and the list of rooms.
+2. **Add room** -> name `Room 3`, branch -> Save -> ✅ appears; bookings can use it.
+3. At the limit, add another -> ✅ red "Chair limit reached"; nothing created.
+4. **Switch off** a room -> ✅ count drops by one; now a new room can be added. Its past appointments are kept.
+5. A room with appointments has no Delete (only Switch off); an unused room can be deleted.
+6. Log in as a doctor -> ✅ no Rooms & chairs menu.
+
+### AF. From the central app
+1. Clinic page -> **Rooms & chairs** card -> ✅ after the clinic's next sync it lists its rooms (in use / off) and "X of Y chairs".
+2. **Add room** `Room 4` -> ✅ "Waiting for the clinic's next sync: Add Room 4".
+3. Clinic -> License page -> **Sync now**, then Sync now once more -> ✅ Room 4 is in the clinic's list, and the central card shows it.
+   (The first sync runs the change, the second reports the new list.)
+4. **Rename** and **Switch off/on** a room the same way.
+5. Lower the chair limit below the rooms in use -> **Add room** from central -> ✅ the command shows **failed** with "Chair limit reached".
+
 ### Clean up
 - Remove the three `LICENSE_*` lines from `.env` → `docker exec clinic_app sh docker/optimize.sh` → `docker restart clinic_nginx`.
 - Central local data lives in `doxamigo-central/.wrangler/` — delete that folder to start fresh.

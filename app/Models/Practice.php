@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\FeatureManager;
+use App\Services\LicenseManager;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -74,7 +76,7 @@ class Practice extends Model
     {
         // The signed license from the central app is the ceiling: the clinic
         // can switch licensed features off, never switch unlicensed ones on.
-        $license = app(\App\Services\LicenseManager::class);
+        $license = app(LicenseManager::class);
 
         if (! $license->allowsFeature($feature)) {
             return false;
@@ -91,13 +93,13 @@ class Practice extends Model
             return $this->featureDefault($feature);
         }
 
-        if (!is_array($features)) {
+        if (! is_array($features)) {
             return false;
         }
 
         // Legacy associative format: ['feature_key' => true/false]
-        if (!array_is_list($features)) {
-            return !empty($features[$feature]);
+        if (! array_is_list($features)) {
+            return ! empty($features[$feature]);
         }
 
         // Current flat-array format: ['feature_key', ...]
@@ -105,11 +107,33 @@ class Practice extends Model
     }
 
     /**
+     * How many active chairs (rooms) this clinic may have: the signed license
+     * from the central app when there is one, otherwise the practice's own
+     * setting. 0 or null = no limit.
+     */
+    public function effectiveChairLimit(): ?int
+    {
+        $limit = app(LicenseManager::class)->chairLimit() ?? $this->chair_limit;
+
+        return $limit === null || (int) $limit <= 0 ? null : (int) $limit;
+    }
+
+    /** Active chairs (rooms) across all branches of this clinic. */
+    public function activeChairCount(): int
+    {
+        return Operatory::query()
+            ->where('is_active', true)
+            ->whereHas('branch', fn ($q) => $q->where('practice_id', $this->id))
+            ->count();
+    }
+
+    /**
      * Get all enabled feature keys for this practice.
      */
     public function getEnabledFeatures(): array
     {
-        $allFeatures = array_keys(\App\Services\FeatureManager::FEATURES);
+        $allFeatures = array_keys(FeatureManager::FEATURES);
+
         return array_values(array_filter($allFeatures, fn ($f) => $this->hasFeature($f)));
     }
 
@@ -118,7 +142,7 @@ class Practice extends Model
      */
     private function featureDefault(string $feature): bool
     {
-        return \App\Services\FeatureManager::FEATURES[$feature]['default'] ?? true;
+        return FeatureManager::FEATURES[$feature]['default'] ?? true;
     }
 
     // ──────────────────────────────────────────────

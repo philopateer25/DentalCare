@@ -455,6 +455,21 @@ class LicenseManager
         return $stage === null ? null : (int) $stage;
     }
 
+    /**
+     * Chairs (rooms) the license allows, as set in the central app. Null when the
+     * license isn't enforced or carries no limit (the practice's own setting applies).
+     */
+    public function chairLimit(): ?int
+    {
+        if (! $this->isEnforced()) {
+            return null;
+        }
+
+        $limit = $this->getPayload()['chair_limit'] ?? null;
+
+        return $limit === null ? null : (int) $limit;
+    }
+
     /** Stage a module unlocks at (config `license.rollout_stages`; unlisted = 1). */
     public static function stageFor(string $module): int
     {

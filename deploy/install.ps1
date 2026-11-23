@@ -276,7 +276,11 @@ Write-Host '=============================================' -ForegroundColor Cyan
 $Root = Read-Value 'Install folder' 'C:\DOXamigo'
 New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'backups'), (Join-Path $Root 'registry') | Out-Null
 $EnvFile = Join-Path $Root '.env'
-$IsUpdate = Test-Path -LiteralPath $EnvFile
+$RegistryConfig = Join-Path $Root 'registry\config.json'
+# Written only when a first install has fully finished. A folder with settings
+# but no flag is a half-finished install: it is resumed, not treated as an update.
+$DoneFlag = Join-Path $Root 'installed.flag'
+$IsUpdate = Test-Path -LiteralPath $DoneFlag
 
 # 1. PC check ----------------------------------------------------------------
 Write-Step 'Checking this PC'
@@ -327,52 +331,96 @@ if (Test-Path -LiteralPath $settings) {
 }
 
 # 3. Settings -----------------------------------------------------------------
-$Port = 80
+function Get-EnvValue([string]$key) {
+    if (-not (Test-Path -LiteralPath $EnvFile)) { return '' }
+    $hit = Select-String -LiteralPath $EnvFile -Pattern "^$([regex]::Escape($key))=(.*)$" | Select-Object -First 1
+    if ($hit) { return $hit.Matches[0].Groups[1].Value.Trim() } else { return '' }
+}
+function Set-EnvValue([string]$key, [string]$value) {
+    $lines = [System.IO.File]::ReadAllLines($EnvFile)
+    $found = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match "^$([regex]::Escape($key))=") { $lines[$i] = "$key=$value"; $found = $true }
+    }
+    if (-not $found) { $lines += "$key=$value" }
+    [System.IO.File]::WriteAllLines($EnvFile, [string[]]$lines, $Utf8NoBom)
+}
+function Connect-Registry([string]$user, [string]$token) {
+    # Watchtower reads registry\config.json; this install's own pull uses docker login.
+    $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$user`:$token"))
+    $config = '{ "auths": { "https://index.docker.io/v1/": { "auth": "' + $auth + '" } } }'
+    [System.IO.File]::WriteAllText($RegistryConfig, $config, $Utf8NoBom)
+    return ((Invoke-Native 'docker' @('login', '-u', $user, '--password-stdin') -InputText $token) -eq 0)
+}
+
 $enrollment = ''
 if ($IsUpdate) {
     Write-Step 'Existing installation found: updating it (your data is kept)'
-    $saved = Select-String -LiteralPath $EnvFile -Pattern '^DOXAMIGO_PORT=(\d+)' | Select-Object -First 1
-    if ($saved) { $Port = [int]$saved.Matches[0].Groups[1].Value }
 } else {
+    if (Test-Path -LiteralPath $EnvFile) {
+        Write-Step 'A previous install did not finish: continuing it (its settings are kept)'
+    }
     Write-Step 'Clinic details'
     $clinicName = (Read-Value 'Clinic name' -Required).Replace('"', '')
     do { $adminEmail = Read-Value 'Admin email (used to log in)' -Required } until ($adminEmail -match '^[^@\s]+@[^@\s]+\.[^@\s]+$')
     $enrollment = Read-Value 'Enrollment code from DOXamigo (DXA-XXXX-XXXX-XXXX), or Enter to skip'
-    $registryUser = Read-Value 'Update account (Docker Hub user)' 'philohany12'
-    $registryToken = Read-Value 'Update token (read-only, from DOXamigo)' -Required
-    $channel = Read-Value 'Update channel (stable / pilot)' 'stable'
 
-    if (-not (Test-PortFree 80)) {
-        Write-Host 'Port 80 is used by another program (often IIS or Skype); using 8080.' -ForegroundColor Yellow
-        $Port = 8080
+    if (-not (Test-Path -LiteralPath $EnvFile)) {
+        $Port = 80
+        if (-not (Test-PortFree 80)) {
+            Write-Host 'Port 80 is used by another program (often IIS or Skype); using 8080.' -ForegroundColor Yellow
+            $Port = 8080
+        }
+        $lan = Get-LanAddress
+        $suffix = if ($Port -eq 80) { '' } else { ":$Port" }
+        $values = @{
+            '{{IMAGE}}'           = $DefaultImage
+            '{{CHANNEL}}'         = 'pilot'
+            '{{PORT}}'            = "$Port"
+            '{{APP_KEY}}'         = 'base64:' + (New-RandomBase64 32)
+            '{{APP_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { "http://localhost$suffix" })
+            '{{LAN_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { '' })
+            '{{CENTRAL_URL}}'     = $CentralUrl
+            '{{MACHINE_ID}}'      = ((New-RandomBase64 18) -replace '[^A-Za-z0-9]', '')
+            '{{BACKUP_PASSWORD}}' = (New-RandomBase64 18)
+        }
+        $envText = $ClinicEnvTemplate
+        foreach ($k in $values.Keys) { $envText = $envText.Replace($k, $values[$k]) }
+        [System.IO.File]::WriteAllText($EnvFile, $envText, $Utf8NoBom)
     }
-    $lan = Get-LanAddress
-    $suffix = if ($Port -eq 80) { '' } else { ":$Port" }
-    $values = @{
-        '{{IMAGE}}'           = $DefaultImage
-        '{{CHANNEL}}'         = $channel
-        '{{PORT}}'            = "$Port"
-        '{{APP_KEY}}'         = 'base64:' + (New-RandomBase64 32)
-        '{{APP_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { "http://localhost$suffix" })
-        '{{LAN_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { '' })
-        '{{CENTRAL_URL}}'     = $CentralUrl
-        '{{MACHINE_ID}}'      = ((New-RandomBase64 18) -replace '[^A-Za-z0-9]', '')
-        '{{BACKUP_PASSWORD}}' = (New-RandomBase64 18)
-    }
-    $envText = $ClinicEnvTemplate
-    foreach ($k in $values.Keys) { $envText = $envText.Replace($k, $values[$k]) }
-    [System.IO.File]::WriteAllText($EnvFile, $envText, $Utf8NoBom)
 
-    # Pull credentials: for this install (docker login) and for Watchtower (registry\config.json).
-    $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$registryUser`:$registryToken"))
-    $config = '{ "auths": { "https://index.docker.io/v1/": { "auth": "' + $auth + '" } } }'
-    [System.IO.File]::WriteAllText((Join-Path $Root 'registry\config.json'), $config, $Utf8NoBom)
-    if ((Invoke-Native 'docker' @('login', '-u', $registryUser, '--password-stdin') -InputText $registryToken) -ne 0) { Stop-Install 'The update account or token was not accepted. Check them with DOXamigo and run the installer again.' }
+    # Update account: reuse the one saved by an unfinished install if it still works.
+    $connected = $false
+    if (Test-Path -LiteralPath $RegistryConfig) {
+        try {
+            $saved = (Get-Content -LiteralPath $RegistryConfig -Raw | ConvertFrom-Json).auths.'https://index.docker.io/v1/'.auth
+            $pair = [Text.Encoding]::ASCII.GetString([Convert]::FromBase64String($saved)).Split(':', 2)
+            if ($pair.Count -eq 2) { $connected = Connect-Registry $pair[0] $pair[1] }
+        } catch { $connected = $false }
+    }
+    while (-not $connected) {
+        $registryUser = Read-Value 'Update account (Docker Hub user)' 'philohany12'
+        $registryToken = Read-Value 'Update token (read-only, from DOXamigo)' -Required
+        $connected = Connect-Registry $registryUser $registryToken
+        if (-not $connected) { Write-Host 'That account/token was not accepted. Check it and try again.' -ForegroundColor Yellow }
+    }
 }
+
+$Port = [int]$(if (Get-EnvValue 'DOXAMIGO_PORT') { Get-EnvValue 'DOXAMIGO_PORT' } else { 80 })
+$image = $(if (Get-EnvValue 'DOXAMIGO_IMAGE') { Get-EnvValue 'DOXAMIGO_IMAGE' } else { $DefaultImage })
+
+# Which release line this clinic follows. Check it exists before downloading.
+$channel = Get-EnvValue 'DOXAMIGO_CHANNEL'
+if (-not $IsUpdate) { $channel = Read-Value 'Update channel (pilot = test clinics, stable = everyone)' $(if ($channel) { $channel } else { 'pilot' }) }
+while ((Invoke-Native 'docker' @('manifest', 'inspect', "$image`:app-$channel") -Quiet) -ne 0) {
+    Write-Host "No DOXamigo version is published on the '$channel' channel yet (or the update token cannot see it)." -ForegroundColor Yellow
+    $channel = Read-Value 'Update channel (pilot / stable)' $(if ($channel -eq 'stable') { 'pilot' } else { 'stable' })
+}
+Set-EnvValue 'DOXAMIGO_CHANNEL' $channel
 
 # Only DOXamigo's own folders: the settings files are private.
 Invoke-Native 'icacls' @($EnvFile, '/inheritance:r', '/grant:r', 'SYSTEM:F', 'Administrators:F') -Quiet | Out-Null
-Invoke-Native 'icacls' @((Join-Path $Root 'registry'), '/inheritance:r', '/grant:r', 'SYSTEM:(OI)(CI)F', 'Administrators:(OI)(CI)F') -Quiet | Out-Null
+Invoke-Native 'icacls' @((Split-Path -Parent $RegistryConfig), '/inheritance:r', '/grant:r', 'SYSTEM:(OI)(CI)F', 'Administrators:(OI)(CI)F') -Quiet | Out-Null
 
 [System.IO.File]::WriteAllText((Join-Path $Root 'docker-compose.yml'), $ClinicCompose, $Utf8NoBom)
 
@@ -433,6 +481,7 @@ if (-not $IsUpdate -and -not (Get-Command tailscale -ErrorAction SilentlyContinu
 }
 
 # 6. Done ----------------------------------------------------------------------
+[System.IO.File]::WriteAllText($DoneFlag, "Installed $(Get-Date -Format s)`r`n", $Utf8NoBom)
 $lan = Get-LanAddress
 Write-Host ''
 Write-Host '=============================================' -ForegroundColor Green

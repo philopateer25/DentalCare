@@ -87,10 +87,12 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # config.json with a read-only pull token for the private image registry.
-      - ./registry:/config:ro
+    # REPO_USER / REPO_PASS: the read-only pull token for the private repository.
+    # A separate file, so the token is not passed into the app containers. (A
+    # bind-mounted folder can't be locked down: Docker Desktop reads it as the
+    # signed-in user, not as Administrator.)
+    env_file: registry.env
     environment:
-      DOCKER_CONFIG: /config
       # Only update DOXamigo's own containers, never anything else on the PC.
       WATCHTOWER_LABEL_ENABLE: "true"
       # 6-field cron (with seconds), Cairo time: outside clinic hours.
@@ -274,9 +276,13 @@ Write-Host ' DOXamigo clinic installer' -ForegroundColor Cyan
 Write-Host '=============================================' -ForegroundColor Cyan
 
 $Root = Read-Value 'Install folder' 'C:\DOXamigo'
-New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'backups'), (Join-Path $Root 'registry') | Out-Null
+New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'backups') | Out-Null
 $EnvFile = Join-Path $Root '.env'
-$RegistryConfig = Join-Path $Root 'registry\config.json'
+# Update account for Watchtower (REPO_USER / REPO_PASS). Read by docker compose,
+# which runs as Administrator, so it can be locked to Administrators.
+$RegistryEnv = Join-Path $Root 'registry.env'
+# Older installer versions kept it here (read only to resume such an install).
+$OldRegistryConfig = Join-Path $Root 'registry\config.json'
 # Written only when a first install has fully finished. A folder with settings
 # but no flag is a half-finished install: it is resumed, not treated as an update.
 $DoneFlag = Join-Path $Root 'installed.flag'
@@ -346,10 +352,8 @@ function Set-EnvValue([string]$key, [string]$value) {
     [System.IO.File]::WriteAllLines($EnvFile, [string[]]$lines, $Utf8NoBom)
 }
 function Connect-Registry([string]$user, [string]$token) {
-    # Watchtower reads registry\config.json; this install's own pull uses docker login.
-    $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$user`:$token"))
-    $config = '{ "auths": { "https://index.docker.io/v1/": { "auth": "' + $auth + '" } } }'
-    [System.IO.File]::WriteAllText($RegistryConfig, $config, $Utf8NoBom)
+    # Watchtower gets REPO_USER / REPO_PASS from registry.env; this install's own pull uses docker login.
+    [System.IO.File]::WriteAllText($RegistryEnv, "REPO_USER=$user`r`nREPO_PASS=$token`r`n", $Utf8NoBom)
     return ((Invoke-Native 'docker' @('login', '-u', $user, '--password-stdin') -InputText $token) -eq 0)
 }
 
@@ -391,12 +395,21 @@ if ($IsUpdate) {
 
     # Update account: reuse the one saved by an unfinished install if it still works.
     $connected = $false
-    if (Test-Path -LiteralPath $RegistryConfig) {
-        try {
-            $saved = (Get-Content -LiteralPath $RegistryConfig -Raw | ConvertFrom-Json).auths.'https://index.docker.io/v1/'.auth
+    try {
+        if (Test-Path -LiteralPath $RegistryEnv) {
+            $text = [System.IO.File]::ReadAllText($RegistryEnv)
+            $user = [regex]::Match($text, '(?m)^REPO_USER=(.+)$').Groups[1].Value.Trim()
+            $token = [regex]::Match($text, '(?m)^REPO_PASS=(.+)$').Groups[1].Value.Trim()
+            if ($user -and $token) { $connected = Connect-Registry $user $token }
+        } elseif (Test-Path -LiteralPath $OldRegistryConfig) {
+            $saved = (Get-Content -LiteralPath $OldRegistryConfig -Raw | ConvertFrom-Json).auths.'https://index.docker.io/v1/'.auth
             $pair = [Text.Encoding]::ASCII.GetString([Convert]::FromBase64String($saved)).Split(':', 2)
             if ($pair.Count -eq 2) { $connected = Connect-Registry $pair[0] $pair[1] }
-        } catch { $connected = $false }
+        }
+    } catch { $connected = $false }
+    # The old locked registry folder is no longer used.
+    if (Test-Path -LiteralPath (Split-Path -Parent $OldRegistryConfig)) {
+        Invoke-Native 'cmd' @('/c', 'rmdir', '/s', '/q', (Split-Path -Parent $OldRegistryConfig)) -Quiet | Out-Null
     }
     while (-not $connected) {
         $registryUser = Read-Value 'Update account (Docker Hub user)' 'philohany12'
@@ -420,7 +433,7 @@ Set-EnvValue 'DOXAMIGO_CHANNEL' $channel
 
 # Only DOXamigo's own folders: the settings files are private.
 Invoke-Native 'icacls' @($EnvFile, '/inheritance:r', '/grant:r', 'SYSTEM:F', 'Administrators:F') -Quiet | Out-Null
-Invoke-Native 'icacls' @((Split-Path -Parent $RegistryConfig), '/inheritance:r', '/grant:r', 'SYSTEM:(OI)(CI)F', 'Administrators:(OI)(CI)F') -Quiet | Out-Null
+Invoke-Native 'icacls' @($RegistryEnv, '/inheritance:r', '/grant:r', 'SYSTEM:F', 'Administrators:F') -Quiet | Out-Null
 
 [System.IO.File]::WriteAllText((Join-Path $Root 'docker-compose.yml'), $ClinicCompose, $Utf8NoBom)
 

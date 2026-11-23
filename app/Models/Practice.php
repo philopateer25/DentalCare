@@ -213,6 +213,12 @@ class Practice extends Model
         return $this->hasMany(ClinicExpense::class);
     }
 
+    /** The clinic's own dropdown values (Phase 5). */
+    public function practiceOptions(): HasMany
+    {
+        return $this->hasMany(PracticeOption::class);
+    }
+
     public function insuranceClaims(): HasMany
     {
         return $this->hasMany(InsuranceClaim::class);

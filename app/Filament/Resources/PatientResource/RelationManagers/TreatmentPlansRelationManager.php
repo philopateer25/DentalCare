@@ -171,15 +171,13 @@ class TreatmentPlansRelationManager extends RelationManager
                                             ->preload()
                                             ->placeholder('Select Technique...'),
 
-                                        Forms\Components\TagsInput::make('tools_used_json')
+                                        \App\Filament\Forms\CreatableSelect::tags('tools_used_json', 'tool')
                                             ->label('Equipment & Tools Used')
-                                            ->suggestions(\App\Services\ClinicalPresets::toolsAndEquipment())
                                             ->placeholder('Add tool...')
                                             ->columnSpan(2),
 
-                                        Forms\Components\TagsInput::make('materials_used_json')
+                                        \App\Filament\Forms\CreatableSelect::tags('materials_used_json', 'material')
                                             ->label('Materials & Shade')
-                                            ->suggestions(\App\Services\ClinicalPresets::clinicalMaterials())
                                             ->placeholder('Add material/shade...')
                                             ->columnSpan(2),
 
@@ -197,6 +195,7 @@ class TreatmentPlansRelationManager extends RelationManager
                                     ->collapsible()
                                     ->collapsed(),
 
+                                \App\Filament\Forms\CreatableSelect::phrases('quick_note', 'procedure_note', 'notes')->columnSpanFull(),
                                 Forms\Components\Textarea::make('notes')->columnSpanFull(),
                             ])
                             ->columns(4)
@@ -289,20 +288,16 @@ class TreatmentPlansRelationManager extends RelationManager
                     ->icon('heroicon-o-beaker')
                     ->color('warning')
                     ->form([
-                        Forms\Components\TextInput::make('medication_name')
+                        \App\Filament\Forms\CreatableSelect::make('medication_name', 'medication')
                             ->label('Medication Name')
-                            ->default('Amoxicillin & Ibuprofen')
                             ->required(),
-                        Forms\Components\TextInput::make('dosage')
+                        \App\Filament\Forms\CreatableSelect::make('dosage', 'rx_dosage')
                             ->label('Dosage')
-                            ->default('500mg / 400mg')
                             ->required(),
-                        Forms\Components\TextInput::make('frequency')
-                            ->label('Frequency')
-                            ->default('Every 8 hours / Every 6 hours PRN'),
-                        Forms\Components\TextInput::make('duration')
-                            ->label('Duration')
-                            ->default('7 days'),
+                        \App\Filament\Forms\CreatableSelect::make('frequency', 'rx_frequency')
+                            ->label('Frequency'),
+                        \App\Filament\Forms\CreatableSelect::make('duration', 'rx_duration')
+                            ->label('Duration'),
                         Forms\Components\Textarea::make('instructions')
                             ->label('Patient Instructions')
                             ->default("Take medications as prescribed. Avoid chewing on the treated side. Call clinic if severe pain or swelling occurs.")

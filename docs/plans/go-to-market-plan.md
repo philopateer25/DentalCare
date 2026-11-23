@@ -188,6 +188,8 @@ This plan turns the conversation about "why clinics will reject us" into concret
 5. Same pattern in the Inertia chairside screens (React combobox).
 6. **Timing check** of the 5 core flows (book, check in, add procedure, take payment, send WhatsApp) before/after.
 
+**Status (2026-11-23):** tasks 2–4 built — `practice_options` table, `CreatableSelect::make()/tags()/phrases()`, Settings → Dropdown lists, recent-then-most-used order (per clinic). Applied to prescriptions, procedure tools/materials/note phrases, medical history tags and expense category. Task 1 audit for review: `docs/plans/phase5-dropdown-audit.md`. Not yet: chairside React combobox (5), per-doctor ordering, timing check (6).
+
 **Done when:** a doctor records a common procedure + note without the keyboard, and a medication typed once appears in the list next time.
 
 ---

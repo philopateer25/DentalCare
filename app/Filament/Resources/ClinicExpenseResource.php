@@ -52,23 +52,10 @@ class ClinicExpenseResource extends Resource
                             ->disabled()
                             ->dehydrated()
                             ->placeholder('Auto-generated (e.g. EXP-2026-00001)'),
-                        Forms\Components\Select::make('category')
+                        // Phase 5: the defaults plus the clinic's own categories, most used first.
+                        \App\Filament\Forms\CreatableSelect::make('category', 'expense_category')
                             ->label('Accounting Category')
-                            ->options([
-                                'Clinical Supplies & Materials' => 'Clinical Supplies & Consumables',
-                                'Dental Lab Fees' => 'Dental Lab Production Invoices',
-                                'Staff Payroll & Salaries' => 'Staff Salaries & Hygienist Payroll',
-                                'Facility Rent & Lease' => 'Clinic Facility Rent & Lease',
-                                'Utilities & Electricity' => 'Utilities (Electricity, Water, Waste Disposal)',
-                                'Equipment Lease & Maintenance' => 'Dental Equipment Maintenance & Sterilizer Service',
-                                'Marketing & Patient Acquisition' => 'Marketing, Google Ads & Social Media',
-                                'Software & Technology' => 'PMS Software, AI Diagnostics & Cloud Storage',
-                                'Insurance & Licensing' => 'Malpractice & Clinic Liability Insurance',
-                                'Taxes & Accounting' => 'Taxes, CPA & Legal Fees',
-                                'Miscellaneous' => 'General Office Supplies & Misc',
-                            ])
-                            ->required()
-                            ->searchable(),
+                            ->required(),
                         Forms\Components\TextInput::make('payee')
                             ->label('Payee / Vendor / Landlord Name')
                             ->required()

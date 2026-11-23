@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Forms\CreatableSelect;
 use App\Models\Prescription;
 use App\Services\WhatsAppLink;
 use Filament\Facades\Filament;
@@ -34,30 +35,23 @@ class PrescriptionsRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('medication_name')
+                // Phase 5: the clinic's own lists, most used first; anything typed is remembered.
+                CreatableSelect::make('medication_name', 'medication')
+                    ->label(__('Medication'))
                     ->required()
-                    ->maxLength(255)
-                    ->datalist([
-                        'Amoxicillin', 'Clindamycin', 'Ibuprofen', 'Paracetamol', 'Chlorhexidine',
-                    ])
                     ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('dosage')
-                    ->required()
-                    ->maxLength(255)
-                    ->placeholder('e.g., 500mg'),
+                CreatableSelect::make('dosage', 'rx_dosage')
+                    ->label(__('Dosage'))
+                    ->required(),
 
-                Forms\Components\TextInput::make('frequency')
-                    ->required()
-                    ->maxLength(255)
-                    ->datalist(['Every 8 hours', 'Every 12 hours', 'Once daily', 'Twice daily', 'As needed'])
-                    ->placeholder('e.g., Every 8 hours'),
+                CreatableSelect::make('frequency', 'rx_frequency')
+                    ->label(__('Frequency'))
+                    ->required(),
 
-                Forms\Components\TextInput::make('duration')
-                    ->required()
-                    ->maxLength(255)
-                    ->datalist(['3 days', '5 days', '7 days', '14 days', 'Until finished'])
-                    ->placeholder('e.g., 7 days'),
+                CreatableSelect::make('duration', 'rx_duration')
+                    ->label(__('Duration'))
+                    ->required(),
 
                 Forms\Components\DatePicker::make('date_prescribed')
                     ->default(now())

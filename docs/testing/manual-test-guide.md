@@ -218,6 +218,34 @@ The phone must reach this PC over the clinic Wi-Fi, so `localhost` will not work
 2. Enter the phone → **Create and scan card** → ✅ the new patient opens with the scan dialog already showing.
 3. Try a phone that already exists → ✅ red "Already a patient: … (file number)" with an **Open** button; nothing created.
 
+## Phase 5 — dropdowns you can add to
+
+Prescriptions need rollout stage 3 or more; expenses need stage 2 and a plan with finance.
+
+### T. Type once, pick next time
+1. A patient → **Prescriptions** → New → tap **Medication** without typing → ✅ a list opens (Amoxicillin 500mg …).
+2. Type a medication that isn't there (e.g. `Flagyl 500mg`) → ✅ the first line says **Add “Flagyl 500mg”** → pick it, fill the rest, save.
+3. New prescription again → tap Medication → ✅ **Flagyl 500mg is first**. The same goes for Dosage, Frequency and Duration (the last values you used come first).
+4. Expenses → New → **Accounting category** → type `Water bottles` → **Add “Water bottles”** → save → next expense: ✅ it's in the list.
+
+### U. Quick phrases and tags
+1. Treatment plan → add a procedure → **Quick phrase** → tap "Well tolerated", then "Rubber dam used" → ✅ Notes reads `Well tolerated. Rubber dam used`.
+2. Type your own phrase → **Add “…”** → ✅ it's added to the note and offered next time.
+3. Patient → Edit → medical history → **Other medical conditions** → type a new one → save → on another patient ✅ it's suggested.
+
+### U2. Dental chart (3D / 2D diagnosis page)
+1. A patient → **Dental chart** → pick a tooth → **Diagnosis** tab → tap **Clinical diagnosis** → ✅ list opens without typing.
+2. Type `Cracked tooth` → ✅ **+ Add “Cracked tooth”** → pick it → ✅ saved on the tooth.
+3. Another tooth → Clinical diagnosis → ✅ **Cracked tooth** is first, marked "Used here".
+4. Findings tab → under Notes → **+ Quick phrase** → tap "Sensitive to cold" → ✅ added to the tooth note.
+5. Crown / Implant / Missing teeth: material, implant system and reason missing work the same way.
+   Severity, urgency, mobility, pulp and periapical diagnosis stay fixed lists on purpose (standard scales).
+
+### V. Dropdown lists screen (admin)
+1. Settings → **Dropdown lists** → ✅ everything typed above, with "Times used".
+2. Filter by list, **Remove** a typo → ✅ it no longer appears in the dropdown.
+3. Log in as a doctor → ✅ no Dropdown lists menu (doctors add values by typing; admins clean up).
+
 ### Clean up
 - Remove the three `LICENSE_*` lines from `.env` → `docker exec clinic_app sh docker/optimize.sh` → `docker restart clinic_nginx`.
 - Central local data lives in `doxamigo-central/.wrangler/` — delete that folder to start fresh.

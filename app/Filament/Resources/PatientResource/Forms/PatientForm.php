@@ -121,9 +121,8 @@ class PatientForm
                                                         ->numeric()
                                                         ->suffix('mg/dL')
                                                         ->placeholder('e.g., 120'),
-                                                    TagsInput::make('diabetes_medications')
+                                                    \App\Filament\Forms\CreatableSelect::tags('diabetes_medications', 'diabetes_medication')
                                                         ->label('Diabetes Medications')
-                                                        ->suggestions(\App\Services\ClinicalPresets::diabetesMedications())
                                                         ->placeholder('Type medication...'),
                                                     Toggle::make('hypoglycemia_history')
                                                         ->label('History of Hypoglycemia (fainting/sweating episodes)')
@@ -161,9 +160,8 @@ class PatientForm
 
                                             Group::make()
                                                 ->schema([
-                                                    TagsInput::make('cardiac_conditions_json')
+                                                    \App\Filament\Forms\CreatableSelect::tags('cardiac_conditions_json', 'cardiac_condition')
                                                         ->label('Cardiac Conditions & Implants')
-                                                        ->suggestions(\App\Services\ClinicalPresets::cardiacConditions())
                                                         ->placeholder('Select or type condition...'),
                                                     Toggle::make('requires_antibiotic_prophylaxis')
                                                         ->label('AHA Antibiotic Prophylaxis Required (e.g. 2g Amoxicillin prior to treatment)'),
@@ -249,11 +247,11 @@ class PatientForm
 
                                     Section::make('Additional Information')
                                         ->schema([
-                                            TagsInput::make('medical_conditions_json')
+                                            \App\Filament\Forms\CreatableSelect::tags('medical_conditions_json', 'medical_condition')
                                                 ->label('Other Medical Conditions')
                                                 ->placeholder('Type condition and press Enter')
                                                 ->separator(','),
-                                            TagsInput::make('active_medications_json')
+                                            \App\Filament\Forms\CreatableSelect::tags('active_medications_json', 'active_medication')
                                                 ->label('Active Medications')
                                                 ->placeholder('Type medication and press Enter')
                                                 ->separator(','),

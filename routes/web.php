@@ -162,6 +162,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/patients/{patient}/chart-workspace', [\App\Http\Controllers\Api\ChartWorkspaceController::class, 'show']);
     Route::get('/patients/{patient}/chart/print', [\App\Http\Controllers\ChartPrintController::class, 'show'])->name('patient.chart.print');
 
+    // Phase 5: the clinic's own pick-or-add lists for the chart workspace
+    Route::get('/api/practice-options', [\App\Http\Controllers\Api\PracticeOptionController::class, 'index'])->name('practice-options.index');
+    Route::post('/api/practice-options', [\App\Http\Controllers\Api\PracticeOptionController::class, 'store'])->name('practice-options.store');
+
     // 6-site periodontal (gum) chart
     Route::get('/api/patients/{patient}/perio', [\App\Http\Controllers\Api\PerioChartController::class, 'index']);
     Route::post('/api/patients/{patient}/perio', [\App\Http\Controllers\Api\PerioChartController::class, 'store']);

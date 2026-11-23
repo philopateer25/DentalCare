@@ -11,6 +11,7 @@ import { http, errorMessage, type ChartRecord, type Status, type Suggestion, typ
 import ToothMap from './ToothMap';
 import SurfaceDiagram, { SURFACE_OPTIONS } from './SurfaceDiagram';
 import PerioChart from './PerioChart';
+import CreatableField, { usePracticeOptions } from './CreatableField';
 
 const Viewer3DPanel = React.lazy(() => import('./Viewer3DPanel'));
 
@@ -24,13 +25,14 @@ const STATUS_META: Record<Status, { label: string; on: string }> = {
 };
 
 /** Condition-specific technical fields (stored in clinical_details). */
-const TECH_FIELDS: Record<string, { key: string; label: string; options: { value: string; label: string }[] }[]> = {
+/** `list` = the clinic can add its own values (Phase 5); fields without it are standard scales and stay fixed. */
+const TECH_FIELDS: Record<string, { key: string; label: string; options: { value: string; label: string }[]; list?: string }[]> = {
   active_caries: [
     { key: 'caries_depth', label: 'Caries depth', options: CARIES_DEPTH_OPTIONS },
     { key: 'caries_class', label: 'G.V. Black class', options: CARIES_CLASS_OPTIONS },
   ],
   crown: [
-    { key: 'crown_material', label: 'Crown material', options: CROWN_MATERIAL_OPTIONS },
+    { key: 'crown_material', label: 'Crown material', options: CROWN_MATERIAL_OPTIONS, list: 'crown_material' },
     { key: 'crown_margin_fit', label: 'Margin fit', options: CROWN_MARGIN_OPTIONS },
   ],
   root_canal: [
@@ -39,19 +41,27 @@ const TECH_FIELDS: Record<string, { key: string; label: string; options: { value
     { key: 'canals_count', label: 'Canals', options: CANALS_COUNT_OPTIONS },
   ],
   implant: [
-    { key: 'implant_brand', label: 'Implant system', options: IMPLANT_BRAND_OPTIONS },
+    { key: 'implant_brand', label: 'Implant system', options: IMPLANT_BRAND_OPTIONS, list: 'implant_brand' },
     { key: 'implant_diameter', label: 'Diameter', options: IMPLANT_DIAMETER_OPTIONS },
     { key: 'implant_length', label: 'Length', options: IMPLANT_LENGTH_OPTIONS },
   ],
-  missing: [{ key: 'extraction_reason', label: 'Reason missing', options: EXTRACTION_REASON_OPTIONS }],
+  missing: [{ key: 'extraction_reason', label: 'Reason missing', options: EXTRACTION_REASON_OPTIONS, list: 'extraction_reason' }],
 };
 
-const DIAGNOSIS_FIELDS = [
-  { key: 'diagnosis', label: 'Clinical diagnosis', options: DIAGNOSIS_OPTIONS },
+const DIAGNOSIS_FIELDS: { key: string; label: string; options: { value: string; label: string }[]; list?: string }[] = [
+  { key: 'diagnosis', label: 'Clinical diagnosis', options: DIAGNOSIS_OPTIONS, list: 'diagnosis' },
   { key: 'severity', label: 'Severity / stage', options: SEVERITY_OPTIONS },
   { key: 'urgency', label: 'Urgency', options: URGENCY_OPTIONS },
   { key: 'mobility', label: 'Mobility grade', options: MOBILITY_OPTIONS },
 ];
+
+const TOOTH_NOTE_PHRASES = [
+  'Sensitive to cold', 'Pain on percussion', 'Food impaction', 'Fractured cusp', 'Old restoration leaking',
+  'Recurrent caries', 'Patient declined treatment', 'Review on X-ray', 'Monitor next visit', 'Gingival bleeding',
+].map((v) => ({ value: v, label: v }));
+
+/** Every list the workspace can learn (see PracticeOptionResource::LIST_LABELS). */
+const OWN_LISTS = ['diagnosis', 'crown_material', 'implant_brand', 'extraction_reason', 'tooth_note'];
 
 const EMPTY: ChartRecord = { condition: 'healthy', status: 'existing', clinical_details: {}, notes: null, surfaces: {} };
 const money = (n: any) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -91,6 +101,8 @@ export default function ChartWorkspace({ config }: { config: any }) {
   const [procQuery, setProcQuery] = useState('');
   const [voice, setVoice] = useState<{ tooth: string; proc?: any } | null>(null);
   const [history, setHistory] = useState<Record<number, Record<string, ChartRecord>>>({});
+
+  const practiceOptions = usePracticeOptions(OWN_LISTS);
 
   const timers = useRef<Record<string, any>>({});
   const pending = useRef<Record<string, ChartRecord>>({});
@@ -502,9 +514,19 @@ export default function ChartWorkspace({ config }: { config: any }) {
                     {TECH_FIELDS[rec.condition].map((f) => (
                       <label key={f.key} className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                         {f.label}
-                        <select className={select} disabled={readOnly} value={rec.clinical_details?.[f.key] || ''} onChange={(e) => setDetail(f.key, e.target.value)}>
-                          {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                        </select>
+                        {f.list ? (
+                          <CreatableField
+                            value={rec.clinical_details?.[f.key] || ''}
+                            options={f.options}
+                            own={practiceOptions.own[f.list] || []}
+                            disabled={readOnly}
+                            onPick={(v) => { setDetail(f.key, v); if (v) practiceOptions.used(f.list!, v); }}
+                          />
+                        ) : (
+                          <select className={select} disabled={readOnly} value={rec.clinical_details?.[f.key] || ''} onChange={(e) => setDetail(f.key, e.target.value)}>
+                            {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          </select>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -521,6 +543,21 @@ export default function ChartWorkspace({ config }: { config: any }) {
                     className={`${select} min-h-[84px] py-2`}
                   />
                 </label>
+                {!readOnly && (
+                  <CreatableField
+                    mode="append"
+                    value=""
+                    placeholder="+ Quick phrase"
+                    options={TOOTH_NOTE_PHRASES}
+                    own={practiceOptions.own.tooth_note || []}
+                    onPick={(v) => {
+                      if (!v) return;
+                      const current = (rec.notes || '').trim();
+                      update({ notes: current ? `${current}${/[.!?]$/.test(current) ? ' ' : '. '}${v}` : v });
+                      practiceOptions.used('tooth_note', v);
+                    }}
+                  />
+                )}
               </>
             )}
 
@@ -529,12 +566,22 @@ export default function ChartWorkspace({ config }: { config: any }) {
                 {DIAGNOSIS_FIELDS.map((f) => (
                   <label key={f.key} className="grid gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {f.label}
-                    <select className={select} disabled={readOnly} value={rec.clinical_details?.[f.key] || ''} onChange={(e) => setDetail(f.key, e.target.value)}>
-                      {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                    {f.list ? (
+                      <CreatableField
+                        value={rec.clinical_details?.[f.key] || ''}
+                        options={f.options}
+                        own={practiceOptions.own[f.list] || []}
+                        disabled={readOnly}
+                        onPick={(v) => { setDetail(f.key, v); if (v) practiceOptions.used(f.list!, v); }}
+                      />
+                    ) : (
+                      <select className={select} disabled={readOnly} value={rec.clinical_details?.[f.key] || ''} onChange={(e) => setDetail(f.key, e.target.value)}>
+                        {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    )}
                   </label>
                 ))}
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Stored as structured data, separate from the tooth notes.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Stored as structured data, separate from the tooth notes. Diagnoses you add are remembered for this clinic.</p>
               </div>
             )}
 

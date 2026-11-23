@@ -160,8 +160,53 @@ $DefaultImage = 'philohany12/dentalcare-app'
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
-function Write-Step([string]$text) { Write-Host ""; Write-Host "==> $text" -ForegroundColor Cyan }
-function Stop-Install([string]$text) { Write-Host ""; Write-Host $text -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }
+# Everything is also written here, so a failed install can be diagnosed.
+$LogFile = Join-Path $env:TEMP 'doxamigo-install.log'
+
+function Write-Log([string]$text) {
+    try { Add-Content -LiteralPath $LogFile -Value ('[{0}] {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $text) -Encoding UTF8 } catch { }
+}
+function Write-Step([string]$text) { Write-Host ""; Write-Host "==> $text" -ForegroundColor Cyan; Write-Log "==> $text" }
+function Stop-Install([string]$text) {
+    Write-Log "STOPPED: $text"
+    Write-Host ""
+    Write-Host $text -ForegroundColor Red
+    Write-Host "Details: $LogFile" -ForegroundColor Yellow
+    Read-Host 'Press Enter to close'
+    exit 1
+}
+
+# Runs an outside program (docker, netsh, icacls...). Its error channel is treated
+# as plain text - Docker prints download progress there - and success is judged by
+# the exit code only. Inside a PS2EXE .exe, stderr would otherwise end the script.
+function Invoke-Native([string]$exe, [string[]]$arguments, [switch]$Quiet, [switch]$NoLog, $InputText = $null) {
+    $script:NativeOutput = New-Object System.Collections.Generic.List[string]
+    if (-not $NoLog) { Write-Log "> $exe $($arguments -join ' ')" }
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $handle = {
+            $line = "$_"
+            $script:NativeOutput.Add($line)
+            if (-not $NoLog) { Write-Log "  $line" }
+            if (-not $Quiet) { Write-Host $line }
+        }
+        if ($null -ne $InputText) {
+            $InputText | & $exe @arguments 2>&1 | ForEach-Object $handle
+        } else {
+            & $exe @arguments 2>&1 | ForEach-Object $handle
+        }
+        $code = $LASTEXITCODE
+    } catch {
+        Write-Log "  failed to run: $($_.Exception.Message)"
+        $code = 9999
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+    if ($null -eq $code) { $code = 0 }
+    if (-not $NoLog) { Write-Log "  exit $code" }
+    return $code
+}
 
 function Read-Value([string]$prompt, [string]$default = '', [switch]$Required) {
     while ($true) {
@@ -199,18 +244,28 @@ function Test-PortFree([int]$p) {
     } catch { return $false } finally { if ($listener) { $listener.Stop() } }
 }
 
-function Invoke-Compose([string[]]$arguments, [switch]$AllowFailure) {
+function Invoke-Compose([string[]]$arguments, [switch]$AllowFailure, [switch]$Quiet, [switch]$NoLog) {
     Push-Location $Root
     try {
-        # Out-Host: Docker's output goes to the window, not into the return value.
-        & docker compose @arguments | Out-Host
-        $code = $LASTEXITCODE
+        $code = Invoke-Native 'docker' (@('compose') + $arguments) -Quiet:$Quiet -NoLog:$NoLog
     } finally { Pop-Location }
     if ($code -ne 0 -and -not $AllowFailure) { Stop-Install "docker compose $($arguments -join ' ') failed. Send a photo of this window to DOXamigo support." }
     return $code
 }
 
+# Safety net: an unexpected error shows a message and waits, instead of the
+# window closing by itself.
+trap {
+    Write-Log "CRASH: $($_ | Out-String)"
+    Write-Host ''
+    Write-Host "Something went wrong: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Details: $LogFile  - send this file to DOXamigo support." -ForegroundColor Yellow
+    Read-Host 'Press Enter to close'
+    exit 1
+}
+
 # ---------------------------------------------------------------------------
+Write-Log "DOXamigo installer started on $env:COMPUTERNAME"
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { Stop-Install 'Please run the installer as Administrator (right-click > Run as administrator).' }
 
@@ -256,8 +311,7 @@ if (Test-Path -LiteralPath $dockerExe) { Start-Process -FilePath $dockerExe -Err
 Write-Host 'Waiting for Docker to start...'
 $deadline = (Get-Date).AddMinutes(10)
 while ($true) {
-    & docker info *> $null
-    if ($LASTEXITCODE -eq 0) { break }
+    if ((Invoke-Native 'docker' @('info') -Quiet) -eq 0) { break }
     if ((Get-Date) -gt $deadline) { Stop-Install 'Docker did not start within 10 minutes. Restart the PC, open Docker Desktop once, then run this installer again.' }
     Start-Sleep -Seconds 5
 }
@@ -313,13 +367,12 @@ if ($IsUpdate) {
     $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$registryUser`:$registryToken"))
     $config = '{ "auths": { "https://index.docker.io/v1/": { "auth": "' + $auth + '" } } }'
     [System.IO.File]::WriteAllText((Join-Path $Root 'registry\config.json'), $config, $Utf8NoBom)
-    $registryToken | & docker login -u $registryUser --password-stdin | Out-Null
-    if ($LASTEXITCODE -ne 0) { Stop-Install 'The update account or token was not accepted. Check them with DOXamigo and run the installer again.' }
+    if ((Invoke-Native 'docker' @('login', '-u', $registryUser, '--password-stdin') -InputText $registryToken) -ne 0) { Stop-Install 'The update account or token was not accepted. Check them with DOXamigo and run the installer again.' }
 }
 
 # Only DOXamigo's own folders: the settings files are private.
-& icacls $EnvFile /inheritance:r /grant:r 'SYSTEM:F' 'Administrators:F' | Out-Null
-& icacls (Join-Path $Root 'registry') /inheritance:r /grant:r 'SYSTEM:(OI)(CI)F' 'Administrators:(OI)(CI)F' | Out-Null
+Invoke-Native 'icacls' @($EnvFile, '/inheritance:r', '/grant:r', 'SYSTEM:F', 'Administrators:F') -Quiet | Out-Null
+Invoke-Native 'icacls' @((Join-Path $Root 'registry'), '/inheritance:r', '/grant:r', 'SYSTEM:(OI)(CI)F', 'Administrators:(OI)(CI)F') -Quiet | Out-Null
 
 [System.IO.File]::WriteAllText((Join-Path $Root 'docker-compose.yml'), $ClinicCompose, $Utf8NoBom)
 
@@ -330,7 +383,7 @@ Invoke-Compose @('up', '-d', '--remove-orphans') | Out-Null
 
 Write-Host 'Waiting for the database to be ready...'
 $deadline = (Get-Date).AddMinutes(5)
-while ((Invoke-Compose @('exec', '-T', 'app', 'php', 'artisan', 'migrate:status') -AllowFailure) -ne 0) {
+while ((Invoke-Compose @('exec', '-T', 'app', 'php', 'artisan', 'migrate:status') -AllowFailure -Quiet) -ne 0) {
     if ((Get-Date) -gt $deadline) { Stop-Install 'DOXamigo did not start. Run: docker compose -f C:\DOXamigo\docker-compose.yml logs app   and send the output to support.' }
     Start-Sleep -Seconds 5
 }
@@ -341,7 +394,12 @@ if (-not $IsUpdate) {
     $file = '/var/www/html/storage/app/first-login.txt'
     Invoke-Compose @('exec', '-T', '-u', 'www-data', 'app', 'php', 'artisan', 'clinic:install', "--clinic=$clinicName", "--admin-email=$adminEmail", "--credentials-file=$file") | Out-Null
     Push-Location $Root
-    try { $login = (& docker compose exec -T app cat $file) -join "`r`n"; & docker compose exec -T app rm -f $file | Out-Null } finally { Pop-Location }
+    try {
+        # -NoLog: the temporary password must not end up in the log file.
+        Invoke-Native 'docker' @('compose', 'exec', '-T', 'app', 'cat', $file) -Quiet -NoLog | Out-Null
+        $login = $script:NativeOutput -join "`r`n"
+        Invoke-Native 'docker' @('compose', 'exec', '-T', 'app', 'rm', '-f', $file) -Quiet | Out-Null
+    } finally { Pop-Location }
 
     if ($enrollment) {
         Write-Step 'Activating the license'
@@ -353,10 +411,10 @@ if (-not $IsUpdate) {
 
 # 5. Network, power, shortcut ---------------------------------------------------
 Write-Step 'Opening the firewall for the clinic network'
-netsh advfirewall firewall delete rule name="DOXamigo" | Out-Null
-netsh advfirewall firewall add rule name="DOXamigo" dir=in action=allow protocol=TCP localport=$Port profile=private,domain | Out-Null
-powercfg /change standby-timeout-ac 0 | Out-Null
-powercfg /change hibernate-timeout-ac 0 | Out-Null
+Invoke-Native 'netsh' @('advfirewall', 'firewall', 'delete', 'rule', 'name=DOXamigo') -Quiet | Out-Null
+Invoke-Native 'netsh' @('advfirewall', 'firewall', 'add', 'rule', 'name=DOXamigo', 'dir=in', 'action=allow', 'protocol=TCP', "localport=$Port", 'profile=private,domain') -Quiet | Out-Null
+Invoke-Native 'powercfg' @('/change', 'standby-timeout-ac', '0') -Quiet | Out-Null
+Invoke-Native 'powercfg' @('/change', 'hibernate-timeout-ac', '0') -Quiet | Out-Null
 
 $suffix = if ($Port -eq 80) { '' } else { ":$Port" }
 $desktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
@@ -370,7 +428,7 @@ if (-not $IsUpdate -and -not (Get-Command tailscale -ErrorAction SilentlyContinu
         Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe' -OutFile $ts -UseBasicParsing
         Start-Process -FilePath $ts -ArgumentList '/quiet' -Wait
         $tsExe = Join-Path $env:ProgramFiles 'Tailscale\tailscale.exe'
-        if (Test-Path -LiteralPath $tsExe) { & $tsExe up "--authkey=$tsKey" --unattended | Out-Null }
+        if (Test-Path -LiteralPath $tsExe) { Invoke-Native $tsExe @('up', "--authkey=$tsKey", '--unattended') -NoLog | Out-Null }
     }
 }
 

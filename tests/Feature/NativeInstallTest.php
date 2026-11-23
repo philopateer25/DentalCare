@@ -88,4 +88,13 @@ class NativeInstallTest extends TestCase
             $this->assertSame(hash('sha256', 'windows|'.strtolower($guid)), $first, 'Windows uses MachineGuid only.');
         }
     }
+
+    #[Test]
+    public function the_passwordless_quick_login_does_not_exist_on_clinic_installs(): void
+    {
+        // Routes are registered for this (non-local) environment, like a clinic PC.
+        $this->get('/quick-login')->assertNotFound();
+        $this->get('/register')->assertRedirect(route('filament.admin.auth.login'));
+        $this->assertFalse((bool) config('app.demo_data'), 'No demo data outside developer installs.');
+    }
 }

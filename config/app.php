@@ -75,6 +75,12 @@ return [
     'lan_url' => env('CLINIC_LAN_URL'),
 
     /*
+    | Fill a newly created clinic with demo data (sample doctor login, patients,
+    | labs, stock). Developer installs only by default - never on a real clinic.
+    */
+    'demo_data' => (bool) env('DEMO_DATA', env('APP_ENV') === 'local'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------

@@ -3,6 +3,12 @@
 namespace App\Observers;
 
 use App\Models\Practice;
+use Database\Seeders\DentalCatalogSeeder;
+use Database\Seeders\DentalInventorySeeder;
+use Database\Seeders\DentalLabSeeder;
+use Database\Seeders\EyeCatalogSeeder;
+use Database\Seeders\EyeInventorySeeder;
+use Database\Seeders\EyeLabSeeder;
 
 class PracticeObserver
 {
@@ -11,26 +17,36 @@ class PracticeObserver
      */
     public function created(Practice $practice): void
     {
-        if (app()->runningUnitTests() || app()->environment('testing') || config('app.env') === 'testing' || (defined('PHPUNIT_COMPOSER_INSTALL') && !defined('RUN_SEEDERS_IN_TESTS'))) {
+        if (app()->runningUnitTests() || app()->environment('testing') || config('app.env') === 'testing' || (defined('PHPUNIT_COMPOSER_INSTALL') && ! defined('RUN_SEEDERS_IN_TESTS'))) {
             return;
         }
 
+        // The procedure catalogue is real starting data for every new clinic.
+        // The other seeders are DEMO data (a doctor login with the password
+        // "password", fake patients, labs, lab orders, suppliers and stock) and
+        // must never land in a real clinic: developer installs or DEMO_DATA=true only.
+        $demo = (bool) config('app.demo_data');
+
         if ($practice->type === 'ophthalmology') {
-            $this->runSeeder(\Database\Seeders\EyeInventorySeeder::class, $practice);
-            $this->runSeeder(\Database\Seeders\EyeCatalogSeeder::class, $practice);
-            $this->runSeeder(\Database\Seeders\EyeLabSeeder::class, $practice);
+            $this->runSeeder(EyeCatalogSeeder::class, $practice);
+            if ($demo) {
+                $this->runSeeder(EyeInventorySeeder::class, $practice);
+                $this->runSeeder(EyeLabSeeder::class, $practice);
+            }
         } else {
             // Default to dental
-            $this->runSeeder(\Database\Seeders\DentalInventorySeeder::class, $practice);
-            $this->runSeeder(\Database\Seeders\DentalCatalogSeeder::class, $practice);
-            $this->runSeeder(\Database\Seeders\DentalLabSeeder::class, $practice);
+            $this->runSeeder(DentalCatalogSeeder::class, $practice);
+            if ($demo) {
+                $this->runSeeder(DentalInventorySeeder::class, $practice);
+                $this->runSeeder(DentalLabSeeder::class, $practice);
+            }
         }
     }
 
     private function runSeeder(string $seederClass, Practice $practice): void
     {
         if (class_exists($seederClass)) {
-            $seeder = new $seederClass();
+            $seeder = new $seederClass;
             if (property_exists($seeder, 'targetPractice')) {
                 $seeder->targetPractice = $practice;
             }
@@ -70,4 +86,3 @@ class PracticeObserver
         //
     }
 }
-

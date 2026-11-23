@@ -194,6 +194,8 @@ This plan turns the conversation about "why clinics will reject us" into concret
 
 ---
 
+> **Decision 2026-11-23:** the clinic default is **Docker Desktop + Watchtower** (automatic nightly updates; code only inside private images) - `deploy/docker/` + `deploy/install.ps1`. The native installer below stays as the fallback for PCs without virtualization. Watchtower = maintained fork `nickfedor/watchtower:1.24.1`; a full pull -> backup -> migrate -> data-kept update was tested locally. Open before the first clinic: private images + read-only token, ionCube encoding.
+
 ## Phase 6 — Running on the clinic's own computer (no Docker)
 
 **Goal:** install on ordinary — including old — Windows PCs. Today's `deploy/install.ps1` needs Docker, which needs hardware virtualization; many clinic PCs don't have it. Because we chose SQLite, we can drop Docker entirely.

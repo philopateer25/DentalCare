@@ -290,6 +290,24 @@ A backup is the whole computer: every clinic on it plus the `.env` key. Restorin
 2. Next morning -> Backup & Security -> ✅ a backup from about 02:00; Download works.
 3. Without waiting: `docker exec clinic_scheduler php artisan schedule:test --name="backup:run"` -> ✅ a new backup appears within a minute.
 
+## Clinic install with Docker + Watchtower (the default)
+
+Needs a spare PC/VM with Windows 10/11, virtualization on, and the images published (private) on Docker Hub.
+
+### AC. Install
+1. Dev PC: `.\deploy\docker\publish.ps1 -Channel pilot` -> ✅ images pushed. Then `.\deploy\dockeruild-installer.ps1` -> `DOXamigo-Docker-Setup.exe`.
+2. Clinic PC: run it as Administrator -> clinic name, admin email, enrollment code, update token, channel `pilot`.
+3. ✅ It ends with the email + a temporary password and the `http://192.168.x.x` address; desktop shortcut works.
+4. Log in -> ✅ onboarding wizard; Patients list is **empty** (no demo patients); only your admin under Users.
+5. `http://<pc>/quick-login` -> ✅ 404.
+
+### AD. Automatic update
+1. Change something visible, commit, `publish.ps1 -Channel pilot`.
+2. On the clinic PC (instead of waiting for 03:30): `docker exec doxamigo_watchtower /watchtower --run-once --label-enable`
+   -> ✅ log says the containers were updated; the change is visible; patients still there.
+3. With a new migration: ✅ `C:\DOXamigoackups` gets a backup just before the update.
+4. Restart the PC and sign in to Windows -> ✅ DOXamigo comes back by itself.
+
 ### Clean up
 - Remove the three `LICENSE_*` lines from `.env` → `docker exec clinic_app sh docker/optimize.sh` → `docker restart clinic_nginx`.
 - Central local data lives in `doxamigo-central/.wrangler/` — delete that folder to start fresh.

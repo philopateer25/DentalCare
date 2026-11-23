@@ -9,6 +9,7 @@ services:
       - "443:443"
     volumes:
       - ./public:/var/www/html/public:ro
+      - ./storage/app/public:/var/www/html/storage/app/public:ro
     depends_on:
       - app
     restart: unless-stopped

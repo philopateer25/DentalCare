@@ -1,339 +1,392 @@
 <#
 .SYNOPSIS
-    Automated Installer for DentalCare On-Premise Clinic Server.
-    Run this script as Administrator on the Clinic's Windows Server/PC.
+    DOXamigo clinic installer (Docker Desktop + Watchtower). Run as Administrator.
+
+.DESCRIPTION
+    New install: installs Docker Desktop if needed, asks for the clinic details,
+    pulls the DOXamigo images, creates the clinic and its admin (random password,
+    shown once), activates the license, opens the firewall for the clinic network.
+    Running it again on an installed PC updates the setup and keeps all data.
+
+    Turn it into an .exe with PS2EXE (Win-PS2EXE window, or deploy\docker\build-installer.ps1).
+    It is self-contained: the compose file and settings template are inside it.
+    Windows PowerShell 5.1 compatible; ASCII only (PS 5.1 reads BOM-less files as ANSI).
+
+    Never runs `docker compose down -v`: -v would delete the clinic's database.
 #>
 
-# Ensure Script is running as Administrator
-if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "Please run this script as an Administrator."
-    Pause
-    Exit
-}
+$ErrorActionPreference = 'Stop'
 
-Write-Host "==============================================" -ForegroundColor Cyan
-Write-Host " DentalCare Clinic Server Installer v1.0" -ForegroundColor Cyan
-Write-Host "==============================================" -ForegroundColor Cyan
-Write-Host ""
+# Everything the installer writes is inside this script, so converting it with
+# PS2EXE (Win-PS2EXE or Invoke-ps2exe) needs no other files.
+# Edit the clinic compose file / settings template HERE; deploy/docker/README.md explains them.
+$ClinicCompose = @'
+# DOXamigo on a clinic PC (Docker Desktop). Installed by deploy/install.ps1 as
+# C:\DOXamigo\docker-compose.yml next to C:\DOXamigo\.env (settings + secrets).
+#
+# The code lives ONLY inside the images. Clinic data lives in named volumes
+# (database, uploads) and C:\DOXamigo\backups. Watchtower pulls new images at
+# night and recreates the containers; the app container then backs up the
+# database (if the update changes it), runs migrations and starts again.
+#
+# Never `docker compose down -v` on a clinic: -v deletes the database volume.
 
-$InstallDir = Read-Host "Where would you like to install the system? (Press Enter for default: C:\DentalCare)"
-if ([string]::IsNullOrWhiteSpace($InstallDir)) {
-    $InstallDir = "C:\DentalCare"
-}
-$StorageDir = "$InstallDir\storage\app"
-$CentralApiUrl = "https://central.dentalcare-software.com/api/v1" # Replace with real domain
+name: doxamigo
 
-# ---------------------------------------------------------
-# 1. Hardware Pre-requisite Check (Virtualization)
-# ---------------------------------------------------------
-Write-Host "[1/7] Performing Hardware Check..."
-$Cpu = Get-CimInstance Win32_Processor
-if ($Cpu.VirtualizationFirmwareEnabled -eq $false) {
-    Write-Host ""
-    Write-Host "CRITICAL WARNING: Hardware Virtualization appears to be DISABLED!" -ForegroundColor Yellow
-    Write-Host "Docker usually cannot run on this computer until Virtualization is enabled in the BIOS."
-    Write-Host ""
-    Write-Host "HOW TO FIX THIS (If Docker fails later):" -ForegroundColor Cyan
-    Write-Host "1. Restart this computer and enter the BIOS."
-    Write-Host "2. Enable 'Intel Virtualization Technology', 'VT-x', or 'AMD SVM'."
-    Write-Host "3. If it's a Lenovo laptop, turn off 'Memory Integrity' in Windows Security."
-    Write-Host ""
-    
-    $Override = Read-Host "If you already have Linux/WSL running, this warning might be a false alarm. Do you want to try continuing anyway? (Y/N)"
-    if ($Override -notmatch "^[Yy]") {
-        Write-Host "Installation aborted. Please enable Virtualization and try again." -ForegroundColor Red
-        Pause
-        Exit
-    }
-} else {
-    Write-Host "      Virtualization is enabled. Hardware check passed!" -ForegroundColor Green
-}
+x-app: &app
+  image: ${DOXAMIGO_APP_IMAGE:-philohany12/dentalcare-app}:${DOXAMIGO_CHANNEL:-stable}
+  restart: unless-stopped
+  env_file: .env
+  volumes:
+    - storage:/var/www/html/storage
+    - data:/var/www/html/database/data
+    - ./backups:/var/www/html/storage/app/backups
+  labels:
+    com.centurylinklabs.watchtower.enable: "true"
+  networks: [doxamigo]
 
-# ---------------------------------------------------------
-# 2. Prepare Directories
-# ---------------------------------------------------------
-Write-Host "[2/7] Preparing installation directories..."
-if (!(Test-Path -Path $StorageDir)) {
-    New-Item -ItemType Directory -Force -Path $StorageDir | Out-Null
-}
-
-# ---------------------------------------------------------
-# 3. Install Docker Desktop
-# ---------------------------------------------------------
-Write-Host "[3/7] Checking for Docker Desktop..."
-if (!(Get-Command "docker" -ErrorAction SilentlyContinue)) {
-    Write-Host "      Docker not found. Downloading Docker Desktop..." -ForegroundColor Yellow
-    $DockerInstaller = "$InstallDir\Docker Desktop Installer.exe"
-    Invoke-WebRequest -Uri "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe" -OutFile $DockerInstaller
-    
-    Write-Host "      Installing Docker silently to your chosen drive. This may take a few minutes..." -ForegroundColor Yellow
-    
-    # If the user chose a different drive (like D:\), we force Docker to install EVERYTHING there to save C: space!
-    $DockerInstallPath = if ($InstallDir -match "^[Cc]:") { "C:\Program Files\Docker\Docker" } else { "$InstallDir\DockerEngine" }
-    $DockerDataPath = "$InstallDir\DockerData"
-    
-    # Ensure directories exist before installing
-    if (!(Test-Path $DockerInstallPath)) { New-Item -ItemType Directory -Force -Path $DockerInstallPath | Out-Null }
-    if (!(Test-Path $DockerDataPath)) { New-Item -ItemType Directory -Force -Path $DockerDataPath | Out-Null }
-    
-    $DockerArgs = @(
-        "install",
-        "--quiet",
-        "--accept-license",
-        "--installation-dir=$DockerInstallPath",
-        "--wsl-default-data-root=$DockerDataPath"
-    )
-    $InstallerProcess = Start-Process -FilePath $DockerInstaller -ArgumentList $DockerArgs -Wait -NoNewWindow -PassThru
-    
-    if ($InstallerProcess.ExitCode -ne 0 -and $InstallerProcess.ExitCode -ne 3010) {
-        Write-Host "      CRITICAL ERROR: Docker failed to install! Exit Code: $($InstallerProcess.ExitCode)" -ForegroundColor Red
-        Write-Host "      (This might be due to lack of space on C:\ drive, or Windows blocked it)." -ForegroundColor Yellow
-        Pause
-        Exit
-    }
-    
-    Write-Host "      Docker installed successfully! Starting Docker Engine..." -ForegroundColor Green
-    if (Test-Path "$DockerInstallPath\Docker Desktop.exe") {
-        Start-Process "$DockerInstallPath\Docker Desktop.exe"
-    } else {
-        # Fallback just in case
-        Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-    }
-    
-    # Inject Docker into the current PowerShell session's PATH so we can use it immediately!
-    $DockerBinPath = if (Test-Path "$DockerInstallPath\resources\bin") { "$DockerInstallPath\resources\bin" } else { "C:\Program Files\Docker\Docker\resources\bin" }
-    $env:Path += ";$DockerBinPath"
-    
-    # Wait for docker daemon
-    Write-Host "      Waiting for Docker Engine to start (this may take a few minutes)..."
-    while ($true) {
-        if (Get-Command "docker" -ErrorAction SilentlyContinue) {
-            $dockerInfo = docker info 2>&1 | Out-String
-            if ($dockerInfo -match "Server Version") {
-                break
-            }
-        }
-        Start-Sleep -Seconds 5
-    }
-} else {
-    Write-Host "      Docker is already installed." -ForegroundColor Green
-}
-
-# ---------------------------------------------------------
-# 4. Install Tailscale (Remote Management)
-# ---------------------------------------------------------
-Write-Host "[4/7] Checking for Tailscale Secure Network..."
-if (!(Get-Command "tailscale" -ErrorAction SilentlyContinue)) {
-    Write-Host "      Tailscale not found. Downloading..." -ForegroundColor Yellow
-    $TsInstaller = "$env:TEMP\tailscale-setup.exe"
-    Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile $TsInstaller
-    
-    Write-Host "      Installing Tailscale silently..."
-    Start-Process -FilePath $TsInstaller -ArgumentList "/quiet" -Wait -NoNewWindow
-    
-    Write-Host "      Authenticating Tailscale silently with Auth Key..." -ForegroundColor Green
-    $TsPath = "${env:ProgramFiles}\Tailscale\tailscale.exe"
-    if (Test-Path $TsPath) {
-        # Silent authentication using Auth Key. No browser will open!
-        Start-Process $TsPath -ArgumentList "up --authkey=tskey-auth-kVcjs8HMFF11CNTRL-qR4gR9vVE61PtrvHUFve61Sgzd84xs5XG --hostname=dentalcare-clinic --unattended" -Wait -NoNewWindow
-    } else {
-        Write-Host "      Could not find tailscale.exe. You may need to run 'tailscale up' manually after restarting PowerShell." -ForegroundColor Yellow
-    }
-} else {
-    Write-Host "      Tailscale is already installed." -ForegroundColor Green
-}
-
-# ---------------------------------------------------------
-# 5. Clinic Enrollment
-# ---------------------------------------------------------
-Write-Host "[5/7] Clinic Enrollment" -ForegroundColor Cyan
-$EnrollmentCode = Read-Host "Please enter your Clinic Enrollment Code (e.g., CLINIC-XYZ-123)"
-
-Write-Host "      Validating code with Central Server..."
-# In production, you would use Invoke-RestMethod here. 
-# We mock the response to generate the local license.json file.
-$LicenseData = @{
-    clinic_id = $EnrollmentCode
-    status = "active"
-    grace_period_expires_at = (Get-Date).AddDays(7).ToString("yyyy-MM-dd HH:mm:ss")
-    last_synced_at = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-}
-$LicenseData | ConvertTo-Json | Set-Content -Path "$StorageDir\license.json"
-Write-Host "      Enrollment successful! License generated." -ForegroundColor Green
-
-
-# ---------------------------------------------------------
-# 6. Generate Secure App Key
-# ---------------------------------------------------------
-Write-Host "[6/8] Generating Secure Application Key..."
-$Bytes = New-Object Byte[] 32
-$Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$Rng.GetBytes($Bytes)
-$AppKey = "base64:" + [Convert]::ToBase64String($Bytes)
-
-# ---------------------------------------------------------
-# 7. Download and Start Application
-# ---------------------------------------------------------
-Write-Host "[7/8] Deploying DentalCare System..."
-$ComposeContent = @"
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: clinic_nginx
-    ports:
-      - "80:80"
-    volumes:
-      - clinic_code:/var/www/html
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - app
-    restart: unless-stopped
-    networks:
-      - clinic_network
-
   app:
-    image: philohany12/dentalcare-app:latest
-    container_name: clinic_app
-    restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - APP_KEY=$AppKey
-      - DB_CONNECTION=mysql
-      - DB_HOST=db
-      - DB_DATABASE=clinic_db
-      - DB_USERNAME=clinic_user
-      - DB_PASSWORD=secret
-      - REDIS_HOST=redis
-    volumes:
-      - clinic_code:/var/www/html
-      - clinic_storage:/var/www/html/storage/app
-    networks:
-      - clinic_network
+    <<: *app
+    container_name: doxamigo_app
 
-  db:
-    image: mysql:8.0
-    container_name: clinic_db
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: clinic_db
-      MYSQL_USER: clinic_user
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: root_secret
-    volumes:
-      - clinic_db_data:/var/lib/mysql
-    networks:
-      - clinic_network
+  worker:
+    <<: *app
+    container_name: doxamigo_worker
+    user: "www-data"
+    command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3"]
+    depends_on: [app]
 
-  redis:
-    image: redis:7-alpine
-    container_name: clinic_redis
+  scheduler:
+    <<: *app
+    container_name: doxamigo_scheduler
+    user: "www-data"
+    # Heartbeat every 30 min, license clock, encrypted backup at 02:00.
+    command: ["php", "artisan", "schedule:work"]
+    depends_on: [app]
+
+  web:
+    image: ${DOXAMIGO_WEB_IMAGE:-philohany12/dentalcare-web}:${DOXAMIGO_CHANNEL:-stable}
+    container_name: doxamigo_web
     restart: unless-stopped
-    networks:
-      - clinic_network
+    ports:
+      - "${DOXAMIGO_PORT:-80}:80"
+    volumes:
+      - storage:/var/www/html/storage:ro
+    depends_on: [app]
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks: [doxamigo]
+
+  watchtower:
+    # Maintained fork of containrrr/watchtower (archived; 1.7.1 can't apply updates
+    # on Docker Engine 29+). Pinned: change deliberately, after testing an update.
+    image: nickfedor/watchtower:1.24.1
+    container_name: doxamigo_watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # config.json with a read-only pull token for the private image registry.
+      - ./registry:/config:ro
+    environment:
+      DOCKER_CONFIG: /config
+      # Only update DOXamigo's own containers, never anything else on the PC.
+      WATCHTOWER_LABEL_ENABLE: "true"
+      # 6-field cron (with seconds), Cairo time: outside clinic hours.
+      WATCHTOWER_SCHEDULE: ${DOXAMIGO_UPDATE_SCHEDULE:-0 30 3 * * *}
+      TZ: Africa/Cairo
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_TIMEOUT: 60s
+    networks: [doxamigo]
 
 volumes:
-  clinic_db_data:
-  clinic_code:
-  clinic_storage:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: $StorageDir
+  storage:
+  data:
 
 networks:
-  clinic_network:
-    driver: bridge
-"@
+  doxamigo:
+'@
 
-$ComposeContent | Set-Content -Path "$InstallDir\docker-compose.yml"
+$ClinicEnvTemplate = @'
+# DOXamigo clinic (Docker). Written once by install.ps1 to C:\DOXamigo\.env.
+# Used by docker compose (DOXAMIGO_* lines) and passed into the containers.
+# {{PLACEHOLDERS}} are filled in by install.ps1. Keep this file private.
 
-Write-Host "      Generating Nginx Configuration..."
-$NginxContent = @"
-server {
-    listen 80;
-    server_name localhost;
-    root /var/www/html/public;
+# --- Images and updates (Watchtower) ---
+DOXAMIGO_APP_IMAGE={{APP_IMAGE}}
+DOXAMIGO_WEB_IMAGE={{WEB_IMAGE}}
+# stable = everyone, pilot = clinics that get new versions first
+DOXAMIGO_CHANNEL={{CHANNEL}}
+DOXAMIGO_PORT={{PORT}}
+DOXAMIGO_UPDATE_SCHEDULE=0 30 3 * * *
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
+# --- App ---
+APP_NAME=DOXamigo
+APP_ENV=production
+APP_KEY={{APP_KEY}}
+APP_DEBUG=false
+APP_TIMEZONE=Africa/Cairo
+APP_URL={{APP_URL}}
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+CLINIC_LAN_URL={{LAN_URL}}
 
-    index index.php;
+LOG_CHANNEL=daily
+LOG_LEVEL=warning
+LOG_DAILY_DAYS=14
 
-    charset utf-8;
+DB_CONNECTION=sqlite
+DB_DATABASE=/var/www/html/database/data/database.sqlite
 
-    location / {
-        try_files `$uri `$uri/ /index.php?`$query_string;
-    }
+SESSION_DRIVER=database
+SESSION_LIFETIME=720
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+FILESYSTEM_DISK=local
+BROADCAST_CONNECTION=log
+MAIL_MAILER=log
 
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location = /robots.txt  { access_log off; log_not_found off; }
+# --- License (central app) ---
+LICENSE_SERVER_URL={{CENTRAL_URL}}
+# Same id for every container, so they count as one PC (see HardwareFingerprint).
+LICENSE_MACHINE_ID={{MACHINE_ID}}
 
-    error_page 404 /index.php;
+BACKUP_DELETE_PASSWORD={{BACKUP_PASSWORD}}
+'@
 
-    location ~ \.php$ {
-        fastcgi_pass app:9000;
-        fastcgi_param SCRIPT_FILENAME `$realpath_root`$fastcgi_script_name;
-        include fastcgi_params;
-    }
+$CentralUrl = 'https://doxamigo-central.philopateerhanyk360.workers.dev'
+$DefaultAppImage = 'philohany12/dentalcare-app'
+$DefaultWebImage = 'philohany12/dentalcare-web'
 
-    location ~ /\.(?!well-known).* {
-        deny all;
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+function Write-Step([string]$text) { Write-Host ""; Write-Host "==> $text" -ForegroundColor Cyan }
+function Stop-Install([string]$text) { Write-Host ""; Write-Host $text -ForegroundColor Red; Read-Host 'Press Enter to close'; exit 1 }
+
+function Read-Value([string]$prompt, [string]$default = '', [switch]$Required) {
+    while ($true) {
+        $suffix = if ($default) { " [$default]" } else { '' }
+        $value = Read-Host "$prompt$suffix"
+        if (-not $value) { $value = $default }
+        $value = $value.Trim()
+        if ($value -or -not $Required) { return $value }
+        Write-Host '  This is required.' -ForegroundColor Yellow
     }
 }
-"@
-$NginxContent | Set-Content -Path "$InstallDir\nginx.conf"
 
-# Note: In production, the script would run `docker login` using credentials returned from the Enrollment API.
-Set-Location -Path $InstallDir
-Write-Host "      Cleaning up any existing containers or orphaned volumes..."
-# Forcefully remove any containers holding these names to prevent "Name already in use" conflicts
-docker rm -f clinic_app clinic_db clinic_nginx clinic_redis clinic_worker clinic_scheduler 2>&1 | Out-Null
-docker-compose down -v --remove-orphans 2>&1 | Out-Null
+function New-RandomBase64([int]$bytes) {
+    $buffer = New-Object byte[] $bytes
+    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($buffer)
+    return [Convert]::ToBase64String($buffer)
+}
 
-Write-Host "      Starting containers (this may take a moment to download images)..."
-# Using docker-compose up
-docker-compose up -d 2>&1 | ForEach-Object { Write-Host $_ }
-
-Write-Host "      Initializing Database and Clinical Data (this may take 15 seconds)..."
-# Wait for MySQL to be fully ready and the container to run migrations
-Start-Sleep -Seconds 15
-
-# Run the seeder exactly once during initial installation
-# We loop to wait for migrations to finish first, and use -T to prevent terminal allocation errors
-$MaxRetries = 24
-$RetryCount = 0
-while ($RetryCount -lt $MaxRetries) {
-    $SeedResult = docker-compose exec -T app php artisan db:seed --force 2>&1 | Out-String
-    if ($LASTEXITCODE -eq 0 -and $SeedResult -match "DONE") {
-        break
+function Get-LanAddress {
+    $configs = Get-NetIPConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up' }
+    foreach ($c in $configs) {
+        foreach ($ip in $c.IPv4Address) {
+            if ($ip.IPAddress -match '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)') { return $ip.IPAddress }
+        }
     }
+    return $null
+}
+
+function Test-PortFree([int]$p) {
+    $listener = $null
+    try {
+        $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Any, $p)
+        $listener.Start()
+        return $true
+    } catch { return $false } finally { if ($listener) { $listener.Stop() } }
+}
+
+function Invoke-Compose([string[]]$arguments, [switch]$AllowFailure) {
+    Push-Location $Root
+    try {
+        # Out-Host: Docker's output goes to the window, not into the return value.
+        & docker compose @arguments | Out-Host
+        $code = $LASTEXITCODE
+    } finally { Pop-Location }
+    if ($code -ne 0 -and -not $AllowFailure) { Stop-Install "docker compose $($arguments -join ' ') failed. Send a photo of this window to DOXamigo support." }
+    return $code
+}
+
+# ---------------------------------------------------------------------------
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { Stop-Install 'Please run the installer as Administrator (right-click > Run as administrator).' }
+
+Write-Host '=============================================' -ForegroundColor Cyan
+Write-Host ' DOXamigo clinic installer' -ForegroundColor Cyan
+Write-Host '=============================================' -ForegroundColor Cyan
+
+$Root = Read-Value 'Install folder' 'C:\DOXamigo'
+New-Item -ItemType Directory -Force -Path $Root, (Join-Path $Root 'backups'), (Join-Path $Root 'registry') | Out-Null
+$EnvFile = Join-Path $Root '.env'
+$IsUpdate = Test-Path -LiteralPath $EnvFile
+
+# 1. PC check ----------------------------------------------------------------
+Write-Step 'Checking this PC'
+$cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
+$cs = Get-CimInstance Win32_ComputerSystem
+$virtOk = $cs.HypervisorPresent -or $cpu.VirtualizationFirmwareEnabled
+if (-not $virtOk) {
+    Write-Host 'Hardware virtualization is OFF, so Docker cannot run on this PC.' -ForegroundColor Yellow
+    Write-Host 'Either enable "Intel VT-x" / "AMD SVM" in the BIOS, or install with DOXamigo-Setup.exe (no Docker needed).' -ForegroundColor Yellow
+    if ((Read-Host 'Continue anyway? (y/N)') -notmatch '^[Yy]') { exit 1 }
+}
+$ramGb = [math]::Round($cs.TotalPhysicalMemory / 1GB, 1)
+$freeGb = [math]::Round((Get-PSDrive -Name ($Root.Substring(0, 1))).Free / 1GB, 1)
+if ($ramGb -lt 6) { Write-Host "Only $ramGb GB of memory: Docker needs about 2 GB on its own; DOXamigo may be slow." -ForegroundColor Yellow }
+if ($freeGb -lt 25) { Write-Host "Only $freeGb GB free on the install drive (25 GB recommended)." -ForegroundColor Yellow }
+
+# 2. Docker Desktop -----------------------------------------------------------
+Write-Step 'Docker Desktop'
+$dockerExe = 'C:\Program Files\Docker\Docker\Docker Desktop.exe'
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    $installer = Join-Path $env:TEMP 'DockerDesktopInstaller.exe'
+    Write-Host 'Downloading Docker Desktop (about 500 MB)...'
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri 'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe' -OutFile $installer -UseBasicParsing
+    Write-Host 'Installing Docker Desktop (several minutes)...'
+    $p = Start-Process -FilePath $installer -ArgumentList 'install', '--quiet', '--accept-license' -Wait -PassThru
+    if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 3010) { Stop-Install "Docker Desktop failed to install (code $($p.ExitCode))." }
+    $env:Path += ';C:\Program Files\Docker\Docker\resources\bin'
+}
+if (Test-Path -LiteralPath $dockerExe) { Start-Process -FilePath $dockerExe -ErrorAction SilentlyContinue }
+
+Write-Host 'Waiting for Docker to start...'
+$deadline = (Get-Date).AddMinutes(10)
+while ($true) {
+    & docker info *> $null
+    if ($LASTEXITCODE -eq 0) { break }
+    if ((Get-Date) -gt $deadline) { Stop-Install 'Docker did not start within 10 minutes. Restart the PC, open Docker Desktop once, then run this installer again.' }
     Start-Sleep -Seconds 5
-    $RetryCount++
 }
 
-if ($RetryCount -ge $MaxRetries) {
-    Write-Host "      WARNING: Database seeding timed out. You may need to run it manually." -ForegroundColor Yellow
+# Docker Desktop must start with Windows (it starts after this user signs in).
+$settings = Join-Path $env:APPDATA 'Docker\settings-store.json'
+if (Test-Path -LiteralPath $settings) {
+    try {
+        $json = Get-Content -LiteralPath $settings -Raw | ConvertFrom-Json
+        if ($json.PSObject.Properties['AutoStart']) { $json.AutoStart = $true } else { $json | Add-Member -NotePropertyName AutoStart -NotePropertyValue $true }
+        [System.IO.File]::WriteAllText($settings, ($json | ConvertTo-Json -Depth 10), $Utf8NoBom)
+    } catch { Write-Host 'Could not switch on "Start Docker Desktop when you sign in"; please tick it in Docker Desktop > Settings.' -ForegroundColor Yellow }
+}
+
+# 3. Settings -----------------------------------------------------------------
+$Port = 80
+$enrollment = ''
+if ($IsUpdate) {
+    Write-Step 'Existing installation found: updating it (your data is kept)'
+    $saved = Select-String -LiteralPath $EnvFile -Pattern '^DOXAMIGO_PORT=(\d+)' | Select-Object -First 1
+    if ($saved) { $Port = [int]$saved.Matches[0].Groups[1].Value }
 } else {
-    Write-Host "      Database initialized successfully!" -ForegroundColor Green
+    Write-Step 'Clinic details'
+    $clinicName = (Read-Value 'Clinic name' -Required).Replace('"', '')
+    do { $adminEmail = Read-Value 'Admin email (used to log in)' -Required } until ($adminEmail -match '^[^@\s]+@[^@\s]+\.[^@\s]+$')
+    $enrollment = Read-Value 'Enrollment code from DOXamigo (DXA-XXXX-XXXX-XXXX), or Enter to skip'
+    $registryUser = Read-Value 'Update account (Docker Hub user)' 'philohany12'
+    $registryToken = Read-Value 'Update token (read-only, from DOXamigo)' -Required
+    $channel = Read-Value 'Update channel (stable / pilot)' 'stable'
+
+    if (-not (Test-PortFree 80)) {
+        Write-Host 'Port 80 is used by another program (often IIS or Skype); using 8080.' -ForegroundColor Yellow
+        $Port = 8080
+    }
+    $lan = Get-LanAddress
+    $suffix = if ($Port -eq 80) { '' } else { ":$Port" }
+    $values = @{
+        '{{APP_IMAGE}}'       = $DefaultAppImage
+        '{{WEB_IMAGE}}'       = $DefaultWebImage
+        '{{CHANNEL}}'         = $channel
+        '{{PORT}}'            = "$Port"
+        '{{APP_KEY}}'         = 'base64:' + (New-RandomBase64 32)
+        '{{APP_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { "http://localhost$suffix" })
+        '{{LAN_URL}}'         = $(if ($lan) { "http://$lan$suffix" } else { '' })
+        '{{CENTRAL_URL}}'     = $CentralUrl
+        '{{MACHINE_ID}}'      = ((New-RandomBase64 18) -replace '[^A-Za-z0-9]', '')
+        '{{BACKUP_PASSWORD}}' = (New-RandomBase64 18)
+    }
+    $envText = $ClinicEnvTemplate
+    foreach ($k in $values.Keys) { $envText = $envText.Replace($k, $values[$k]) }
+    [System.IO.File]::WriteAllText($EnvFile, $envText, $Utf8NoBom)
+
+    # Pull credentials: for this install (docker login) and for Watchtower (registry\config.json).
+    $auth = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$registryUser`:$registryToken"))
+    $config = '{ "auths": { "https://index.docker.io/v1/": { "auth": "' + $auth + '" } } }'
+    [System.IO.File]::WriteAllText((Join-Path $Root 'registry\config.json'), $config, $Utf8NoBom)
+    $registryToken | & docker login -u $registryUser --password-stdin | Out-Null
+    if ($LASTEXITCODE -ne 0) { Stop-Install 'The update account or token was not accepted. Check them with DOXamigo and run the installer again.' }
 }
 
+# Only DOXamigo's own folders: the settings files are private.
+& icacls $EnvFile /inheritance:r /grant:r 'SYSTEM:F' 'Administrators:F' | Out-Null
+& icacls (Join-Path $Root 'registry') /inheritance:r /grant:r 'SYSTEM:(OI)(CI)F' 'Administrators:(OI)(CI)F' | Out-Null
 
-# ---------------------------------------------------------
-# 8. Create Desktop Shortcut
-# ---------------------------------------------------------
-Write-Host "[8/8] Creating Desktop Shortcut..."
-$WshShell = New-Object -comObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\DentalCare Dashboard.lnk")
-$Shortcut.TargetPath = "http://localhost/admin"
-$Shortcut.IconLocation = "shell32.dll,27" # Temporary icon
-$Shortcut.Save()
+[System.IO.File]::WriteAllText((Join-Path $Root 'docker-compose.yml'), $ClinicCompose, $Utf8NoBom)
 
-Write-Host ""
-Write-Host "==========================================================" -ForegroundColor Green
-Write-Host " INSTALLATION COMPLETE! " -ForegroundColor Green
-Write-Host "==========================================================" -ForegroundColor Green
-Write-Host "A shortcut has been placed on the Desktop."
-Write-Host "You can now access the system at http://localhost/admin"
-Write-Host ""
-Pause
+# 4. Start --------------------------------------------------------------------
+Write-Step 'Downloading DOXamigo and starting it (first time: several minutes)'
+Invoke-Compose @('pull') | Out-Null
+Invoke-Compose @('up', '-d', '--remove-orphans') | Out-Null
+
+Write-Host 'Waiting for the database to be ready...'
+$deadline = (Get-Date).AddMinutes(5)
+while ((Invoke-Compose @('exec', '-T', 'app', 'php', 'artisan', 'migrate:status') -AllowFailure) -ne 0) {
+    if ((Get-Date) -gt $deadline) { Stop-Install 'DOXamigo did not start. Run: docker compose -f C:\DOXamigo\docker-compose.yml logs app   and send the output to support.' }
+    Start-Sleep -Seconds 5
+}
+
+$login = ''
+if (-not $IsUpdate) {
+    Write-Step 'Creating the clinic and its admin'
+    $file = '/var/www/html/storage/app/first-login.txt'
+    Invoke-Compose @('exec', '-T', '-u', 'www-data', 'app', 'php', 'artisan', 'clinic:install', "--clinic=$clinicName", "--admin-email=$adminEmail", "--credentials-file=$file") | Out-Null
+    Push-Location $Root
+    try { $login = (& docker compose exec -T app cat $file) -join "`r`n"; & docker compose exec -T app rm -f $file | Out-Null } finally { Pop-Location }
+
+    if ($enrollment) {
+        Write-Step 'Activating the license'
+        if ((Invoke-Compose @('exec', '-T', '-u', 'www-data', 'app', 'php', 'artisan', 'license:activate', $enrollment) -AllowFailure) -ne 0) {
+            Write-Host 'Activation failed (no internet?). Enter the code later on the License page.' -ForegroundColor Yellow
+        }
+    }
+}
+
+# 5. Network, power, shortcut ---------------------------------------------------
+Write-Step 'Opening the firewall for the clinic network'
+netsh advfirewall firewall delete rule name="DOXamigo" | Out-Null
+netsh advfirewall firewall add rule name="DOXamigo" dir=in action=allow protocol=TCP localport=$Port profile=private,domain | Out-Null
+powercfg /change standby-timeout-ac 0 | Out-Null
+powercfg /change hibernate-timeout-ac 0 | Out-Null
+
+$suffix = if ($Port -eq 80) { '' } else { ":$Port" }
+$desktop = [Environment]::GetFolderPath('CommonDesktopDirectory')
+[System.IO.File]::WriteAllText((Join-Path $desktop 'DOXamigo.url'), "[InternetShortcut]`r`nURL=http://localhost$suffix/admin`r`n", (New-Object System.Text.ASCIIEncoding))
+
+# Optional remote support (key typed in, never stored in this installer).
+if (-not $IsUpdate -and -not (Get-Command tailscale -ErrorAction SilentlyContinue)) {
+    $tsKey = Read-Value 'Tailscale key for remote support (Enter to skip)'
+    if ($tsKey) {
+        $ts = Join-Path $env:TEMP 'tailscale-setup.exe'
+        Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe' -OutFile $ts -UseBasicParsing
+        Start-Process -FilePath $ts -ArgumentList '/quiet' -Wait
+        $tsExe = Join-Path $env:ProgramFiles 'Tailscale\tailscale.exe'
+        if (Test-Path -LiteralPath $tsExe) { & $tsExe up "--authkey=$tsKey" --unattended | Out-Null }
+    }
+}
+
+# 6. Done ----------------------------------------------------------------------
+$lan = Get-LanAddress
+Write-Host ''
+Write-Host '=============================================' -ForegroundColor Green
+Write-Host ' DOXamigo is ready' -ForegroundColor Green
+Write-Host '=============================================' -ForegroundColor Green
+if ($login) {
+    Write-Host $login -ForegroundColor White
+    Write-Host 'WRITE THE PASSWORD DOWN NOW - it is not shown again.' -ForegroundColor Yellow
+}
+Write-Host "On this PC:     http://localhost$suffix/admin  (desktop shortcut: DOXamigo)"
+if ($lan) { Write-Host "Other devices:  http://$lan$suffix   (same Wi-Fi / network)" }
+Write-Host 'Updates install automatically every night at 03:30.'
+Write-Host 'Keep this PC on during clinic hours, and signed in to Windows (Docker starts after sign-in).'
+Read-Host 'Press Enter to close'

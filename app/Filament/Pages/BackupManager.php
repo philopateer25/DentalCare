@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Practice;
 use App\Services\Backup\BackupService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -64,6 +65,16 @@ class BackupManager extends Page
 
     public $uploadedBackup = null;
 
+    /**
+     * A backup is the WHOLE install: every clinic's database rows, all uploaded
+     * files and the .env (encryption key). Restoring one overwrites everything.
+     * So it belongs to whoever owns the computer:
+     *  - system admins (developer / super_admin) always;
+     *  - a clinic admin only when this install holds just their clinic (the
+     *    normal on-premise case: one PC = one clinic).
+     * On a shared install clinic admins use "Export my clinic's data" on the
+     * License page instead, which only contains their own clinic.
+     */
     public static function canAccess(): bool
     {
         $user = auth()->user();
@@ -71,12 +82,20 @@ class BackupManager extends Page
             return false;
         }
 
-        // Allow clinic administrators, super admins, doctors, and developers
-        if (method_exists($user, 'hasAnyRole')) {
-            return $user->hasAnyRole(['clinic_admin', 'super_admin', 'developer', 'doctor']);
+        if ($user->hasAnyRole(['developer', 'super_admin'])) {
+            return true;
         }
 
-        return true;
+        return $user->hasRole('clinic_admin')
+            && $user->practice_id !== null
+            && Practice::query()->count() === 1
+            && (int) Practice::query()->value('id') === (int) $user->practice_id;
+    }
+
+    /** Every action re-checks: a Livewire call must not outlive a lost permission. */
+    private function guard(): void
+    {
+        abort_unless(static::canAccess(), 403, 'Backups contain every clinic on this computer.');
     }
 
     protected function getHeaderActions(): array
@@ -102,6 +121,8 @@ class BackupManager extends Page
 
     public function createBackupNow(): void
     {
+        $this->guard();
+
         try {
             $backupService = app(BackupService::class);
             $result = $backupService->createBackup();
@@ -123,6 +144,8 @@ class BackupManager extends Page
 
     public function downloadBackup(string $filename): ?BinaryFileResponse
     {
+        $this->guard();
+
         try {
             $backupService = app(BackupService::class);
             $filePath = $backupService->getDownloadPath($filename);
@@ -149,6 +172,8 @@ class BackupManager extends Page
 
     public function openDeleteModal(string $filename): void
     {
+        $this->guard();
+
         $this->deleteFilename = $filename;
         $this->deletePassword = '';
         $this->deleteErrorMessage = '';
@@ -165,6 +190,8 @@ class BackupManager extends Page
 
     public function executeDelete(): void
     {
+        $this->guard();
+
         $backupService = app(BackupService::class);
 
         if (! $backupService->verifyDeletePassword($this->deletePassword)) {
@@ -202,6 +229,8 @@ class BackupManager extends Page
 
     public function openRestoreModal(string $filename): void
     {
+        $this->guard();
+
         $this->restoreFilename = $filename;
         $this->restoreConfirmKeyword = '';
         $this->restoreCustomKey = '';
@@ -222,6 +251,8 @@ class BackupManager extends Page
 
     public function executeRestore(): void
     {
+        $this->guard();
+
         if (strtoupper(trim($this->restoreConfirmKeyword)) !== 'RESTORE') {
             $this->restoreErrorMessage = 'Please type RESTORE in capital letters to confirm.';
 
@@ -261,6 +292,8 @@ class BackupManager extends Page
 
     public function openUploadModal(): void
     {
+        $this->guard();
+
         $this->uploadedBackup = null;
         $this->isUploadModalOpen = true;
     }
@@ -273,6 +306,8 @@ class BackupManager extends Page
 
     public function executeUploadAndRestore(): void
     {
+        $this->guard();
+
         if (! $this->uploadedBackup) {
             Notification::make()
                 ->title('No File Selected')
@@ -317,6 +352,8 @@ class BackupManager extends Page
 
     public function getBackupsProperty(): Collection
     {
+        $this->guard();
+
         return app(BackupService::class)->listBackups();
     }
 

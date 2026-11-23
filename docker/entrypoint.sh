@@ -1,14 +1,21 @@
 #!/bin/sh
 set -e
 
-# Wait for MySQL to be ready (optional but good practice)
+# Wait until the database answers.
 echo "Waiting for database connection..."
-# We try to run a simple artisan command that connects to the database to ensure it's up.
-# A small sleep loop is usually safer here.
 until php artisan db:monitor > /dev/null 2>&1; do
   echo "Database is unavailable - sleeping"
   sleep 2
 done
+
+# Worker / scheduler containers pass their own command (docker-compose `command:`),
+# e.g. `php artisan schedule:work`. Run it instead of the web server. The app
+# container owns migrations and caches, so they are not repeated here (two
+# containers migrating at once can collide).
+if [ "$#" -gt 0 ]; then
+  echo "Starting: $*"
+  exec "$@"
+fi
 
 echo "Database is up. Running migrations..."
 php artisan migrate --force

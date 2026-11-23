@@ -246,6 +246,50 @@ Prescriptions need rollout stage 3 or more; expenses need stage 2 and a plan wit
 2. Filter by list, **Remove** a typo → ✅ it no longer appears in the dropdown.
 3. Log in as a doctor → ✅ no Dropdown lists menu (doctors add values by typing; admins clean up).
 
+## Phase 6 - native Windows install (no Docker)
+
+Needs a spare PC or a virtual machine with Windows 10/11 64-bit. Don't use your development PC:
+the installer creates services and uses port 80. Building the .exe needs Inno Setup 6 (see `deploy/windows/README.md`).
+
+### W. Build
+1. On your dev PC: `.\deploy\windowsuild.ps1 -PinHashes -AllowNoProductionKey` (first time) -> check `versions.json` got hashes.
+2. Result: `deploy\windowsuild\DOXamigo-Setup-<version>.exe`.
+
+### X. Install on a clean PC
+1. Central app -> new clinic -> copy the enrollment code.
+   For a test installer: the central app must be reachable from that PC (deployed, or your laptop's address).
+2. Run the .exe -> ✅ warning only if the PC is weak (under 4 GB RAM / 20 GB free).
+3. Enter clinic name, admin email, enrollment code -> Install.
+4. ✅ Last page shows the email + a temporary password (write it down) and two addresses: this PC and `http://192.168.x.x`.
+5. Desktop shortcut **DOXamigo** -> log in -> ✅ onboarding wizard (branches, chairs), then the dashboard; License page shows "Active".
+6. `services.msc` -> ✅ DOXamigo-Web, -PHP-1..4, -Queue, -Scheduler are Running, startup Automatic.
+
+### Y. Other devices
+1. Reception PC / phone on the same Wi-Fi -> open the `http://192.168.x.x` address -> ✅ login page.
+2. Two people working at the same time -> ✅ no waiting (4 PHP workers).
+3. Patient -> **Scan paper card** -> ✅ the dialog shows the 192.168 address (phones can open it).
+
+### Z. Survives a reboot and an update
+1. Restart the PC, don't log in to Windows -> from the phone -> ✅ DOXamigo works (services start on boot).
+2. After 30+ minutes -> central app -> ✅ "last seen" updates on its own (scheduler heartbeat; no 409).
+3. Add a patient with a photo -> run a newer DOXamigo-Setup .exe -> ✅ no questions asked, patient and photo still there.
+4. Apps -> uninstall -> ✅ `C:\DOXamigo\data` still exists; reinstall -> ✅ same data.
+
+## Backups
+
+### AA. Who sees backups
+A backup is the whole computer: every clinic on it plus the `.env` key. Restoring one overwrites everything.
+1. Log in as a **clinic admin** on an install with several clinics (your Docker dev has 7) -> ✅ no **Backup & Security** menu; `/admin/<id>/backup-manager` -> 403.
+2. Log in as the **super admin** / developer -> ✅ the backup list is there.
+3. A **doctor** -> ✅ no backup menu, even on a one-clinic PC.
+4. A real clinic PC (one clinic) -> its **clinic admin** ✅ sees and manages the backups.
+5. On a shared install a clinic admin uses **License -> Export data** instead (own clinic only).
+
+### AB. Daily backup at 02:00
+1. `docker logs clinic_scheduler` -> ✅ "Starting: php artisan schedule:work" (not "Starting PHP-FPM").
+2. Next morning -> Backup & Security -> ✅ a backup from about 02:00; Download works.
+3. Without waiting: `docker exec clinic_scheduler php artisan schedule:test --name="backup:run"` -> ✅ a new backup appears within a minute.
+
 ### Clean up
 - Remove the three `LICENSE_*` lines from `.env` → `docker exec clinic_app sh docker/optimize.sh` → `docker restart clinic_nginx`.
 - Central local data lives in `doxamigo-central/.wrangler/` — delete that folder to start fresh.

@@ -46,6 +46,12 @@ services:
     container_name: clinic_worker
     restart: unless-stopped
     command: php artisan queue:work --sleep=3 --tries=3
+    # Use the project's entrypoint (bind-mounted) so `command` really runs; the
+    # script baked into older images always started php-fpm and ignored it.
+    entrypoint: ["/bin/sh", "/var/www/html/docker/entrypoint.sh"]
+    # Same user as php-fpm, so backups and logs written by scheduled jobs can be
+    # read, downloaded and deleted from the web app (root wrote them 0600 before).
+    user: "www-data"
     env_file:
       - .env
     environment:
@@ -74,6 +80,12 @@ services:
     container_name: clinic_scheduler
     restart: unless-stopped
     command: php artisan schedule:work
+    # Use the project's entrypoint (bind-mounted) so `command` really runs; the
+    # script baked into older images always started php-fpm and ignored it.
+    entrypoint: ["/bin/sh", "/var/www/html/docker/entrypoint.sh"]
+    # Same user as php-fpm, so backups and logs written by scheduled jobs can be
+    # read, downloaded and deleted from the web app (root wrote them 0600 before).
+    user: "www-data"
     env_file:
       - .env
     environment:

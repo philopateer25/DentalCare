@@ -70,7 +70,10 @@
                 @if ($chartUrl)
                     <a href="{{ $chartUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-squares-2x2" class="h-4 w-4" /> {{ __('Dental chart') }}</a>
                 @endif
-                <a href="{{ $invoiceUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-document-text" class="h-4 w-4" /> {{ __('New invoice') }}</a>
+                @if ($invoiceUrl)
+                    <a href="{{ $invoiceUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-document-text" class="h-4 w-4" /> {{ __('New invoice') }}</a>
+                @endif
+                <a href="{{ $scanUrl }}" class="dx-btn dx-btn-tint"><x-filament::icon icon="heroicon-o-camera" class="h-4 w-4" /> {{ __('Scan paper card') }}</a>
                 @if (! empty($whatsapp))
                     {{-- Opens WhatsApp with a ready message; staff press send. --}}
                     <details class="dx-menu">

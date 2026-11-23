@@ -184,6 +184,40 @@ press **Sync now** on the clinic's License page, then reload.
 1. Central → clinic → change the stage → Save → change the plan → Save.
 2. Reload → ✅ both changes kept (before the fix the second save put the stage back).
 
+## Phase 4 — switching from paper
+
+Works at any rollout stage. Opening balances become invoices; they show in Finance once the clinic reaches stage 2.
+
+### Q. Import patients and what they owe
+1. Sidebar → **Import patients** → **Download template (.xlsx)** → open it in Excel.
+2. Keep the two sample rows and add a few of your own. Include some mistakes on purpose:
+   - a row without a name;
+   - a phone that already belongs to a patient;
+   - "abc" as the amount owed;
+   - the same phone twice;
+   - Arabic digits like ٠١٠١٢٣٤٥٦٧٨, a phone without its leading zero, a date like 1/12/2026.
+3. Upload → **Check file** → ✅ "N ready" + a red list of the bad rows with the reason; **nothing is saved yet** (Patients count unchanged).
+4. **Import N patients** → ✅ "Done": patients, opening balances and installment plans counted.
+5. Open a patient who owed money → ✅ an invoice "Opening balance (paper records)" with the full amount due;
+   with installments → Patient Financing shows the schedule starting on your date (or next month).
+6. Import the same file again → ✅ every row says "Already a patient"; nothing is duplicated.
+
+### R. Scan a paper card with a phone
+The phone must reach this PC over the clinic Wi-Fi, so `localhost` will not work for this test.
+1. Find the PC's address: `ipconfig` → IPv4 (e.g. 192.168.1.10). Either open DOXamigo on the PC as
+   `http://192.168.1.10/admin`, or add `CLINIC_LAN_URL=http://192.168.1.10` to `.env` → optimize + restart nginx.
+   (Windows Firewall may ask to allow Docker on private networks — allow it.)
+2. Open a patient → **Scan paper card** → ✅ a dialog with the address (and a QR code once the QR library is installed) and "Waiting for photos…".
+   On `localhost` without CLINIC_LAN_URL → ✅ it explains that a phone can't open localhost.
+3. On the phone (same Wi-Fi) open the address → **Take photos** → take 2 → **Save to patient file** → ✅ "2 photos saved".
+4. Within 3 seconds the PC dialog shows ✅ "2 photos received" → **Done — show the photos** → Files tab lists two "Paper card – …" files; Download opens them.
+5. Open the same phone link again → ✅ "expired or was already used". Wait 10 minutes with a fresh link → ✅ expired.
+
+### S. Returning patient who only has a paper card
+1. Patients → search a name that doesn't exist → ✅ "Create from paper card" in the empty list, name pre-filled.
+2. Enter the phone → **Create and scan card** → ✅ the new patient opens with the scan dialog already showing.
+3. Try a phone that already exists → ✅ red "Already a patient: … (file number)" with an **Open** button; nothing created.
+
 ### Clean up
 - Remove the three `LICENSE_*` lines from `.env` → `docker exec clinic_app sh docker/optimize.sh` → `docker restart clinic_nginx`.
 - Central local data lives in `doxamigo-central/.wrangler/` — delete that folder to start fresh.

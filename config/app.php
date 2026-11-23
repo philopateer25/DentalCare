@@ -68,6 +68,13 @@ return [
     'timezone' => env('APP_TIMEZONE', 'Africa/Cairo'),
 
     /*
+    | Address phones on the clinic Wi-Fi use to reach this PC (e.g.
+    | http://192.168.1.10). Needed for "Scan paper card" when staff open the
+    | app as http://localhost. Empty = use the address the browser is using.
+    */
+    'lan_url' => env('CLINIC_LAN_URL'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------

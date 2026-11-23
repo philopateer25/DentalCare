@@ -28,6 +28,7 @@ class FilesRelationManager extends RelationManager
                         $options = [
                             'document' => 'Document',
                             'photo' => 'Photo',
+                            'paper_record' => 'Paper record',
                             'other' => 'Other',
                         ];
                         if ($hasXray) {
@@ -77,7 +78,7 @@ class FilesRelationManager extends RelationManager
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn ($record) => asset('storage/' . $record->file_path))
+                    ->url(fn ($record) => route('patient-files.download', $record))
                     ->openUrlInNewTab(),
             ])
             ->bulkActions([

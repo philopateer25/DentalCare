@@ -132,6 +132,17 @@ Route::middleware('auth')->post('/push/subscribe', [PushSubscriptionController::
 // Clinic data export — reachable even when the license is read-only or locked.
 Route::middleware('auth')->get('/license/export', \App\Http\Controllers\LicenseExportController::class)->name('license.export');
 
+// Phase 4 — switching from paper.
+// Phone side of "Scan paper card": no login, the one-time token is the key.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/scan/{token}', [\App\Http\Controllers\PaperCardScanController::class, 'show'])->name('paper-card.show');
+    Route::post('/scan/{token}', [\App\Http\Controllers\PaperCardScanController::class, 'store'])->name('paper-card.store');
+});
+Route::middleware('auth')->group(function () {
+    Route::get('/patients/import/template', \App\Http\Controllers\PatientImportTemplateController::class)->name('patients.import.template');
+    Route::get('/patient-files/{patientFile}/download', \App\Http\Controllers\PatientFileDownloadController::class)->name('patient-files.download');
+});
+
 // Odontogram, examination, treatment-plan and fee-schedule APIs (session auth required;
 // these used to be reachable without login).
 Route::middleware('auth')->group(function () {

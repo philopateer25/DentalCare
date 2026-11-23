@@ -5,11 +5,13 @@ namespace App\Filament\Resources\PatientResource\Widgets;
 use App\Filament\Resources\AppointmentResource;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\PatientResource;
+use App\Filament\Resources\PatientResource\Pages\ChartWorkspace;
 use App\Filament\Support\PatientSnapshot;
 use App\Models\Appointment;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Services\CurrencyHelper;
+use App\Services\WhatsAppLink;
 use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Model;
@@ -72,16 +74,16 @@ class PatientProfileHeaderWidget extends Widget
         $lifetime = (float) (clone $openInvoices)->sum('total_amount');
 
         $whatsapp = [];
-        if ((Filament::getTenant()?->hasFeature('whatsapp') ?? false) && \App\Services\WhatsAppLink::phone($patient->whatsapp_number ?: $patient->phone)) {
-            $whatsapp['General message'] = \App\Services\WhatsAppLink::forPatient($patient, 'greeting');
+        if ((Filament::getTenant()?->hasFeature('whatsapp') ?? false) && WhatsAppLink::phone($patient->whatsapp_number ?: $patient->phone)) {
+            $whatsapp['General message'] = WhatsAppLink::forPatient($patient, 'greeting');
             if ($upcoming) {
-                $whatsapp['Appointment reminder'] = \App\Services\WhatsAppLink::forAppointment($upcoming, 'appointment_reminder');
+                $whatsapp['Appointment reminder'] = WhatsAppLink::forAppointment($upcoming, 'appointment_reminder');
             }
             if ($balance > 0) {
-                $whatsapp['Balance reminder'] = \App\Services\WhatsAppLink::forPatient($patient, 'balance_reminder', ['balance' => CurrencyHelper::format($balance)]);
+                $whatsapp['Balance reminder'] = WhatsAppLink::forPatient($patient, 'balance_reminder', ['balance' => CurrencyHelper::format($balance)]);
             }
             if ($previous) {
-                $whatsapp['Post-op check-up'] = \App\Services\WhatsAppLink::forPatient($patient, 'post_op_checkup');
+                $whatsapp['Post-op check-up'] = WhatsAppLink::forPatient($patient, 'post_op_checkup');
             }
         }
 
@@ -96,10 +98,12 @@ class PatientProfileHeaderWidget extends Widget
             'money' => fn ($v) => CurrencyHelper::format((float) $v),
             'lifetime' => $lifetime,
             'bookUrl' => AppointmentResource::getUrl('create'),
-            'invoiceUrl' => InvoiceResource::getUrl('create'),
+            'invoiceUrl' => InvoiceResource::canAccess() ? InvoiceResource::getUrl('create') : null,
+            // Opens the "Scan paper card" dialog on the patient page (Phase 4).
+            'scanUrl' => PatientResource::getUrl('view', ['record' => $patient]).'?scan=1',
             'invoicesUrl' => InvoiceResource::getUrl('index'),
             'editUrl' => PatientResource::getUrl('edit', ['record' => $patient]),
-            'chartUrl' => \App\Filament\Resources\PatientResource\Pages\ChartWorkspace::canUseChart()
+            'chartUrl' => ChartWorkspace::canUseChart()
                 ? PatientResource::getUrl('chart', ['record' => $patient]) : null,
             'appointmentUrl' => $upcoming ? AppointmentResource::getUrl('edit', ['record' => $upcoming]) : null,
             'whatsapp' => array_filter($whatsapp),

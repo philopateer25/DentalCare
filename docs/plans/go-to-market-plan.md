@@ -170,6 +170,8 @@ This plan turns the conversation about "why clinics will reject us" into concret
 4. **"Returning paper patient" flow:** search → not found → "Create from paper card" (name + phone + photo) in ~30 s.
 5. Setup-day service: we enter everyone who currently owes money (Phase 7 playbook).
 
+**Status (2026-11-22):** built — 1 (custom "Import patients" page instead of the Filament Importer, so the check-then-import preview runs without the queue), 2 (one-time token instead of a signed URL; `CLINIC_LAN_URL` for the phone address; QR shown when `bacon/bacon-qr-code` is installed, otherwise the link), 4. Not yet: 3 (AI read of the card).
+
 **Done when:** a 200-row debtors Excel imports with errors flagged, and a phone photo lands on the right patient in under 30 s.
 
 ---
